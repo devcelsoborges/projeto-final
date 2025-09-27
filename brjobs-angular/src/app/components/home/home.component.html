@@ -1,0 +1,34 @@
+<div class="home-container">
+  
+  <header class="hero-section">
+    <h1>{{ titulo }}</h1>
+    <p>Milhares de oportunidades de trabalho esperando por você. Comece sua busca agora!</p>
+    
+    <div class="search-bar">
+      <input type="text" placeholder="Buscar por título, empresa ou local..." />
+      <button>Buscar Vagas</button>
+    </div>
+  </header>
+
+  <section class="vagas-section">
+    <h2>Vagas em Destaque</h2>
+    
+    <div class="lista-vagas">
+      
+      <div *ngFor="let vaga of vagas" class="card-vaga">
+        <h3>{{ vaga.titulo }}</h3>
+        <p class="empresa-local">
+          {{ vaga.empresa }} • {{ vaga.local }}
+        </p>
+        <span class="tag-nivel">{{ vaga.nivel }}</span>
+        <button class="btn-detalhes">Ver Detalhes</button>
+      </div>
+
+      <div *ngIf="vagas.length === 0" class="sem-vagas">
+        <p>Nenhuma vaga encontrada no momento.</p>
+      </div>
+      
+    </div>
+  </section>
+
+</div>

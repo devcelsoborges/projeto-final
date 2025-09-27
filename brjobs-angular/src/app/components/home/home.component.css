@@ -1,0 +1,121 @@
+/* src/app/components/home/home.component.css */
+
+.home-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- Hero Section (Capa) --- */
+.hero-section {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: #eef4ff; /* Cor de fundo suave */
+  border-radius: 8px;
+  margin-bottom: 40px;
+}
+
+.hero-section h1 {
+  font-size: 2.5em;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.hero-section p {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+/* Barra de Pesquisa */
+.search-bar {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.search-bar input {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 60%;
+  max-width: 400px;
+}
+
+.search-bar button {
+  padding: 10px 20px;
+  background-color: #007bff; /* Azul primário */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.search-bar button:hover {
+  background-color: #0056b3;
+}
+
+/* --- Lista de Vagas --- */
+.vagas-section h2 {
+  font-size: 1.8em;
+  color: #333;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.lista-vagas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.card-vaga {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.card-vaga:hover {
+  transform: translateY(-5px);
+}
+
+.card-vaga h3 {
+  font-size: 1.4em;
+  color: #007bff;
+  margin-bottom: 5px;
+}
+
+.empresa-local {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+.tag-nivel {
+  display: inline-block;
+  background-color: #28a745; /* Verde para destaque */
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  margin-bottom: 15px;
+}
+
+.btn-detalhes {
+  background-color: #6c757d; /* Cinza secundário */
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+}
+
+.btn-detalhes:hover {
+  background-color: #5a6268;
+}
