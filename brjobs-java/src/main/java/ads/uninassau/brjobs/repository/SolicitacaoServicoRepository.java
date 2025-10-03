@@ -1,4 +1,14 @@
 package ads.uninassau.brjobs.repository;
 
-public class SolicitacaoServicoRepository {
+import ads.uninassau.brjobs.entity.SolicitacaoServico;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface SolicitacaoServicoRepository extends JpaRepository<SolicitacaoServico, Long> {
+
+    List<SolicitacaoServico> findByUsuarioId(Long usuarioId);
+
+    List<SolicitacaoServico> findByPrestadorId(Long prestadorId);
 }
