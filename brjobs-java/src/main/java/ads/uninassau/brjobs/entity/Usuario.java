@@ -25,6 +25,6 @@ public class Usuario {
 
     private String telefone;
 
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<SolicitacaoServico> solicitacoes;
 }
