@@ -1,7 +1,7 @@
 package ads.uninassau.brjobs.service;
 
 import ads.uninassau.brjobs.dto.ServicoDTO;
-import ads.uninassau.brjobs.entity.Servico;
+import ads.uninassau.brjobs.model.Servico;
 import ads.uninassau.brjobs.repository.ServicoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

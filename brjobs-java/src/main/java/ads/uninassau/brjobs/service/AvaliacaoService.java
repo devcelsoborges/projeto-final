@@ -1,14 +1,13 @@
 package ads.uninassau.brjobs.service;
 
 import ads.uninassau.brjobs.dto.AvaliacaoDTO;
-import ads.uninassau.brjobs.entity.Avaliacao;
+import ads.uninassau.brjobs.model.Avaliacao;
 import ads.uninassau.brjobs.repository.AvaliacaoRepository;
 
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 @Service

@@ -7,10 +7,8 @@ import lombok.AllArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsuarioDTO {
+public class LoginRequestDTO {
 
-    private Long id;
-    private String nome;
     private String email;
-    private String senha; // Usado apenas no input (registro)
+    private String senha;
 }

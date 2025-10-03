@@ -1,6 +1,6 @@
 package ads.uninassau.brjobs.repository;
 
-import ads.uninassau.brjobs.entity.Avaliacao;
+import ads.uninassau.brjobs.model.Avaliacao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;

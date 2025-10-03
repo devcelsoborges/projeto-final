@@ -1,7 +1,7 @@
 package ads.uninassau.brjobs.service;
 
 import ads.uninassau.brjobs.dto.PrestadorDTO;
-import ads.uninassau.brjobs.entity.Prestador;
+import ads.uninassau.brjobs.model.Prestador;
 import ads.uninassau.brjobs.repository.PrestadorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

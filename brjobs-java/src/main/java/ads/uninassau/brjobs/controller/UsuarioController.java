@@ -31,16 +31,16 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioDTO> buscarUsuarioPorId(@PathVariable Long id) {
-        return usuarioService.buscarPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        UsuarioDTO usuarioDTO = usuarioService.buscarPorId(id);
+
+        // 2. Se o Service não lançou exceção, o código prossegue e retorna o status 200 OK.
+        return ResponseEntity.ok(usuarioDTO);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDTO> atualizarUsuario(@PathVariable Long id, @RequestBody UsuarioDTO usuarioDTO) {
-        return usuarioService.atualizarUsuario(id, usuarioDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        UsuarioDTO usuarioAtualizado = usuarioService.atualizarUsuario(id, usuarioDTO);
+        return ResponseEntity.ok(usuarioAtualizado);
     }
 
     @DeleteMapping("/{id}")
