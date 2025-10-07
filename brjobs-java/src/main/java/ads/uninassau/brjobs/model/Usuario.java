@@ -5,9 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data // Gera Getters, Setters, toString, equals e hashCode
-@NoArgsConstructor // Gera o construtor vazio (obrigatório pelo JPA)
-@AllArgsConstructor // Gera construtor com todos os campos
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -17,11 +17,34 @@ public class Usuario {
     private Long id;
 
     @Column(nullable = false)
+    private String tipoUsuario;
+
+    @Column(nullable = false)
     private String nome;
 
     @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
-    private String senha; // Senha CRIPTOGRAFADA
+    private String senha;
+
+    private String telefone;
+    private String endereco;
+    private String cpf;
+    private String funcao;
+    private String dataNascimento;
+    private String genero;
+
+    @Column(length = 2000)
+    private String experienciaProfissional;
+
+    private String especialidades;
+
+    @Lob
+    @Column(name = "foto_perfil")
+    private byte[] fotoPerfil;
+
+    @Lob
+    @Column(name = "curriculo")
+    private byte[] curriculo;
 }
