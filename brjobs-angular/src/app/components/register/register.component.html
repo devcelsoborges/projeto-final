@@ -1,0 +1,61 @@
+<div class="register-container">
+  <h2>Register</h2>
+
+  <form [formGroup]="registerForm" (ngSubmit)="submit()" enctype="multipart/form-data">
+    
+    <label>Tipo de Usuário</label>
+    <select formControlName="tipoUsuario">
+      <option value="trabalhador">Worker</option>
+      <option value="contratante">Client</option>
+    </select>
+
+    <label>Name</label>
+    <input type="text" formControlName="nome" required>
+
+    <label>Email</label>
+    <input type="email" formControlName="email" required>
+
+    <label>Password</label>
+    <input type="password" formControlName="senha" required>
+
+    <label>Phone</label>
+    <input type="text" formControlName="telefone">
+
+    <label>Address</label>
+    <input type="text" formControlName="endereco">
+
+    <label>CPF</label>
+    <input type="text" formControlName="cpf">
+
+    <label>Role / Function</label>
+    <input type="text" formControlName="funcao">
+
+    <label>Date of Birth</label>
+    <input type="date" formControlName="dataNascimento">
+
+    <label>Gender</label>
+    <select formControlName="genero">
+      <option value="">Select</option>
+      <option value="male">Male</option>
+      <option value="female">Female</option>
+      <option value="other">Other</option>
+    </select>
+
+    <label>Professional Experience</label>
+    <textarea formControlName="experienciaProfissional"></textarea>
+
+    <label>Specialties</label>
+    <textarea formControlName="especialidades"></textarea>
+
+    <label>Profile Photo</label>
+    <input type="file" (change)="onFotoPerfilChange($event)" accept="image/*">
+
+    <label>Resume / CV</label>
+    <input type="file" (change)="onCurriculoChange($event)" accept=".pdf,.doc,.docx">
+
+    <button type="submit">Register</button>
+
+    <div *ngIf="mensagemSucesso" class="success">{{ mensagemSucesso }}</div>
+    <div *ngIf="mensagemErro" class="error">{{ mensagemErro }}</div>
+  </form>
+</div>

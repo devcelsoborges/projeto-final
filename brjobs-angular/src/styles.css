@@ -1,1 +1,52 @@
-/* You can add global styles to this file, and also import other style files */
+:root{
+  --bg-top: #a66b3f;
+  --bg-bottom: #32190f;
+  --accent: #b77a3f;
+  --card-bg: rgba(0,0,0,0.18);
+  --card-border: rgba(255,255,255,0.12);
+}
+
+main {
+  margin-top: 80px; /* 🔹 Ajuste conforme a altura do seu header */
+}
+
+html,body,#app-root{
+  height:100%;
+  margin:0;
+  font-family: "Poppins", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+  color: #fff;
+}
+
+/* util */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* accessible focus */
+:focus {
+  outline: 3px solid rgba(255,255,255,0.18);
+  outline-offset: 2px;
+}
+
+/* button primary */
+.btn-primary {
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.25);
+  padding: 0.9rem 1.4rem;
+  border-radius: 6px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight:700;
+}
+
+h1.big {
+  font-size: clamp(2rem, 5.5vw, 4rem);
+  line-height: 1.05;
+  margin-bottom: 1rem;
+  color: #fff;
+  text-shadow: 0 6px 18px rgba(0,0,0,0.45);
+}

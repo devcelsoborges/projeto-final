@@ -1,97 +1,30 @@
-/* src/app/components/login/login.component.css */
-
-.login-page-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* Garante que o container ocupe a altura total da tela */
-  min-height: calc(100vh - 50px); 
-  background-color: #f7f9fc;
+.login-page {
+  min-height: calc(100vh - 80px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:2rem;
 }
 
 .login-card {
-  background: white;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
+  width: 360px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.08));
+  border-radius:8px;
+  padding: 1.8rem;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.05);
 }
 
-.card-title {
-  color: #007bff;
-  margin-bottom: 5px;
-  font-size: 1.8em;
-}
-
-.card-subtitle {
-  color: #666;
-  margin-bottom: 30px;
-  font-size: 0.9em;
-}
-
-.form-group {
-  text-align: left;
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 5px;
-  color: #333;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  box-sizing: border-box; /* Garante que o padding não aumente a largura total */
-  transition: border-color 0.3s;
-}
-
-.form-group input:focus {
-  border-color: #007bff;
-  outline: none;
-}
-
-.validation-message {
-  color: #dc3545; /* Vermelho para erros */
-  font-size: 0.85em;
-  margin-top: 5px;
-}
-
-.btn-login {
-  width: 100%;
-  padding: 12px;
-  background-color: #007bff;
-  color: white;
+label { display:block; margin-top: 0.8rem; font-weight:600; font-size:0.95rem; color: #f3eae0; }
+input {
+  width:100%;
+  padding: 0.65rem 0.8rem;
+  margin-top: 0.4rem;
+  border-radius:6px;
   border: none;
-  border-radius: 6px;
-  font-size: 1.1em;
-  cursor: pointer;
-  transition: background-color 0.3s, opacity 0.3s;
-  margin-top: 10px;
+  background: #0f0f0f;
+  color: #fff;
 }
+.err { color:#ffd7d7; font-size:0.85rem; margin-top:0.3rem; }
 
-.btn-login:hover:not([disabled]) {
-  background-color: #0056b3;
-}
-
-.btn-login[disabled] {
-  background-color: #a0c3e6;
-  cursor: not-allowed;
-  opacity: 0.8;
-}
-
-.register-link {
-  margin-top: 25px;
-  font-size: 0.9em;
-}
-
-.register-link a {
-  color: #007bff;
-  text-decoration: none;
-}
+.forgot { display:block; margin-top:0.8rem; color: #fff; text-decoration:underline; font-size:0.9rem;}

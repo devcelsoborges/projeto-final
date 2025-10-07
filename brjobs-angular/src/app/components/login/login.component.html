@@ -1,54 +1,41 @@
-<p>login works!</p>
-<div class="login-page-container">
+<div class="login-container">
   <div class="login-card">
-    
-    <h1 class="card-title">Acessar BR-Jobs</h1>
-    <p class="card-subtitle">Entre com sua conta para buscar ou publicar vagas.</p>
-    
-    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-      
+    <h2>Login</h2>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="form-group">
         <label for="email">E-mail</label>
-        <input 
-          type="email" 
-          id="email" 
-          name="email" 
-          placeholder="seu@email.com" 
-          required
-          [(ngModel)]="credenciais.email"
-          #email="ngModel"
-        >
-        <div *ngIf="email.invalid && (email.dirty || email.touched)" class="validation-message">
-          O e-mail é obrigatório.
-        </div>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Digite seu e-mail"
+        />
+        <small *ngIf="form.get('email')?.touched && form.get('email')?.invalid">
+          E-mail inválido ou obrigatório
+        </small>
       </div>
-      
+
       <div class="form-group">
-        <label for="senha">Senha</label>
-        <input 
-          type="password" 
-          id="senha" 
-          name="senha" 
-          placeholder="••••••••" 
-          required
-          minlength="6"
-          [(ngModel)]="credenciais.senha"
-          #senha="ngModel"
-        >
-        <div *ngIf="senha.invalid && (senha.dirty || senha.touched)" class="validation-message">
-          A senha deve ter pelo menos 6 caracteres.
-        </div>
+        <label for="password">Senha</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Digite sua senha"
+        />
+        <small *ngIf="form.get('password')?.touched && form.get('password')?.invalid">
+          Senha obrigatória (mínimo 6 caracteres)
+        </small>
       </div>
-      
-      <button type="submit" [disabled]="loginForm.invalid" class="btn-login">
-        Entrar
+
+      <button
+        class="btn-primary"
+        type="submit"
+        [disabled]="loading || form.invalid"
+      >
+        {{ loading ? 'Entrando...' : 'Entrar' }}
       </button>
-      
     </form>
-    
-    <p class="register-link">
-      Não tem conta? <a href="#">Cadastre-se aqui.</a>
-    </p>
-    
   </div>
 </div>

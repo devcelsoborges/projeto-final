@@ -1,37 +1,38 @@
-// src/app/components/login/login.component.ts
-
 import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // ⬅️ IMPORTANTE para usar ngModel
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  // Adiciona FormsModule para formulários de template-driven
-  imports: [CommonModule, FormsModule], 
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-  
-  // Objeto para armazenar os dados do formulário
-  credenciais = {
-    email: '',
-    senha: ''
-  };
+  form: FormGroup;
+  loading = false; // 👈 variável adicionada
 
-  /**
-   * Método chamado quando o formulário é submetido
-   */
-  onSubmit() {
-    console.log('Tentativa de Login:', this.credenciais);
-    
-    // Simulação básica de validação (apenas para demonstração)
-    if (this.credenciais.email && this.credenciais.senha.length >= 6) {
-      alert('Login bem-sucedido (simulado)!');
-      // Em uma aplicação real, aqui você chamaria um Service de autenticação
+  constructor(private fb: FormBuilder, private router: Router) {
+    this.form = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+    });
+  }
+
+  submit() {
+    if (this.form.valid) {
+      this.loading = true;
+      console.log('Login realizado com sucesso!', this.form.value);
+
+      // Simula carregamento
+      setTimeout(() => {
+        this.loading = false;
+        this.router.navigate(['/home']);
+      }, 1500);
     } else {
-      alert('Por favor, preencha o email e a senha (mínimo 6 caracteres).');
+      this.form.markAllAsTouched();
     }
   }
 }

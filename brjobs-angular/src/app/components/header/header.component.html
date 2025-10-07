@@ -1,0 +1,34 @@
+<header class="navbar" role="banner">
+  <div class="logo">
+    <a routerLink="/" aria-label="Página inicial do BRJobs">BRJobs</a>
+  </div>
+
+  <nav class="nav-links" role="navigation" aria-label="Menu principal">
+    <a routerLink="/" (click)="fecharMenu()">Home</a>
+    <a routerLink="/cadastro" (click)="fecharMenu()">Cadastre-se</a>
+    <a routerLink="/login" (click)="fecharMenu()">Login</a>
+    <a routerLink="/sobre" (click)="fecharMenu()">Sobre nós</a>
+    <a routerLink="/contato" (click)="fecharMenu()">Contato</a>
+    <a routerLink="/acessibilidade" (click)="fecharMenu()">Acessibilidade</a>
+  </nav>
+
+  <button
+    class="menu-toggle"
+    (click)="toggleMenu()"
+    aria-label="Abrir ou fechar menu de navegação"
+    aria-expanded="{{ menuAberto }}"
+  >
+    ☰
+  </button>
+</header>
+
+@if (menuAberto) {
+  <nav class="mobile-menu" role="navigation" aria-label="Menu móvel">
+    <a routerLink="/" (click)="fecharMenu()">Home</a>
+    <a routerLink="/cadastro" (click)="fecharMenu()">Cadastre-se</a>
+    <a routerLink="/login" (click)="fecharMenu()">Login</a>
+    <a routerLink="/sobre" (click)="fecharMenu()">Sobre nós</a>
+    <a routerLink="/contato" (click)="fecharMenu()">Contato</a>
+    <a routerLink="/acessibilidade" (click)="fecharMenu()">Acessibilidade</a>
+  </nav>
+}
