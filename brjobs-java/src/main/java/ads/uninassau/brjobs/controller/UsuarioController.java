@@ -11,13 +11,12 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@CrossOrigin(origins = "http://localhost:4200") // Angular rodando na porta 4200
+@CrossOrigin(origins = "http://localhost:4200/register")
 public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
 
-    // Cadastro de usuário com todos os campos e arquivos
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<UsuarioDTO> criarUsuario(
             @RequestParam String tipoUsuario,
