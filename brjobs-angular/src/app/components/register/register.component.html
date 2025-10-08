@@ -1,61 +1,166 @@
-<div class="register-container">
-  <h2>Register</h2>
+<div class="register-wrapper">
+    <div class="register-card">
+        <h1 class="card-title">Cadastro Detalhado BRJobs</h1>
+        <p class="card-subtitle">Preencha todos os dados para criar seu perfil profissional completo.</p>
 
-  <form [formGroup]="registerForm" (ngSubmit)="submit()" enctype="multipart/form-data">
-    
-    <label>Tipo de Usuário</label>
-    <select formControlName="tipoUsuario">
-      <option value="trabalhador">Worker</option>
-      <option value="contratante">Client</option>
-    </select>
+        <!-- Formulário Reativo -->
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
 
-    <label>Name</label>
-    <input type="text" formControlName="nome" required>
+            <!-- BLOCO DE AUTENTICAÇÃO -->
+            <fieldset class="form-section authentication-section">
+                <legend>Dados de Acesso</legend>
+                <div class="form-grid">
+                    <!-- Campo Email (1/2) -->
+                    <div class="form-group grid-span-full">
+                        <label for="email">E-mail *</label>
+                        <input id="email" type="email" formControlName="email" placeholder="email@exemplo.com" [class.is-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+                        <div *ngIf="registerForm.get('email')?.errors && registerForm.get('email')?.touched" class="error-message">
+                            <span *ngIf="registerForm.get('email')?.errors?.['required']">O e-mail é obrigatório.</span>
+                            <span *ngIf="registerForm.get('email')?.errors?.['email']">O e-mail deve ser válido.</span>
+                        </div>
+                    </div>
+                    <!-- Campo Senha (2/2) -->
+                    <div class="form-group">
+                        <label for="senha">Senha *</label>
+                        <input id="senha" type="password" formControlName="senha" placeholder="Mínimo 6 caracteres" [class.is-invalid]="registerForm.get('senha')?.invalid && registerForm.get('senha')?.touched">
+                        <div *ngIf="registerForm.get('senha')?.errors && registerForm.get('senha')?.touched" class="error-message">
+                            <span *ngIf="registerForm.get('senha')?.errors?.['required']">A senha é obrigatória.</span>
+                            <span *ngIf="registerForm.get('senha')?.errors?.['minlength']">Mínimo 6 caracteres.</span>
+                        </div>
+                    </div>
+                    <!-- Campo Confirmar Senha (2/2) -->
+                    <div class="form-group">
+                        <label for="confirmarSenha">Confirme a Senha *</label>
+                        <input id="confirmarSenha" type="password" formControlName="confirmarSenha" placeholder="Repita a senha" [class.is-invalid]="registerForm.get('confirmarSenha')?.invalid && registerForm.get('confirmarSenha')?.touched">
+                        <div *ngIf="registerForm.get('confirmarSenha')?.errors && registerForm.get('confirmarSenha')?.touched" class="error-message">
+                            <span *ngIf="registerForm.get('confirmarSenha')?.errors?.['required']">A confirmação é obrigatória.</span>
+                        </div>
+                        <div *ngIf="registerForm.errors?.['mismatch'] && registerForm.get('confirmarSenha')?.touched" class="error-message mismatch-error">
+                            As senhas não coincidem.
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
 
-    <label>Email</label>
-    <input type="email" formControlName="email" required>
+            <!-- BLOCO DE DADOS PESSOAIS -->
+            <fieldset class="form-section">
+                <legend>Dados Pessoais</legend>
+                <div class="form-grid">
+                    <!-- Tipo Usuário -->
+                    <div class="form-group">
+                        <label for="tipoUsuario">Tipo de Usuário *</label>
+                        <select id="tipoUsuario" formControlName="tipoUsuario" [class.is-invalid]="registerForm.get('tipoUsuario')?.invalid && registerForm.get('tipoUsuario')?.touched">
+                            <option value="" disabled>Selecione</option>
+                            <option *ngFor="let type of userTypes" [value]="type">{{ type }}</option>
+                        </select>
+                        <div *ngIf="registerForm.get('tipoUsuario')?.errors?.['required'] && registerForm.get('tipoUsuario')?.touched" class="error-message">
+                            Selecione o tipo de usuário.
+                        </div>
+                    </div>
+                    <!-- Nome -->
+                    <div class="form-group">
+                        <label for="nome">Nome Completo *</label>
+                        <input id="nome" type="text" formControlName="nome" placeholder="Seu nome" [class.is-invalid]="registerForm.get('nome')?.invalid && registerForm.get('nome')?.touched">
+                        <div *ngIf="registerForm.get('nome')?.errors?.['required'] && registerForm.get('nome')?.touched" class="error-message">
+                            O nome é obrigatório.
+                        </div>
+                    </div>
+                    <!-- CPF -->
+                    <div class="form-group">
+                        <label for="cpf">CPF *</label>
+                        <!-- Usando type="text" e inputmode="numeric" para melhor controle de validação do Angular -->
+                        <input id="cpf" type="text" inputmode="numeric" formControlName="cpf" placeholder="Apenas números (11 dígitos)" 
+                               [class.is-invalid]="registerForm.get('cpf')?.invalid && registerForm.get('cpf')?.touched">
+                        <div *ngIf="registerForm.get('cpf')?.errors && registerForm.get('cpf')?.touched" class="error-message">
+                            <span *ngIf="registerForm.get('cpf')?.errors?.['required']">O CPF é obrigatório.</span>
+                            <span *ngIf="registerForm.get('cpf')?.errors?.['minlength'] || registerForm.get('cpf')?.errors?.['maxlength']">O CPF deve ter 11 dígitos.</span>
+                        </div>
+                    </div>
+                    <!-- Data Nascimento -->
+                    <div class="form-group">
+                        <label for="dataNascimento">Data de Nascimento *</label>
+                        <input id="dataNascimento" type="date" formControlName="dataNascimento" [class.is-invalid]="registerForm.get('dataNascimento')?.invalid && registerForm.get('dataNascimento')?.touched">
+                        <div *ngIf="registerForm.get('dataNascimento')?.errors?.['required'] && registerForm.get('dataNascimento')?.touched" class="error-message">
+                            A data de nascimento é obrigatória.
+                        </div>
+                    </div>
+                    <!-- Gênero -->
+                    <div class="form-group">
+                        <label for="genero">Gênero *</label>
+                        <select id="genero" formControlName="genero" [class.is-invalid]="registerForm.get('genero')?.invalid && registerForm.get('genero')?.touched">
+                            <option value="" disabled>Selecione</option>
+                            <option *ngFor="let gender of genders" [value]="gender">{{ gender }}</option>
+                        </select>
+                        <div *ngIf="registerForm.get('genero')?.errors?.['required'] && registerForm.get('genero')?.touched" class="error-message">
+                            O gênero é obrigatório.
+                        </div>
+                    </div>
+                    <!-- Telefone -->
+                    <div class="form-group">
+                        <label for="telefone">Telefone *</label>
+                        <input id="telefone" type="tel" formControlName="telefone" placeholder="(XX) XXXXX-XXXX" [class.is-invalid]="registerForm.get('telefone')?.invalid && registerForm.get('telefone')?.touched">
+                        <div *ngIf="registerForm.get('telefone')?.errors?.['required'] && registerForm.get('telefone')?.touched" class="error-message">
+                            O telefone é obrigatório.
+                        </div>
+                    </div>
+                    <!-- Endereço (Span Full) -->
+                    <div class="form-group grid-span-full">
+                        <label for="endereco">Endereço Completo *</label>
+                        <input id="endereco" type="text" formControlName="endereco" placeholder="Rua, número, complemento, bairro, cidade, estado" [class.is-invalid]="registerForm.get('endereco')?.invalid && registerForm.get('endereco')?.touched">
+                        <div *ngIf="registerForm.get('endereco')?.errors?.['required'] && registerForm.get('endereco')?.touched" class="error-message">
+                            O endereço é obrigatório.
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
 
-    <label>Password</label>
-    <input type="password" formControlName="senha" required>
+            <!-- BLOCO DE INFORMAÇÕES PROFISSIONAIS -->
+            <fieldset class="form-section">
+                <legend>Informações Profissionais (Opcional)</legend>
+                <div class="form-grid">
+                    <!-- Função -->
+                    <div class="form-group">
+                        <label for="funcao">Função/Cargo Desejado</label>
+                        <input id="funcao" type="text" formControlName="funcao" placeholder="Ex: Desenvolvedor Front-end">
+                    </div>
+                    <!-- Especialidades -->
+                    <div class="form-group">
+                        <label for="especialidades">Especialidades/Habilidades</label>
+                        <input id="especialidades" type="text" formControlName="especialidades" placeholder="Ex: Angular, TypeScript, UX Design">
+                    </div>
+                    <!-- Experiência Profissional (Span Full) -->
+                    <div class="form-group grid-span-full">
+                        <label for="experienciaProfissional">Resumo da Experiência Profissional</label>
+                        <textarea id="experienciaProfissional" formControlName="experienciaProfissional" rows="3" placeholder="Descreva brevemente sua trajetória e principais conquistas."></textarea>
+                    </div>
+                </div>
+            </fieldset>
 
-    <label>Phone</label>
-    <input type="text" formControlName="telefone">
+            <!-- BLOCO DE ARQUIVOS -->
+            <fieldset class="form-section">
+                <legend>Arquivos</legend>
+                <div class="form-grid">
+                    <!-- Foto Perfil -->
+                    <div class="form-group file-input-group">
+                        <label for="fotoPerfil" class="file-label">Foto de Perfil</label>
+                        <!-- O método onFileChange no TS cuida da lógica de anexar o arquivo -->
+                        <input id="fotoPerfil" type="file" (change)="onFileChange($event, 'fotoPerfil')" accept="image/*">
+                        <span class="file-name">{{ registerForm.get('fotoPerfil')?.value?.name || 'Nenhum arquivo selecionado' }}</span>
+                    </div>
+                    <!-- Currículo -->
+                    <div class="form-group file-input-group">
+                        <label for="curriculo" class="file-label">Currículo (PDF/DOCX)</label>
+                        <input id="curriculo" type="file" (change)="onFileChange($event, 'curriculo')" accept=".pdf,.doc,.docx">
+                        <span class="file-name">{{ registerForm.get('curriculo')?.value?.name || 'Nenhum arquivo selecionado' }}</span>
+                    </div>
+                </div>
+            </fieldset>
 
-    <label>Address</label>
-    <input type="text" formControlName="endereco">
+            <button type="submit" [disabled]="!registerForm.valid" class="btn-primary">
+                Finalizar Cadastro
+            </button>
+        </form>
 
-    <label>CPF</label>
-    <input type="text" formControlName="cpf">
-
-    <label>Role / Function</label>
-    <input type="text" formControlName="funcao">
-
-    <label>Date of Birth</label>
-    <input type="date" formControlName="dataNascimento">
-
-    <label>Gender</label>
-    <select formControlName="genero">
-      <option value="">Select</option>
-      <option value="male">Male</option>
-      <option value="female">Female</option>
-      <option value="other">Other</option>
-    </select>
-
-    <label>Professional Experience</label>
-    <textarea formControlName="experienciaProfissional"></textarea>
-
-    <label>Specialties</label>
-    <textarea formControlName="especialidades"></textarea>
-
-    <label>Profile Photo</label>
-    <input type="file" (change)="onFotoPerfilChange($event)" accept="image/*">
-
-    <label>Resume / CV</label>
-    <input type="file" (change)="onCurriculoChange($event)" accept=".pdf,.doc,.docx">
-
-    <button type="submit">Register</button>
-
-    <div *ngIf="mensagemSucesso" class="success">{{ mensagemSucesso }}</div>
-    <div *ngIf="mensagemErro" class="error">{{ mensagemErro }}</div>
-  </form>
+        <p class="login-link">Já tem uma conta? <a routerLink="/login">Faça login aqui</a></p>
+    </div>
 </div>

@@ -3,6 +3,7 @@
     <h2>Login</h2>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
+      
       <div class="form-group">
         <label for="email">E-mail</label>
         <input
@@ -29,6 +30,10 @@
         </small>
       </div>
 
+      <div class="forgot-password">
+        <a routerLink="/forgot-password">Esqueceu sua senha?</a>
+      </div>
+
       <button
         class="btn-primary"
         type="submit"
@@ -36,6 +41,8 @@
       >
         {{ loading ? 'Entrando...' : 'Entrar' }}
       </button>
+
     </form>
+    
   </div>
 </div>

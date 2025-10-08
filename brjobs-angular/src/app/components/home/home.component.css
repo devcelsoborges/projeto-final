@@ -1,121 +1,182 @@
-/* src/app/components/home/home.component.css */
-
-.home-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* --- Hero Section (Capa) --- */
+/* =================================================================
+ * 1. SEÇÃO HERO E BUSCA (UX: Destaque e Clareza)
+ * ================================================================= */
 .hero-section {
-  text-align: center;
-  padding: 60px 20px;
-  background-color: #eef4ff; /* Cor de fundo suave */
-  border-radius: 8px;
-  margin-bottom: 40px;
+    background-color: var(--color-primary); /* Fundo com a cor de marca */
+    color: var(--color-surface); /* Texto branco para contraste (Acessibilidade) */
+    padding: 60px 0; /* Espaçamento vertical generoso */
+    text-align: center;
+    margin-bottom: 40px;
 }
 
 .hero-section h1 {
-  font-size: 2.5em;
-  color: #333;
-  margin-bottom: 10px;
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    color: var(--color-surface); /* Garante que o título seja branco */
 }
 
 .hero-section p {
-  color: #666;
-  margin-bottom: 25px;
+    font-size: 1.25rem;
+    opacity: 0.9;
+    margin-bottom: 30px;
 }
 
-/* Barra de Pesquisa */
+/* Barra de Busca (Clareza e Simplicidade) */
 .search-bar {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
+    display: flex;
+    justify-content: center;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: var(--color-surface);
+    border-radius: var(--border-radius-md);
+    overflow: hidden; /* Garante que input e botão fiquem alinhados */
+    box-shadow: var(--shadow-sm); /* Leve elevação */
 }
 
-.search-bar input {
-  padding: 10px 15px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 60%;
-  max-width: 400px;
+.search-bar input[type="text"] {
+    flex-grow: 1; /* Ocupa o máximo de espaço */
+    padding: 15px 20px;
+    font-size: 1rem;
+    border: none;
+    outline: none;
+    color: var(--color-text-dark);
 }
 
 .search-bar button {
-  padding: 10px 20px;
-  background-color: #007bff; /* Azul primário */
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+    /* Estilo do Botão - Usando a cor Accent para destaque (CTA) */
+    background-color: var(--color-accent);
+    color: var(--color-text-dark);
+    padding: 15px 25px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
 }
 
 .search-bar button:hover {
-  background-color: #0056b3;
+    background-color: #4DA5A7; /* Tom sutilmente mais escuro de accent */
 }
 
-/* --- Lista de Vagas --- */
+
+/* =================================================================
+ * 2. LISTA DE VAGAS (UX/UI: Escaneabilidade e Dinamismo)
+ * ================================================================= */
+
 .vagas-section h2 {
-  font-size: 1.8em;
-  color: #333;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #eee;
-  padding-bottom: 10px;
+    font-size: 2rem;
+    color: var(--color-text-dark);
+    margin-left: 15px; /* Alinhado com o container de vagas */
 }
 
+/* CSS Grid para a Listagem de Vagas (Responsividade) */
 .lista-vagas {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+    display: grid;
+    /* Layout adaptável: 3 colunas, mas ajusta em telas menores */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+    gap: 20px;
+    padding: 20px 15px;
 }
 
+/* Estilo do Card Individual de Vaga */
 .card-vaga {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s;
+    /* Herda os estilos profissionais de card definidos globalmente */
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 20px;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer; 
+    
+    /* Garante que o conteúdo seja empurrado para o topo */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
+/* Dinamismo: Efeito de elevação no hover */
 .card-vaga:hover {
-  transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px); 
 }
 
+/* Hierarquia de Títulos no Card */
 .card-vaga h3 {
-  font-size: 1.4em;
-  color: #007bff;
-  margin-bottom: 5px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--color-primary); /* Usa a cor primária para destacar o título */
+    margin-top: 0;
+    margin-bottom: 5px;
 }
 
 .empresa-local {
-  color: #666;
-  font-size: 0.9em;
-  margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 15px;
 }
 
+/* Estilo das Tags (Nível) - Claridade e Identificação Rápida */
 .tag-nivel {
-  display: inline-block;
-  background-color: #28a745; /* Verde para destaque */
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8em;
-  margin-bottom: 15px;
+    display: inline-block;
+    background-color: var(--color-background); /* Fundo sutil */
+    color: var(--color-text-secondary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 15px;
 }
 
+/* Botão de Detalhes (CTA Secundário) */
 .btn-detalhes {
-  background-color: #6c757d; /* Cinza secundário */
-  color: white;
-  padding: 8px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  width: 100%;
+    /* Usa a classe btn-primary global para um CTA profissional */
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    padding: 10px 15px;
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    transition: all 0.2s;
+    width: 100%; /* Força o botão a ocupar o espaço total do card */
+    margin-top: auto; /* Empurra o botão para a parte inferior do flex container */
 }
 
 .btn-detalhes:hover {
-  background-color: #5a6268;
+    background-color: var(--color-primary-light);
+}
+
+
+/* =================================================================
+ * 3. RESPONSIVIDADE (Mobile First)
+ * ================================================================= */
+
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 40px 0;
+    }
+    
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+
+    /* Empilhamento da barra de busca em telas menores */
+    .search-bar {
+        flex-direction: column;
+    }
+    
+    .search-bar input[type="text"], .search-bar button {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .search-bar input[type="text"] {
+        border-bottom: 1px solid var(--color-border); /* Separador visual */
+    }
+
+    /* Em mobile, o grid se torna uma coluna única (já ajustado com minmax, mas confirmando) */
+    .lista-vagas {
+        grid-template-columns: 1fr;
+        padding: 10px;
+    }
 }

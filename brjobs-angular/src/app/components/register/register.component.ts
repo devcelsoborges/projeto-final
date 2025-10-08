@@ -1,79 +1,101 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { HttpClient, HttpEventType } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-register',
-  templateUrl: './register.component.html',
-  styleUrls: ['./register.component.css'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule] // necessário para *ngIf e formulários
+  // Importa ReactiveFormsModule para o tratamento de formulários
+  imports: [CommonModule, ReactiveFormsModule], 
+  templateUrl: './register.component.html',
+  styleUrls: ['./register.component.css']
 })
-export class RegisterComponent {
-  registerForm: FormGroup;
-  fotoPerfilFile: File | null = null;
-  curriculoFile: File | null = null;
-  mensagemSucesso: string = '';
-  mensagemErro: string = '';
+export class RegisterComponent implements OnInit {
+  // Define o grupo de formulário
+  registerForm!: FormGroup;
+  
+  // Lista de tipos de usuário e gêneros para os <select> no HTML
+  userTypes = ['Candidato', 'Empresa'];
+  genders = ['Feminino', 'Masculino', 'Outro', 'Prefiro não informar'];
 
-  constructor(private fb: FormBuilder, private http: HttpClient) {
+  // Injeta o FormBuilder para construir o formulário
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    // Inicializa o formulário com todos os campos e validadores especificados
     this.registerForm = this.fb.group({
-      tipoUsuario: ['trabalhador', Validators.required],
-      nome: ['', Validators.required],
+      // CAMPOS DE AUTENTICAÇÃO (MANTIDOS)
       email: ['', [Validators.required, Validators.email]],
-      senha: ['', Validators.required],
-      telefone: [''],
-      endereco: [''],
-      cpf: [''],
+      senha: ['', [Validators.required, Validators.minLength(6)]],
+      confirmarSenha: ['', Validators.required],
+      
+      // CAMPOS OBRIGATÓRIOS DO USUÁRIO
+      tipoUsuario: ['', Validators.required],
+      nome: ['', Validators.required],
+      telefone: ['', Validators.required],
+      endereco: ['', Validators.required],
+      cpf: ['', [Validators.required, Validators.minLength(11), Validators.maxLength(11)]],
+      dataNascimento: ['', Validators.required],
+      genero: ['', Validators.required],
+      
+      // CAMPOS OPCIONAIS / DE CONTEÚDO
       funcao: [''],
-      dataNascimento: [''],
-      genero: [''],
       experienciaProfissional: [''],
-      especialidades: ['']
+      especialidades: [''],
+      
+      // CAMPOS DE ARQUIVO (Iniciam como null, tratados separadamente)
+      fotoPerfil: [null], 
+      curriculo: [null]
+    }, { 
+      // Adiciona um validador personalizado a nível de grupo para verificar se as senhas coincidem
+      validators: this.passwordMatchValidator 
     });
   }
 
-  onFotoPerfilChange(event: any) {
-    const file = event.target.files[0];
-    if (file) this.fotoPerfilFile = file;
+  // Validador personalizado para checar se a senha e a confirmação coincidem
+  passwordMatchValidator(form: FormGroup) {
+    const senha = form.get('senha')?.value;
+    const confirmarSenha = form.get('confirmarSenha')?.value;
+    
+    return senha && confirmarSenha && senha !== confirmarSenha ? { mismatch: true } : null;
   }
 
-  onCurriculoChange(event: any) {
-    const file = event.target.files[0];
-    if (file) this.curriculoFile = file;
-  }
-
-  submit() {
-    if (this.registerForm.invalid) {
-      this.mensagemErro = 'Please fill in all required fields.';
-      return;
+  // Método auxiliar para lidar com a seleção de arquivos
+  onFileChange(event: any, fieldName: 'fotoPerfil' | 'curriculo'): void {
+    if (event.target.files.length > 0) {
+      const file = event.target.files[0];
+      // Define o objeto File no controle do formulário.
+      this.registerForm.get(fieldName)?.setValue(file);
+      this.registerForm.get(fieldName)?.updateValueAndValidity();
     }
+  }
 
-    const formData = new FormData();
-    Object.keys(this.registerForm.value).forEach(key => {
-      formData.append(key, this.registerForm.value[key]);
-    });
+  onSubmit(): void {
+    if (this.registerForm.valid) {
+      console.log('Dados do Cadastro Válidos:', this.registerForm.value);
+      // TODO: Em uma aplicação real, você enviaria os dados do formulário e os arquivos (separadamente) para o servidor
+      
+      // Exemplo de como você acessaria os arquivos:
+      const foto = this.registerForm.get('fotoPerfil')?.value;
+      const curriculo = this.registerForm.get('curriculo')?.value;
+      console.log('Arquivo de Foto:', foto);
+      console.log('Arquivo de Currículo:', curriculo);
 
-    if (this.fotoPerfilFile) formData.append('fotoPerfil', this.fotoPerfilFile);
-    if (this.curriculoFile) formData.append('curriculo', this.curriculoFile);
+      // Substitua alert() por um modal em produção
+      alert('Cadastro completo e válido! (Simulação de envio)'); 
+      this.registerForm.reset();
+    } else {
+      console.error('Formulário Inválido. Verifique todos os campos obrigatórios.');
+      this.markAllAsTouched(this.registerForm);
+    }
+  }
 
-    this.http.post('http://localhost:8080/api/usuarios', formData, {
-      reportProgress: true,
-      observe: 'events'
-    }).subscribe({
-      next: (event: any) => {
-        if (event.type === HttpEventType.Response) {
-          this.mensagemSucesso = 'Registration successful!';
-          this.registerForm.reset();
-          this.fotoPerfilFile = null;
-          this.curriculoFile = null;
-          this.mensagemErro = '';
-        }
-      },
-      error: (err) => {
-        this.mensagemErro = 'Error: ' + (err.error.message || err.message);
+  // Função auxiliar para marcar todos os campos como 'touched' e exibir erros
+  private markAllAsTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      if (control instanceof FormGroup) {
+        this.markAllAsTouched(control);
       }
     });
   }

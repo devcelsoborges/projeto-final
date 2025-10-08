@@ -4,19 +4,19 @@
   </div>
 
   <nav class="nav-links" role="navigation" aria-label="Menu principal">
-    <a routerLink="/" (click)="fecharMenu()">Home</a>
-    <a routerLink="/cadastro" (click)="fecharMenu()">Cadastre-se</a>
-    <a routerLink="/login" (click)="fecharMenu()">Login</a>
-    <a routerLink="/sobre" (click)="fecharMenu()">Sobre nós</a>
-    <a routerLink="/contato" (click)="fecharMenu()">Contato</a>
-    <a routerLink="/acessibilidade" (click)="fecharMenu()">Acessibilidade</a>
+    <a routerLink="/" routerLinkActive="active" (click)="fecharMenu()">Home</a>
+    <a routerLink="/register" routerLinkActive="active" (click)="fecharMenu()">Cadastre-se</a>
+    <a routerLink="/login" routerLinkActive="active" (click)="fecharMenu()">Login</a>
+    <a routerLink="/sobre" routerLinkActive="active" (click)="fecharMenu()">Sobre nós</a>
+    <a routerLink="/contato" routerLinkActive="active" (click)="fecharMenu()">Contato</a>
+    <a routerLink="/acessibilidade" routerLinkActive="active" (click)="fecharMenu()">Acessibilidade</a>
   </nav>
 
   <button
     class="menu-toggle"
     (click)="toggleMenu()"
     aria-label="Abrir ou fechar menu de navegação"
-    aria-expanded="{{ menuAberto }}"
+    [attr.aria-expanded]="menuAberto"
   >
     ☰
   </button>
@@ -24,11 +24,11 @@
 
 @if (menuAberto) {
   <nav class="mobile-menu" role="navigation" aria-label="Menu móvel">
-    <a routerLink="/" (click)="fecharMenu()">Home</a>
-    <a routerLink="/cadastro" (click)="fecharMenu()">Cadastre-se</a>
-    <a routerLink="/login" (click)="fecharMenu()">Login</a>
-    <a routerLink="/sobre" (click)="fecharMenu()">Sobre nós</a>
-    <a routerLink="/contato" (click)="fecharMenu()">Contato</a>
-    <a routerLink="/acessibilidade" (click)="fecharMenu()">Acessibilidade</a>
+    <a routerLink="/" routerLinkActive="active" (click)="fecharMenu()">Home</a>
+    <a routerLink="/register" routerLinkActive="active" (click)="fecharMenu()">Cadastre-se</a>
+    <a routerLink="/login" routerLinkActive="active" (click)="fecharMenu()">Login</a>
+    <a routerLink="/sobre" routerLinkActive="active" (click)="fecharMenu()">Sobre nós</a>
+    <a routerLink="/contato" routerLinkActive="active" (click)="fecharMenu()">Contato</a>
+    <a routerLink="/acessibilidade" routerLinkActive="active" (click)="fecharMenu()">Acessibilidade</a>
   </nav>
 }

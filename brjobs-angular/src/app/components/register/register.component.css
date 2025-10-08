@@ -1,83 +1,213 @@
-.cadastro-container {
-  max-width: 900px;
-  margin: 100px auto;
-  padding: 30px;
-  background: #f7f7f7;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* Cores e Variáveis */
+:root {
+  --color-primary: #002b5b; /* Azul Escuro (BRJobs) */
+  --color-accent: #ffd700; /* Dourado */
+  --color-background: #f4f7f6; /* Fundo Leve */
+  --color-surface: #ffffff; /* Branco/Card */
+  --color-text-dark: #333333;
+  --color-text-secondary: #666666;
+  --color-danger: #e53e3e; 
+  --border-radius-md: 8px;
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
-h2 {
+.register-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Alinha ao topo para formulários longos */
+  min-height: calc(100vh - 60px); 
+  padding: 40px 20px;
+  background-color: var(--color-background);
+}
+
+.register-card {
+  background-color: var(--color-surface);
+  padding: 40px;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  max-width: 900px; /* Aumenta a largura para o formulário detalhado */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.card-title {
+  color: var(--color-primary);
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.card-subtitle {
+  color: var(--color-text-secondary);
   text-align: center;
   margin-bottom: 30px;
-  color: #002b5b;
+  font-size: 1rem;
 }
 
-.cadastro-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* Estilização das Seções Fieldset */
+.form-section {
+  border: 1px solid #e0e0e0;
+  border-radius: var(--border-radius-md);
+  padding: 20px;
+  margin-bottom: 30px;
 }
 
+.form-section legend {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  padding: 0 10px;
+  margin-left: 10px;
+}
+
+/* Layout de Grade para os Campos */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: 1fr 1fr; /* Duas colunas padrão */
   gap: 20px;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 0; /* O espaçamento é controlado pelo gap da grid */
 }
 
-.full-width {
-  grid-column: span 2;
+/* Classe para campos que ocupam a largura total da grade */
+.grid-span-full {
+  grid-column: 1 / -1;
 }
 
-label {
-  font-weight: bold;
+.form-group label {
+  display: block;
+  font-weight: 600;
   margin-bottom: 6px;
-  color: #333;
+  color: var(--color-text-dark);
 }
 
-input,
-select,
-textarea {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 15px;
-}
-
-.radio-group {
-  display: flex;
-  gap: 20px;
-}
-
-button {
-  background-color: #002b5b;
-  color: white;
-  border: none;
+.register-form input,
+.register-form select,
+.register-form textarea {
+  width: 100%;
   padding: 12px;
-  border-radius: 8px;
-  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius-md);
+  box-sizing: border-box;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.register-form input:focus,
+.register-form select:focus,
+.register-form textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
+}
+
+/* Estilo para inputs inválidos */
+.register-form input.is-invalid,
+.register-form select.is-invalid,
+.register-form textarea.is-invalid {
+  border-color: var(--color-danger);
+}
+
+.error-message {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+.mismatch-error {
+  /* Estilo adicional para erro de não coincidência de senhas */
+  font-weight: 600;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  font-weight: 700;
+  border: none;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  align-self: center;
-  width: 200px;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  font-size: 1.1rem;
+  margin-top: 20px;
 }
 
-button:hover {
-  background-color: #01418c;
+.btn-primary:hover:not(:disabled) {
+  background-color: #003e7c;
 }
 
-.foto-preview {
-  margin-top: 10px;
+.btn-primary:disabled {
+  background-color: #a0aec0; 
+  cursor: not-allowed;
+}
+
+.login-link {
   text-align: center;
+  margin-top: 25px;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
 }
 
-.foto-preview img {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  object-fit: cover;
+.login-link a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.login-link a:hover {
+  color: var(--color-accent);
+}
+
+/* Estilo específico para input type="file" */
+.file-input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.file-input-group input[type="file"] {
+    display: none; /* Esconde o input file padrão */
+}
+
+.file-label {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    padding: 10px 15px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.file-label:hover {
+    background-color: #003e7c;
+}
+
+.file-name {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 5px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .register-card {
+    padding: 30px 20px;
+  }
+  .card-title {
+    font-size: 1.75rem;
+  }
+  .form-grid {
+    grid-template-columns: 1fr; /* Uma coluna em telas menores */
+  }
 }
