@@ -16,12 +16,34 @@
     /* Cores de Texto (Alto Contraste) */
     --color-text-dark: #343A40;     /* Texto Principal */
     --color-text-secondary: #6C757D; /* Texto Secundário (Descrições) */
-    
+
+    /* Bordas */
+    --color-border: #E0E0E0;
+
     /* Espaçamento, Sombras e Bordas */
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --border-radius-md: 8px;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+
+    /* Transição global para suavidade */
+    --transition-base: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* =================================================================
+ * 1.1. TEMA ESCURO (DARK MODE)
+ * ================================================================= */
+.dark-theme {
+    --color-background: #121212;
+    --color-surface: #1E1E1E;
+    --color-text-dark: #E4E4E4;
+    --color-text-secondary: #B0B0B0;
+    --color-border: #2C2C2C;
+
+    /* Ajuste de marca e contraste */
+    --color-primary: #4A8CD0;
+    --color-primary-light: #61A8FF;
+    --color-accent: #66C5C4;
 }
 
 /* =================================================================
@@ -35,14 +57,13 @@
 
 html, body {
     height: 100%;
-    
-    /* Tipografia Profissional */
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     font-size: 16px;
     color: var(--color-text-dark);
     background-color: var(--color-background);
-    line-height: 1.6; /* Melhor Legibilidade */
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    transition: var(--transition-base);
 }
 
 /* Links e Foco (Acessibilidade) */
@@ -50,17 +71,17 @@ a {
     color: var(--color-primary);
     text-decoration: none;
     transition: color 0.2s ease-in-out;
+}
 
-    &:hover {
-        color: var(--color-primary-light);
-        text-decoration: underline;
-    }
-    /* Foco visível obrigatório para navegação por teclado */
-    &:focus-visible {
-        outline: 3px solid var(--color-accent); 
-        outline-offset: 2px;
-        border-radius: var(--border-radius-md);
-    }
+a:hover {
+    color: var(--color-primary-light);
+    text-decoration: underline;
+}
+
+a:focus-visible {
+    outline: 3px solid var(--color-accent); 
+    outline-offset: 2px;
+    border-radius: var(--border-radius-md);
 }
 
 /* Hierarquia de Títulos */
@@ -101,7 +122,7 @@ h1, h2, h3 {
 .btn-primary:hover {
     background-color: var(--color-primary-light);
     box-shadow: var(--shadow-sm);
-    transform: translateY(-1px); /* Dinamismo sutil */
+    transform: translateY(-1px);
 }
 
 /* Botão de Destaque (Accent) */
@@ -127,23 +148,44 @@ h1, h2, h3 {
 }
 
 .app-card:hover {
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Sombra mais profunda no hover */
-    transform: translateY(-3px); /* Efeito de elevação (Dinâmico) */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
 }
 
 /* =================================================================
- * 4. RESPONSIVIDADE BASE (Mobile First)
+ * 4. FOOTER GLOBAL
+ * ================================================================= */
+footer {
+    background-color: var(--color-surface);
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: var(--spacing-md);
+    font-size: 0.9rem;
+    border-top: 1px solid var(--color-border);
+    transition: var(--transition-base);
+}
+
+footer a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* =================================================================
+ * 5. RESPONSIVIDADE BASE (Mobile First)
  * ================================================================= */
 @media (max-width: 768px) {
     h1 { font-size: 2rem; }
     h2 { font-size: 1.5rem; }
-    
+
     .container {
         padding: 0 10px;
     }
-    
-    /* Adaptação de botões em mobile, se necessário */
+
     .btn-primary, .btn-accent {
-        width: 100%; /* Botões de largura total em telas pequenas */
+        width: 100%;
     }
 }

@@ -9,9 +9,12 @@
     <a routerLink="/login" routerLinkActive="active" (click)="fecharMenu()">Login</a>
     <a routerLink="/sobre" routerLinkActive="active" (click)="fecharMenu()">Sobre nós</a>
     <a routerLink="/contato" routerLinkActive="active" (click)="fecharMenu()">Contato</a>
-    <a routerLink="/acessibilidade" routerLinkActive="active" (click)="fecharMenu()">Acessibilidade</a>
+
+    <!-- Componente de acessibilidade inline -->
+    <app-accessibility></app-accessibility>
   </nav>
 
+  <!-- Botão menu móvel -->
   <button
     class="menu-toggle"
     (click)="toggleMenu()"
@@ -22,13 +25,11 @@
   </button>
 </header>
 
-@if (menuAberto) {
-  <nav class="mobile-menu" role="navigation" aria-label="Menu móvel">
-    <a routerLink="/" routerLinkActive="active" (click)="fecharMenu()">Home</a>
-    <a routerLink="/register" routerLinkActive="active" (click)="fecharMenu()">Cadastre-se</a>
-    <a routerLink="/login" routerLinkActive="active" (click)="fecharMenu()">Login</a>
-    <a routerLink="/sobre" routerLinkActive="active" (click)="fecharMenu()">Sobre nós</a>
-    <a routerLink="/contato" routerLinkActive="active" (click)="fecharMenu()">Contato</a>
-    <a routerLink="/acessibilidade" routerLinkActive="active" (click)="fecharMenu()">Acessibilidade</a>
-  </nav>
-}
+<!-- Menu móvel -->
+<nav *ngIf="menuAberto" class="mobile-menu" role="navigation" aria-label="Menu móvel">
+  <a routerLink="/" routerLinkActive="active" (click)="fecharMenu()">Home</a>
+  <a routerLink="/register" routerLinkActive="active" (click)="fecharMenu()">Cadastre-se</a>
+  <a routerLink="/login" routerLinkActive="active" (click)="fecharMenu()">Login</a>
+  <a routerLink="/sobre" routerLinkActive="active" (click)="fecharMenu()">Sobre nós</a>
+  <a routerLink="/contato" routerLinkActive="active" (click)="fecharMenu()">Contato</a>
+</nav>

@@ -1,0 +1,78 @@
+.accessibility-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: static; /* inline no header */
+}
+
+.btn-accessibility {
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px; /* botões maiores */
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease-in-out;
+  position: relative; /* necessário para tooltip */
+}
+
+/* Tooltip */
+.btn-accessibility[aria-label]::after {
+  content: attr(aria-label);
+  position: absolute;
+  bottom: 120%; /* acima do botão */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 1000;
+}
+
+.btn-accessibility:hover::after {
+  opacity: 1;
+}
+
+/* Hover efeito botão */
+.btn-accessibility:hover {
+  background-color: var(--color-primary-light);
+  transform: translateY(-1px);
+}
+
+/* ============================
+   FIXO EM MOBILE
+   ============================ */
+@media (max-width: 900px) {
+  .accessibility-container {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background-color: var(--color-surface);
+    padding: 6px 10px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    z-index: 1000;
+  }
+
+  .btn-accessibility {
+    font-size: 0.85rem;
+    padding: 5px 8px;
+  }
+
+  .btn-accessibility[aria-label]::after {
+    font-size: 0.7rem;
+  }
+}
+
+/* DARK MODE */
+body.dark-theme .accessibility-container {
+  background-color: var(--color-surface);
+}
