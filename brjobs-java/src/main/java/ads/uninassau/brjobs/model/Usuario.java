@@ -28,16 +28,28 @@ public class Usuario {
     @Column(nullable = false)
     private String senha;
 
+    @Column(length = 15)
     private String telefone;
+
+    @Column(length = 1000)
     private String endereco;
+
+    @Column(nullable = false, unique = true)
     private String cpf;
+
+    @Column(length = 100)
     private String funcao;
+
+    @Column(name = "data_nascimento")
     private String dataNascimento;
+
+    @Column(length = 20)
     private String genero;
 
     @Column(length = 2000)
     private String experienciaProfissional;
 
+    @Column(length = 1000)
     private String especialidades;
 
     @Lob
