@@ -70,6 +70,12 @@
 }
 
 /* CSS Grid para a Listagem de Vagas (Responsividade) */
+.vagas-section {
+    background-color: var(--color-background);
+    padding: 20px 0;
+    transition: background-color 0.3s ease;
+}
+
 .lista-vagas {
     display: grid;
     /* Layout adaptável: 3 colunas, mas ajusta em telas menores */

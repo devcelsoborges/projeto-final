@@ -1,10 +1,17 @@
 package ads.uninassau.brjobs.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+/**
+ * Entidade que representa um usuário no sistema.
+ * Pode ser um CONTRATANTE ou um PRESTADOR de serviços.
+ * Se for PRESTADOR, terá um relacionamento com a entidade Prestador.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,46 +24,82 @@ public class Usuario {
     private Long id;
 
     @Column(nullable = false)
-    private String tipoUsuario;
-
-    @Column(nullable = false)
     private String nome;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
     private String senha;
 
-    @Column(length = 15)
+    @Column(nullable = false)
     private String telefone;
 
-    @Column(length = 1000)
-    private String endereco;
-
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String cpf;
 
-    @Column(length = 100)
-    private String funcao;
-
-    @Column(name = "data_nascimento")
-    private String dataNascimento;
-
-    @Column(length = 20)
+    @Column(nullable = false)
     private String genero;
 
-    @Column(length = 2000)
-    private String experienciaProfissional;
+    @Column(name = "data_nascimento", nullable = false)
+    private LocalDate dataNascimento;
 
-    @Column(length = 1000)
-    private String especialidades;
+    @Column(nullable = false)
+    private String endereco;
 
-    @Lob
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TipoUsuario tipoUsuario;
+
+    @Column(nullable = false)
+    private boolean ativo = true;
+
+    @CreationTimestamp
+    @Column(name = "data_cadastro", nullable = false, updatable = false)
+    private LocalDateTime dataCadastro;
+
+    @Column(name = "data_atualizacao")
+    private LocalDateTime dataAtualizacao;
+
+    @PreUpdate
+    protected void onUpdate() {
+        dataAtualizacao = LocalDateTime.now();
+    }
+
+    // Foto de perfil armazenada como bytea
     @Column(name = "foto_perfil")
     private byte[] fotoPerfil;
 
-    @Lob
-    @Column(name = "curriculo")
-    private byte[] curriculo;
+    // Relacionamento com Prestador (opcional, apenas se tipoUsuario == PRESTADOR)
+    @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private Prestador prestador;
+
+    /**
+     * Verifica se o usuário é um prestador de serviço
+     */
+    public boolean isPrestador() {
+        return tipoUsuario.isPrestador();
+    }
+
+    /**
+     * Verifica se o usuário é um contratante
+     */
+    public boolean isContratante() {
+        return tipoUsuario.isContratante();
+    }
+
+    /**
+     * Ativa o usuário
+     */
+    public void ativar() {
+        this.ativo = true;
+    }
+
+    /**
+     * Desativa o usuário
+     */
+    public void desativar() {
+        this.ativo = false;
+    }
 }

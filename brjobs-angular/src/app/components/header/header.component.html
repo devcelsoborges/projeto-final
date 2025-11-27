@@ -4,11 +4,11 @@
   </div>
 
   <nav class="nav-links" role="navigation" aria-label="Menu principal">
-    <a routerLink="/" routerLinkActive="active" (click)="fecharMenu()">Home</a>
-    <a routerLink="/register" routerLinkActive="active" (click)="fecharMenu()">Cadastre-se</a>
-    <a routerLink="/login" routerLinkActive="active" (click)="fecharMenu()">Login</a>
-    <a routerLink="/sobre" routerLinkActive="active" (click)="fecharMenu()">Sobre nós</a>
-    <a routerLink="/contato" routerLinkActive="active" (click)="fecharMenu()">Contato</a>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Home</a>
+    <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Cadastre-se</a>
+    <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Login</a>
+    <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Sobre nós</a>
+    <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Contato</a>
 
     <!-- Componente de acessibilidade inline -->
     <app-accessibility></app-accessibility>
@@ -27,9 +27,9 @@
 
 <!-- Menu móvel -->
 <nav *ngIf="menuAberto" class="mobile-menu" role="navigation" aria-label="Menu móvel">
-  <a routerLink="/" routerLinkActive="active" (click)="fecharMenu()">Home</a>
-  <a routerLink="/register" routerLinkActive="active" (click)="fecharMenu()">Cadastre-se</a>
-  <a routerLink="/login" routerLinkActive="active" (click)="fecharMenu()">Login</a>
-  <a routerLink="/sobre" routerLinkActive="active" (click)="fecharMenu()">Sobre nós</a>
-  <a routerLink="/contato" routerLinkActive="active" (click)="fecharMenu()">Contato</a>
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Home</a>
+  <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Cadastre-se</a>
+  <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Login</a>
+  <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Sobre nós</a>
+  <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Contato</a>
 </nav>

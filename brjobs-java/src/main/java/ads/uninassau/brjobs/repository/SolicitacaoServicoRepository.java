@@ -9,6 +9,4 @@ import java.util.List;
 public interface SolicitacaoServicoRepository extends JpaRepository<SolicitacaoServico, Long> {
 
     List<SolicitacaoServico> findByUsuarioId(Long usuarioId);
-
-    List<SolicitacaoServico> findByPrestadorId(Long prestadorId);
 }

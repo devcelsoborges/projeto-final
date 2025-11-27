@@ -1,13 +1,20 @@
 package ads.uninassau.brjobs.dto;
 
 import lombok.Data;
-import lombok.RequiredArgsConstructor; // Usa RequiredArgsConstructor para campos 'final'
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Data
-@RequiredArgsConstructor // Gera construtor com campos final/NonNull
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoginResponseDTO {
 
-    private final String token;
+    private String token;
+    private String message;
 
-    // Obs: Se 'token' não fosse final, usaríamos @AllArgsConstructor ou @NoArgsConstructor + Setter
+    // Construtor auxiliar para sucesso (Token OK)
+    public LoginResponseDTO(String token) {
+        this.token = token;
+        this.message = "Login realizado com sucesso.";
+    }
 }

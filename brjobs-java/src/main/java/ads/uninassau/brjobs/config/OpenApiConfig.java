@@ -16,13 +16,11 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
-                // 1. Informações da API
                 .info(new Info()
                         .title("BRJobs API - Plataforma de Empregos")
                         .version("v1.0.0")
                         .description("API REST para gerenciamento de usuários, vagas e candidaturas."))
 
-                // 2. Componentes de Segurança (Define o esquema Bearer Token)
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME,

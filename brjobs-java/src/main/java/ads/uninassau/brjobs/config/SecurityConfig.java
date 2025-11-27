@@ -24,9 +24,10 @@ public class SecurityConfig {
     @Autowired private JwtAuthenticationFilter jwtAuthenticationFilter;
     @Autowired private CustomUserDetailsService userDetailsService;
 
-    // O WebSecurityCustomizer foi removido para resolver o WARN e o conflito.
-
-    // 1. O MÉTODO authenticationProvider() RESTAURADO E ESSENCIAL PARA O LOGIN
+    /**
+     * Configura o provedor de autenticação usando o UserDetailsService e o PasswordEncoder.
+     * Este é o provedor principal para login via usuário/senha.
+     */
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -35,28 +36,39 @@ public class SecurityConfig {
         return authProvider;
     }
 
+    /**
+     * Expõe o AuthenticationManager para ser usado no serviço de autenticação (AuthService).
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * Define o encoder de senha (BCrypt) para criptografar e verificar senhas.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 2. O securityFilterChain agora tem o authenticationProvider E as rotas do Swagger liberadas.
+    /**
+     * Configura a cadeia de filtros de segurança HTTP.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Desabilita CSRF (Cross-Site Request Forgery) pois estamos usando JWT (stateless)
                 .csrf(csrf -> csrf.disable())
+                // Configura a política de criação de sessão como stateless (sem sessão HTTP)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        // Adiciona o provedor de autenticação (usa o método RESTAURADO)
+        // Adiciona o provedor de autenticação customizado
         http.authenticationProvider(authenticationProvider());
 
+        // Configuração de autorização das requisições
         http.authorizeHttpRequests(authorize -> authorize
-                // PRIORITY 1: Libera TODAS as rotas do Swagger (Solução final para o 403)
+                // Libera todas as rotas do Swagger/OpenAPI para que a documentação possa ser acessada
                 .requestMatchers(
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
@@ -64,14 +76,14 @@ public class SecurityConfig {
                         "/webjars/**"
                 ).permitAll()
 
-                // PRIORITY 2: Libera as rotas de Auth
+                // Libera as rotas de autenticação (login, registro)
                 .requestMatchers("/api/auth/**").permitAll()
 
-                // PRIORITY 3: Protege todo o resto
+                // Todas as outras requisições devem ser autenticadas
                 .anyRequest().authenticated()
         );
 
-        // O filtro JWT volta ao seu lugar
+        // Adiciona o filtro JWT customizado ANTES do filtro padrão de autenticação de usuário/senha
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

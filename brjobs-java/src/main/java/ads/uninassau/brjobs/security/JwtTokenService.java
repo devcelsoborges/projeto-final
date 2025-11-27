@@ -4,23 +4,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.util.Date;
 
-// Importações necessárias para o JJWT
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.security.SignatureException; // Importação corrigida para o JJWT moderno
 
 @Service
 public class JwtTokenService {
 
-    // Chave secreta lida do arquivo de configuração (application.properties)
+    // Chave secreta lida do arquivo de configuração
     @Value("${brjobs.jwt.secret}")
     private String secret;
 
-    // Tempo de expiração do token em milissegundos (ex: 1 hora)
+    // Tempo de expiração do token em milissegundos
     @Value("${brjobs.jwt.expiration}")
     private long expirationTime;
 
@@ -35,6 +34,7 @@ public class JwtTokenService {
                 .setSubject(email)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
+                // Usando a chave secreta e o algoritmo HS512.
                 .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
     }
@@ -46,22 +46,27 @@ public class JwtTokenService {
      */
     public boolean validateToken(String authToken) {
         try {
-            // CORREÇÃO: Necessário chamar .build() no parser após setSigningKey
+            // Parser construído com a chave secreta para validação
             Jwts.parser()
                     .setSigningKey(secret)
-                    .build()
+                    .build() // ESSENCIAL para a API moderna do JJWT
                     .parseClaimsJws(authToken);
             return true;
         } catch (SignatureException ex) {
-            // Log de Assinatura JWT inválida
+            // Assinatura JWT inválida (chave secreta incorreta)
+            System.err.println("Assinatura JWT inválida: " + ex.getMessage());
         } catch (MalformedJwtException ex) {
-            // Log de Token JWT inválido
+            // Token JWT inválido (não está no formato esperado)
+            System.err.println("Token JWT malformado: " + ex.getMessage());
         } catch (ExpiredJwtException ex) {
-            // Log de Token JWT expirado
+            // Token JWT expirado
+            System.err.println("Token JWT expirado: " + ex.getMessage());
         } catch (UnsupportedJwtException ex) {
-            // Log de Token JWT não suportado
+            // Token JWT não suportado
+            System.err.println("Token JWT não suportado: " + ex.getMessage());
         } catch (IllegalArgumentException ex) {
-            // Log de Cadeia de claims JWT vazia
+            // Cadeia de claims JWT vazia
+            System.err.println("Cadeia de claims JWT vazia: " + ex.getMessage());
         }
         return false;
     }
@@ -72,10 +77,10 @@ public class JwtTokenService {
      * @return O e-mail (string) do usuário.
      */
     public String getUsernameFromToken(String token) {
-        // CORREÇÃO: Necessário chamar .build() no parser
+        // Parser construído com a chave secreta para extrair as claims
         Claims claims = Jwts.parser()
                 .setSigningKey(secret)
-                .build()
+                .build() // ESSENCIAL para a API moderna do JJWT
                 .parseClaimsJws(token)
                 .getBody();
 
