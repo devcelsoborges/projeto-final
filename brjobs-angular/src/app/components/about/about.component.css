@@ -15,6 +15,12 @@
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Dark theme hero section */
+.dark-theme .hero-sobre {
+  background: linear-gradient(135deg, #0a1929 0%, #132f4c 100%);
+  color: #d4d4d4;
+}
+
 .hero-sobre h1 {
   font-size: 2.8rem;
   font-weight: 800;
@@ -119,19 +125,32 @@
 
 .btn-chamada {
   display: inline-block;
-  background-color: var(--color-accent);
-  color: var(--color-primary); 
+  background-color: var(--color-primary);
+  color: var(--color-surface);
   padding: 12px 30px;
   text-decoration: none;
   font-weight: 700;
   border-radius: var(--border-radius-md);
   margin-top: 20px;
   transition: background-color 0.3s ease, transform 0.2s ease;
+  font-size: 1rem;
 }
 
 .btn-chamada:hover {
-  background-color: #e0b700;
-  transform: scale(1.05);
+  background-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(28, 93, 153, 0.3);
+}
+
+/* Dark theme button */
+.dark-theme .btn-chamada {
+  background-color: #007acc;
+  color: #d4d4d4;
+}
+
+.dark-theme .btn-chamada:hover {
+  background-color: #1f96ff;
+  box-shadow: 0 4px 12px rgba(31, 150, 255, 0.3);
 }
 
 /* Responsividade */

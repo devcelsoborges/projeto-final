@@ -5,14 +5,51 @@
 
   <nav class="nav-links" role="navigation" aria-label="Menu principal">
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Home</a>
-    <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Cadastre-se</a>
-    <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Login</a>
+    
+    <!-- Links de autenticação (mostrar quando NOT logado) -->
+    <ng-container *ngIf="!isLoggedIn">
+      <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Cadastre-se</a>
+      <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Login</a>
+    </ng-container>
+
     <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Sobre nós</a>
     <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Contato</a>
 
     <!-- Componente de acessibilidade inline -->
     <app-accessibility></app-accessibility>
   </nav>
+
+  <!-- Botão de Tema -->
+  <button class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="isDarkTheme ? 'Modo claro' : 'Modo escuro'">
+    <span class="theme-icon">{{ isDarkTheme ? '☀️' : '🌙' }}</span>
+  </button>
+
+  <!-- Dropdown do usuário (lado direito) -->
+  <ng-container *ngIf="isLoggedIn">
+    <div class="usuario-dropdown">
+      <button class="usuario-btn" (click)="toggleUsuarioMenu()" [class.active]="usuarioMenuAberto">
+        👤 {{ usuarioNome }}
+        <span class="dropdown-arrow">▼</span>
+      </button>
+      
+      <!-- Dropdown menu -->
+      <div *ngIf="usuarioMenuAberto" class="usuario-menu" (click)="fecharUsuarioMenu()">
+        <a class="menu-item" (click)="irParaPerfil()">
+          <span class="menu-icon">�</span>
+          <span class="menu-text">Ver Perfil</span>
+        </a>
+        <a class="menu-item" (click)="editarPerfil()">
+          <span class="menu-icon">⚙️</span>
+          <span class="menu-text">Editar Perfil</span>
+        </a>
+        <div class="menu-divider"></div>
+        <a class="menu-item logout-item" (click)="logout()">
+          <span class="menu-icon">👋</span>
+          <span class="menu-text">Sair</span>
+        </a>
+      </div>
+    </div>
+  </ng-container>
 
   <!-- Botão menu móvel -->
   <button
@@ -28,8 +65,18 @@
 <!-- Menu móvel -->
 <nav *ngIf="menuAberto" class="mobile-menu" role="navigation" aria-label="Menu móvel">
   <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Home</a>
-  <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Cadastre-se</a>
-  <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Login</a>
+  
+  <ng-container *ngIf="!isLoggedIn">
+    <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Cadastre-se</a>
+    <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Login</a>
+  </ng-container>
+
+  <ng-container *ngIf="isLoggedIn">
+    <a (click)="irParaPerfil()" class="usuario-nome-mobile">👤 {{ usuarioNome }}</a>
+    <a (click)="editarPerfil()">⚙️ Editar Perfil</a>
+    <button class="btn-logout" (click)="logout()">🚪 Sair</button>
+  </ng-container>
+
   <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Sobre nós</a>
   <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Contato</a>
 </nav>

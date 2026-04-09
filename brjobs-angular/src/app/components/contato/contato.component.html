@@ -1,0 +1,127 @@
+<div class="contato-container">
+    <header class="hero-contato">
+        <h1>Entre em Contato</h1>
+        <p>Dúvidas, sugestões ou feedbacks? Estamos sempre prontos para ouvi-lo.</p>
+    </header>
+
+    <section class="contato-content">
+        <div class="contato-wrapper">
+            <div class="contato-form-section">
+                <h2>Envie uma Mensagem</h2>
+                
+                <form [formGroup]="form" (ngSubmit)="enviarFormulario()" class="contato-form">
+                    <div class="form-group">
+                        <label for="nome">Nome Completo *</label>
+                        <input 
+                            id="nome" 
+                            type="text" 
+                            formControlName="nome"
+                            placeholder="Seu nome completo"
+                            class="form-control"
+                            [class.is-invalid]="nome?.invalid && nome?.touched"
+                        />
+                        <small *ngIf="nome?.invalid && nome?.touched" class="error-message">
+                            <span *ngIf="nome?.errors?.['required']">Nome é obrigatório</span>
+                            <span *ngIf="nome?.errors?.['minlength']">Nome deve ter pelo menos 3 caracteres</span>
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input 
+                            id="email" 
+                            type="email" 
+                            formControlName="email"
+                            placeholder="seu.email@exemplo.com"
+                            class="form-control"
+                            [class.is-invalid]="email?.invalid && email?.touched"
+                        />
+                        <small *ngIf="email?.invalid && email?.touched" class="error-message">
+                            <span *ngIf="email?.errors?.['required']">Email é obrigatório</span>
+                            <span *ngIf="email?.errors?.['email']">Email inválido</span>
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="assunto">Assunto *</label>
+                        <input 
+                            id="assunto" 
+                            type="text" 
+                            formControlName="assunto"
+                            placeholder="Qual é o assunto?"
+                            class="form-control"
+                            [class.is-invalid]="assunto?.invalid && assunto?.touched"
+                        />
+                        <small *ngIf="assunto?.invalid && assunto?.touched" class="error-message">
+                            <span *ngIf="assunto?.errors?.['required']">Assunto é obrigatório</span>
+                            <span *ngIf="assunto?.errors?.['minlength']">Assunto deve ter pelo menos 5 caracteres</span>
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mensagem">Mensagem *</label>
+                        <textarea 
+                            id="mensagem" 
+                            formControlName="mensagem"
+                            placeholder="Digite sua mensagem aqui..."
+                            rows="5"
+                            class="form-control"
+                            [class.is-invalid]="mensagem?.invalid && mensagem?.touched"
+                        ></textarea>
+                        <small *ngIf="mensagem?.invalid && mensagem?.touched" class="error-message">
+                            <span *ngIf="mensagem?.errors?.['required']">Mensagem é obrigatória</span>
+                            <span *ngIf="mensagem?.errors?.['minlength']">Mensagem deve ter pelo menos 10 caracteres</span>
+                        </small>
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        class="btn-enviar"
+                        [disabled]="form.invalid"
+                    >
+                        Enviar Mensagem
+                    </button>
+
+                    <div *ngIf="enviado" class="success-message">
+                        ✓ Mensagem enviada com sucesso! Obrigado pelo contato.
+                    </div>
+                </form>
+            </div>
+
+            <div class="contato-info">
+                <h2>Informações de Contato</h2>
+                
+                <div class="info-item">
+                    <h3>Email</h3>
+                    <p>
+                        <a href="mailto:contato@brjobs.com.br">contato@brjobs.com.br</a>
+                    </p>
+                </div>
+
+                <div class="info-item">
+                    <h3>Telefone</h3>
+                    <p>
+                        <a href="tel:+5511987654321">(11) 98765-4321</a>
+                    </p>
+                </div>
+
+                <div class="info-item">
+                    <h3>Endereço</h3>
+                    <p>
+                        Rua Brasil, 1000<br/>
+                        São Paulo - SP, 01010-100<br/>
+                        Brasil
+                    </p>
+                </div>
+
+                <div class="info-item">
+                    <h3>Horário de Atendimento</h3>
+                    <p>
+                        Segunda a Sexta: 09:00 - 18:00<br/>
+                        Sábado e Domingo: Fechado
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

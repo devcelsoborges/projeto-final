@@ -3,47 +3,57 @@
  * (Profissionalismo, Personalidade e Acessibilidade)
  * ================================================================= */
 :root {
-    /* Cores de Marca e Ação */
-    --color-primary: #1C5D99;       /* Azul Corporativo (Confiança) */
-    --color-primary-light: #4A8CD0; /* Azul Claro para Hover/Foco */
-    --color-accent: #61C0BF;        /* Verde-Água (Destaque, Sucesso, CTA) */
-    --color-warning: #FF6B6B;       /* Vermelho Padrão */
+    /* Cores de Marca (Light Mode) */
+    --color-primary: #1C5D99;       /* Azul Corporativo */
+    --color-primary-light: #4A8CD0; /* Azul Claro */
+    --color-accent: #61C0BF;        /* Verde-Água */
+    --color-warning: #FF6B6B;       /* Vermelho */
     
-    /* Cores de Fundo e Superfície */
-    --color-background: #F8F9FA;    /* Fundo da Página (Leveza) */
-    --color-surface: #FFFFFF;       /* Fundo de Cards (Destaque) */
+    /* Cores de Fundo (Light Mode) */
+    --color-background: #F8F9FA;
+    --color-surface: #FFFFFF;
     
-    /* Cores de Texto (Alto Contraste) */
-    --color-text-dark: #343A40;     /* Texto Principal */
-    --color-text-secondary: #6C757D; /* Texto Secundário (Descrições) */
-
-    /* Bordas */
+    /* Cores de Texto (Light Mode) */
+    --color-text-dark: #343A40;
+    --color-text-secondary: #6C757D;
+    
+    /* Bordas e Sombras */
     --color-border: #E0E0E0;
+    --color-border-dark: #D0D0D0;
 
-    /* Espaçamento, Sombras e Bordas */
+    /* Espaçamento */
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --border-radius-md: 8px;
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
 
-    /* Transição global para suavidade */
+    /* Transição global */
     --transition-base: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* =================================================================
- * 1.1. TEMA ESCURO (DARK MODE)
+ * 1.1. TEMA ESCURO (VS CODE Dark Theme)
  * ================================================================= */
 .dark-theme {
-    --color-background: #121212;
-    --color-surface: #1E1E1E;
-    --color-text-dark: #E4E4E4;
-    --color-text-secondary: #B0B0B0;
-    --color-border: #2C2C2C;
+    /* Paleta VS Code Dark */
+    --color-background: #1e1e1e;      /* Editor background */
+    --color-surface: #252526;         /* Slightly lighter for cards */
+    --color-text-dark: #d4d4d4;       /* Primary text */
+    --color-text-secondary: #858585;  /* Secondary/dimmed text */
+    --color-border: #3e3e42;          /* Border color */
+    --color-border-dark: #2d2d30;     /* Darker border */
 
-    /* Ajuste de marca e contraste */
-    --color-primary: #4A8CD0;
-    --color-primary-light: #61A8FF;
-    --color-accent: #66C5C4;
+    /* VS Code Colors */
+    --color-primary: #007acc;         /* VS Code blue */
+    --color-primary-light: #1f96ff;   /* Lighter blue */
+    --color-accent: #4ec9b0;          /* VS Code teal/cyan */
+    --color-warning: #f48771;         /* VS Code orange-red */
+    
+    /* Additional VS Code colors */
+    --vscode-green: #6a9955;          /* Comments/strings */
+    --vscode-red: #f48771;            /* Error/warning */
+    --vscode-yellow: #ce9178;         /* Strings */
 }
 
 /* =================================================================
@@ -188,4 +198,118 @@ footer a:hover {
     .btn-primary, .btn-accent {
         width: 100%;
     }
+}
+
+/* =================================================================
+ * 6. DARK THEME - ESTILOS ESPECÍFICOS
+ * ================================================================= */
+
+/* Cards em modo escuro */
+.dark-theme .app-card {
+    background: #2d2d30;
+    border-color: #3e3e42;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dark-theme .app-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Inputs em modo escuro */
+.dark-theme input,
+.dark-theme textarea,
+.dark-theme select {
+    background-color: #2d2d30;
+    color: #d4d4d4;
+    border-color: #3e3e42;
+}
+
+.dark-theme input:focus,
+.dark-theme textarea:focus,
+.dark-theme select:focus {
+    background-color: #252526;
+    border-color: #007acc;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.1);
+}
+
+.dark-theme input::placeholder {
+    color: #858585;
+}
+
+/* Botões em modo escuro */
+.dark-theme .btn-primary {
+    background-color: #007acc;
+    color: #d4d4d4;
+}
+
+.dark-theme .btn-primary:hover {
+    background-color: #0098ff;
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
+}
+
+.dark-theme .btn-accent {
+    background-color: #4ec9b0;
+    color: #1e1e1e;
+    border-color: #4ec9b0;
+}
+
+.dark-theme .btn-accent:hover {
+    background-color: #6fd8c3;
+    border-color: #6fd8c3;
+}
+
+/* Links em modo escuro */
+.dark-theme a {
+    color: #4ec9b0;
+}
+
+.dark-theme a:hover {
+    color: #6fd8c3;
+}
+
+/* Footer em modo escuro */
+.dark-theme footer {
+    background-color: #252526;
+    border-top-color: #3e3e42;
+}
+
+.dark-theme footer a {
+    color: #4ec9b0;
+}
+
+/* Tabelas em modo escuro */
+.dark-theme table {
+    background-color: #252526;
+    border-color: #3e3e42;
+}
+
+.dark-theme th {
+    background-color: #2d2d30;
+    color: #d4d4d4;
+    border-color: #3e3e42;
+}
+
+.dark-theme td {
+    border-color: #3e3e42;
+    color: #d4d4d4;
+}
+
+/* Scroll customizado em modo escuro */
+.dark-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.dark-theme ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb {
+    background: #3e3e42;
+    border-radius: 5px;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb:hover {
+    background: #4e4e52;
 }
