@@ -2,9 +2,13 @@ package ads.uninassau.brjobs.config;
 
 import ads.uninassau.brjobs.security.CustomUserDetailsService;
 import ads.uninassau.brjobs.security.JwtAuthenticationFilter;
+import ads.uninassau.brjobs.security.TenantFilter;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -15,12 +19,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.security.config.Customizer;
 
 
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class SecurityConfig {
 
+    @Autowired private TenantFilter tenantFilter;
     @Autowired private JwtAuthenticationFilter jwtAuthenticationFilter;
     @Autowired private CustomUserDetailsService userDetailsService;
 
@@ -41,6 +49,8 @@ public class SecurityConfig {
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        // IMPORTANTE: O AuthenticationConfiguration já integra o authenticationProvider()
+        // que foi adicionado via http.authenticationProvider() na SecurityFilterChain
         return config.getAuthenticationManager();
     }
 
@@ -52,6 +62,11 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
     /**
      * Configura a cadeia de filtros de segurança HTTP.
      */
@@ -60,6 +75,8 @@ public class SecurityConfig {
         http
                 // Desabilita CSRF (Cross-Site Request Forgery) pois estamos usando JWT (stateless)
                 .csrf(csrf -> csrf.disable())
+            // Habilita configuração CORS definida em CorsConfig
+            .cors(Customizer.withDefaults())
                 // Configura a política de criação de sessão como stateless (sem sessão HTTP)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -73,17 +90,55 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/swagger-resources/**",
-                        "/webjars/**"
+                    "/webjars/**",
+                    "/error"
                 ).permitAll()
 
-                // Libera as rotas de autenticação (login, registro)
+                // Libera as rotas de autenticação (login, registro, social-login)
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/publicacoes/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/usuarios/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/prestadores/usuario/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/avaliacoes/prestador/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/avaliacoes/v1/prestador/*/stats").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // Libera as rotas de registro de novos usuários
+                .requestMatchers("/api/usuarios/contratante", "/api/usuarios/prestador").permitAll()
+                .requestMatchers("GET", "/api/usuarios/email/**").permitAll()
 
                 // Todas as outras requisições devem ser autenticadas
                 .anyRequest().authenticated()
         );
 
-        // Adiciona o filtro JWT customizado ANTES do filtro padrão de autenticação de usuário/senha
+            // Logs detalhados para erros de autenticação/autorização (401/403)
+            http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    log.warn("SECURITY 401: method={} path={} origin={} authHeaderPresent={} message={}",
+                        request.getMethod(),
+                        request.getRequestURI(),
+                        request.getHeader("Origin"),
+                        request.getHeader("Authorization") != null,
+                        authException.getMessage());
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    log.warn("SECURITY 403: method={} path={} origin={} authHeaderPresent={} tenantAttr={} message={}",
+                        request.getMethod(),
+                        request.getRequestURI(),
+                        request.getHeader("Origin"),
+                        request.getHeader("Authorization") != null,
+                        request.getAttribute("tenant_id"),
+                        accessDeniedException.getMessage());
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+                })
+            );
+
+        // Adiciona o filtro de tenant ANTES do filtro JWT customizado
+        // TenantFilter: extrai tenant_id do JWT e armazena no request
+        // JwtAuthenticationFilter: autentica o usuário
+        http.addFilterBefore(tenantFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

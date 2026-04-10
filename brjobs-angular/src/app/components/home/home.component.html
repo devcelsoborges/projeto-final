@@ -2,30 +2,144 @@
   
   <header class="hero-section">
     <h1>{{ titulo }}</h1>
-    <p>Milhares de oportunidades de trabalho esperando por você. Comece sua busca agora!</p>
+    <p>Pesquise serviços oferecidos e oportunidades de contratação publicadas na plataforma.</p>
     
     <div class="search-bar">
-      <input type="text" placeholder="Buscar por título, empresa ou local..." />
-      <button>Buscar Vagas</button>
+      <input
+        type="text"
+        placeholder="Buscar por título, descrição, categoria ou autor..."
+        [(ngModel)]="termoBusca"
+        (input)="onTermoBuscaInput()"
+        (keyup.enter)="buscarPublicacoes(true)"
+      />
+
+      <select class="tipo-select" [(ngModel)]="filtroTipo" (change)="onFiltroChange()" aria-label="Filtro de tipo de publicação">
+        <option value="TODAS">Todos os tipos</option>
+        <option value="PRESTACAO">Prestação</option>
+        <option value="CONTRATACAO">Contratação</option>
+      </select>
+
+      <button (click)="buscarPublicacoes(true)">Buscar</button>
     </div>
+
+    <section class="filtros-avancados">
+      <div class="filtro-grid">
+        <label>
+          Categoria
+          <select [(ngModel)]="categoriaSelecionada" (change)="onCategoriaChange()">
+            <option value="">Todas</option>
+            <option *ngFor="let cat of categoriasServico" [value]="cat.nome">{{ cat.nome }}</option>
+          </select>
+        </label>
+
+        <label>
+          Subcategoria
+          <select [(ngModel)]="subcategoriaSelecionada" (change)="onSubcategoriaChange()" [disabled]="!categoriaSelecionada">
+            <option value="">Todas</option>
+            <option *ngFor="let sub of subcategoriasDisponiveis" [value]="sub">{{ sub }}</option>
+          </select>
+        </label>
+
+        <label>
+          Localização
+          <input
+            type="text"
+            placeholder="Bairro ou cidade"
+            [(ngModel)]="localizacaoBusca"
+            (input)="onFiltroAvancadoChange()"
+          />
+        </label>
+
+        <label>
+          Avaliação mínima
+          <select [(ngModel)]="avaliacaoMinima" (change)="onFiltroAvancadoChange()">
+            <option [ngValue]="0">Qualquer</option>
+            <option [ngValue]="3">3+ estrelas</option>
+            <option [ngValue]="4">4+ estrelas</option>
+            <option [ngValue]="4.5">4.5+ estrelas</option>
+          </select>
+        </label>
+
+        <label>
+          Preço mínimo (R$)
+          <input type="number" min="0" step="1" [(ngModel)]="precoMin" (change)="onFiltroAvancadoChange()" />
+        </label>
+
+        <label>
+          Preço máximo (R$)
+          <input type="number" min="0" step="1" [(ngModel)]="precoMax" (change)="onFiltroAvancadoChange()" />
+        </label>
+
+        <label>
+          Disponibilidade
+          <select [(ngModel)]="disponibilidadeFiltro" (change)="onFiltroAvancadoChange()">
+            <option value="TODOS">Todos</option>
+            <option value="URGENTE">Urgente</option>
+            <option value="HOJE">Hoje</option>
+          </select>
+        </label>
+
+        <label>
+          Atendimento
+          <select [(ngModel)]="atendimentoFiltro" (change)="onFiltroAvancadoChange()">
+            <option value="TODOS">Todos</option>
+            <option value="DOMICILIO">Em domicílio</option>
+            <option value="ONLINE">Online</option>
+            <option value="PRESENCIAL">Presencial</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="tags-bloco">
+        <span class="tags-label">Tags:</span>
+        <button
+          type="button"
+          class="tag-chip"
+          *ngFor="let tag of tagsDisponiveis"
+          [class.ativa]="tagsSelecionadas.includes(tag)"
+          (click)="alternarTag(tag)"
+        >
+          {{ tag }}
+        </button>
+      </div>
+
+      <div class="filtros-acoes">
+        <button type="button" class="btn-limpar" (click)="limparFiltrosAvancados()">Limpar filtros</button>
+      </div>
+    </section>
   </header>
 
   <section class="vagas-section">
-    <h2>Vagas em Destaque</h2>
+    <h2>Publicações em Destaque</h2>
+
+    <p *ngIf="carregando" class="sem-vagas">Carregando publicações...</p>
+    <p *ngIf="erro" class="sem-vagas">{{ erro }}</p>
     
     <div class="lista-vagas">
       
-      <div *ngFor="let vaga of vagas" class="card-vaga">
-        <h3>{{ vaga.titulo }}</h3>
+      <div *ngFor="let pub of publicacoesFiltradas; trackBy: trackByPublicacao" class="card-vaga">
+        <h3>{{ pub.titulo }}</h3>
         <p class="empresa-local">
-          {{ vaga.empresa }} • {{ vaga.local }}
+          {{ pub.usuarioNome }} • {{ pub.categoria || 'Sem categoria' }}
         </p>
-        <span class="tag-nivel">{{ vaga.nivel }}</span>
-        <button class="btn-detalhes">Ver Detalhes</button>
+        <p class="empresa-local">{{ pub.descricao }}</p>
+        <span class="tag-nivel">{{ formatarTipo(pub.tipoPublicacao) }}</span>
+        <p class="empresa-local">{{ formatarValor(pub) }}</p>
+        <button class="btn-detalhes" [routerLink]="['/publicacoes', pub.id]">Ver Publicação</button>
       </div>
 
-      <div *ngIf="vagas.length === 0" class="sem-vagas">
-        <p>Nenhuma vaga encontrada no momento.</p>
+      <div *ngIf="!carregando && !erro && publicacoesFiltradas.length === 0" class="sem-vagas">
+        <p>Nenhuma publicação encontrada com os filtros atuais.</p>
+      </div>
+
+      <div *ngIf="!carregando && !erro && publicacoesFiltradas.length > 0" class="paginacao-publicacoes">
+        <button type="button" class="btn-paginacao" (click)="paginaAnterior()" [disabled]="paginaAtual === 0">
+          Anterior
+        </button>
+        <span>Página {{ paginaAtual + 1 }}</span>
+        <button type="button" class="btn-paginacao" (click)="proximaPagina()" [disabled]="ultimaPagina">
+          Próxima
+        </button>
       </div>
       
     </div>

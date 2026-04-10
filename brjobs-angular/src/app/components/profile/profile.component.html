@@ -1,0 +1,318 @@
+<div class="profile-wrapper">
+  <!-- Card com Header e Formulário -->
+  <div class="profile-card">
+    
+    <!-- Header com Nome do Usuário -->
+    <div class="profile-header">
+      <div class="profile-info">
+        <h1 class="card-title">{{ usuario.nome }}</h1>
+        <p class="card-subtitle">{{ usuario.tipoUsuario === 'PRESTADOR' ? '💼 Prestador de Serviços' : '🏢 Contratante' }}</p>
+        <p class="email-text">{{ usuario.email }}</p>
+      </div>
+      
+      <div class="header-actions">
+        <button class="btn-edit" (click)="toggleEdit()" *ngIf="!isEditing" aria-label="Começar a editar perfil">
+          ✏️ Editar Perfil
+        </button>
+        <div *ngIf="isEditing" class="edit-actions">
+          <button class="btn-save" (click)="saveProfile()" [disabled]="isLoading || profileForm.invalid">
+            {{ isLoading ? 'Salvando...' : '✓ Salvar' }}
+          </button>
+          <button class="btn-cancel" (click)="toggleEdit()" [disabled]="isLoading">
+            ✗ Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensagens de Erro e Sucesso -->
+    <div *ngIf="errorMessage" class="alert alert-danger">
+      <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+      </svg>
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert-success">
+      <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+      </svg>
+      {{ successMessage }}
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Carregando...</p>
+    </div>
+
+    <!-- Formulário de Edição -->
+    <form *ngIf="!isLoading && isEditing" [formGroup]="profileForm" class="profile-form">
+      
+      <!-- BLOCO DE DADOS PESSOAIS -->
+      <fieldset class="form-section">
+        <legend>Dados Pessoais</legend>
+        <div class="form-grid">
+          
+          <!-- Nome (full width) -->
+          <div class="form-group grid-span-full">
+            <label for="nome">Nome Completo *</label>
+            <input 
+              id="nome" 
+              type="text" 
+              formControlName="nome" 
+              placeholder="Seu nome completo"
+              [class.is-invalid]="profileForm.get('nome')?.invalid && profileForm.get('nome')?.touched"
+            >
+            <div *ngIf="profileForm.get('nome')?.errors?.['required'] && profileForm.get('nome')?.touched" class="error-message">
+              Nome é obrigatório
+            </div>
+            <div *ngIf="profileForm.get('nome')?.errors?.['minlength'] && profileForm.get('nome')?.touched" class="error-message">
+              Nome deve ter no mínimo 3 caracteres
+            </div>
+          </div>
+
+          <!-- Email (read-only) -->
+          <div class="form-group grid-span-full">
+            <label for="email">E-mail *</label>
+            <input 
+              id="email" 
+              type="email" 
+              formControlName="email" 
+              placeholder="seu@email.com"
+              [disabled]="true"
+              title="E-mail não pode ser alterado"
+            >
+            <small class="info-text">E-mail não pode ser alterado</small>
+          </div>
+
+          <!-- Telefone (1/2) -->
+          <div class="form-group">
+            <label for="telefone">Telefone *</label>
+            <input 
+              id="telefone" 
+              type="tel" 
+              formControlName="telefone" 
+              placeholder="(XX) XXXXX-XXXX"
+              (input)="onTelefoneInput($event)"
+              [class.is-invalid]="profileForm.get('telefone')?.invalid && profileForm.get('telefone')?.touched"
+            >
+            <div *ngIf="profileForm.get('telefone')?.errors?.['required'] && profileForm.get('telefone')?.touched" class="error-message">
+              Telefone é obrigatório
+            </div>
+            <div *ngIf="profileForm.get('telefone')?.errors?.['invalidTelefone'] && profileForm.get('telefone')?.touched" class="error-message">
+              Telefone deve ter 10 ou 11 dígitos
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="cep">CEP *</label>
+            <input
+              id="cep"
+              type="text"
+              inputmode="numeric"
+              formControlName="cep"
+              placeholder="00000-000"
+              (input)="onCepInput($event)"
+              [class.is-invalid]="profileForm.get('cep')?.invalid && profileForm.get('cep')?.touched"
+            >
+            <div *ngIf="profileForm.get('cep')?.errors?.['required'] && profileForm.get('cep')?.touched" class="error-message">
+              CEP é obrigatório
+            </div>
+            <div *ngIf="profileForm.get('cep')?.errors?.['invalidCep'] && profileForm.get('cep')?.touched" class="error-message">
+              CEP deve ter 8 dígitos
+            </div>
+          </div>
+
+          <!-- Gênero (1/2) -->
+          <div class="form-group">
+            <label for="genero">Gênero</label>
+            <select id="genero" formControlName="genero">
+              <option value="">Selecione</option>
+              <option value="Feminino">Feminino</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Outro">Outro</option>
+              <option value="Prefiro não informar">Prefiro não informar</option>
+            </select>
+          </div>
+
+          <!-- Tipo de Usuário (1/2) -->
+          <div class="form-group">
+            <label for="tipoUsuario">Tipo de Usuário *</label>
+            <select id="tipoUsuario" formControlName="tipoUsuario" [class.is-invalid]="profileForm.get('tipoUsuario')?.invalid && profileForm.get('tipoUsuario')?.touched">
+              <option value="PRESTADOR">Prestador de Serviços</option>
+              <option value="CONTRATANTE">Contratante</option>
+            </select>
+            <div *ngIf="profileForm.get('tipoUsuario')?.errors?.['required'] && profileForm.get('tipoUsuario')?.touched" class="error-message">
+              Selecione o tipo de usuário
+            </div>
+          </div>
+
+          <!-- Data de Nascimento (1/2) -->
+          <div class="form-group">
+            <label for="dataNascimento">Data de Nascimento</label>
+            <input 
+              id="dataNascimento" 
+              type="date" 
+              formControlName="dataNascimento"
+            >
+          </div>
+
+          <div class="form-group grid-span-full">
+            <label for="rua">Rua *</label>
+            <input
+              id="rua"
+              type="text"
+              formControlName="rua"
+              placeholder="Ex: Rua das Flores"
+              [class.is-invalid]="profileForm.get('rua')?.invalid && profileForm.get('rua')?.touched"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="numero">Número *</label>
+            <input
+              id="numero"
+              type="text"
+              formControlName="numero"
+              placeholder="Ex: 123"
+              [class.is-invalid]="profileForm.get('numero')?.invalid && profileForm.get('numero')?.touched"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="complemento">Complemento</label>
+            <input
+              id="complemento"
+              type="text"
+              formControlName="complemento"
+              placeholder="Apto, bloco, referência"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="bairro">Bairro *</label>
+            <input
+              id="bairro"
+              type="text"
+              formControlName="bairro"
+              placeholder="Seu bairro"
+              [class.is-invalid]="profileForm.get('bairro')?.invalid && profileForm.get('bairro')?.touched"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="cidade">Cidade *</label>
+            <input
+              id="cidade"
+              type="text"
+              formControlName="cidade"
+              placeholder="Sua cidade"
+              [class.is-invalid]="profileForm.get('cidade')?.invalid && profileForm.get('cidade')?.touched"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="estado">UF *</label>
+            <input
+              id="estado"
+              type="text"
+              maxlength="2"
+              formControlName="estado"
+              placeholder="Ex: SP"
+              [class.is-invalid]="profileForm.get('estado')?.invalid && profileForm.get('estado')?.touched"
+            >
+          </div>
+
+        </div>
+      </fieldset>
+
+      <!-- Botões de Ação no Final do Formulário -->
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="toggleEdit()" [disabled]="isLoading">
+          ✗ Cancelar
+        </button>
+        <button type="button" class="btn-save" (click)="saveProfile()" [disabled]="isLoading || profileForm.invalid">
+          {{ isLoading ? 'Salvando...' : '✓ Salvar Alterações' }}
+        </button>
+      </div>
+
+    </form>
+
+    <!-- Visualização (quando não está editando) -->
+    <div *ngIf="!isLoading && !isEditing" class="profile-view">
+      <fieldset class="form-section">
+        <legend>Dados Pessoais</legend>
+        <div class="info-grid">
+          
+          <div class="info-item">
+            <label>Nome Completo</label>
+            <p>{{ usuario.nome }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>E-mail</label>
+            <p>{{ usuario.email }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Telefone</label>
+            <p>{{ usuario.telefone || '—' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>CEP</label>
+            <p>{{ usuario.cep || '—' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Gênero</label>
+            <p>{{ usuario.genero || '—' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Tipo de Usuário</label>
+            <p>{{ usuario.tipoUsuario === 'PRESTADOR' ? 'Prestador de Serviços' : 'Contratante' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Data de Nascimento</label>
+            <p>{{ usuario.dataNascimento ? formatData(usuario.dataNascimento) : '—' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Rua</label>
+            <p>{{ usuario.rua || '—' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Número</label>
+            <p>{{ usuario.numero || '—' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Complemento</label>
+            <p>{{ usuario.complemento || '—' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Bairro</label>
+            <p>{{ usuario.bairro || '—' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>Cidade</label>
+            <p>{{ usuario.cidade || '—' }}</p>
+          </div>
+
+          <div class="info-item">
+            <label>UF</label>
+            <p>{{ usuario.estado || '—' }}</p>
+          </div>
+
+        </div>
+      </fieldset>
+    </div>
+
+  </div>
+</div>

@@ -3,14 +3,16 @@ package ads.uninassau.brjobs.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.util.Date;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException; // Importação corrigida para o JJWT moderno
+import io.jsonwebtoken.security.SignatureException;
 
 @Service
 public class JwtTokenService {
@@ -24,6 +26,14 @@ public class JwtTokenService {
     private long expirationTime;
 
     /**
+     * Cria uma SecretKey a partir da string secreta.
+     */
+    private Key getSigningKey() {
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        return new SecretKeySpec(keyBytes, 0, keyBytes.length, "HmacSHA512");
+    }
+
+    /**
      * Gera um Token JWT para o usuário autenticado.
      */
     public String generateToken(String email) {
@@ -31,11 +41,11 @@ public class JwtTokenService {
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                // Usando a chave secreta e o algoritmo HS512.
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .subject(email)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                // Usando a chave secreta.
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -46,27 +56,22 @@ public class JwtTokenService {
      */
     public boolean validateToken(String authToken) {
         try {
-            // Parser construído com a chave secreta para validação
             Jwts.parser()
-                    .setSigningKey(secret)
-                    .build() // ESSENCIAL para a API moderna do JJWT
-                    .parseClaimsJws(authToken);
+                    .verifyWith((javax.crypto.SecretKey) getSigningKey())
+                    .build()
+                    .parseSignedClaims(authToken);
+            System.out.println("DEBUG JwtTokenService: Token validado com sucesso");
             return true;
         } catch (SignatureException ex) {
-            // Assinatura JWT inválida (chave secreta incorreta)
-            System.err.println("Assinatura JWT inválida: " + ex.getMessage());
+            System.err.println("DEBUG JwtTokenService: Assinatura JWT inválida: " + ex.getMessage());
         } catch (MalformedJwtException ex) {
-            // Token JWT inválido (não está no formato esperado)
-            System.err.println("Token JWT malformado: " + ex.getMessage());
+            System.err.println("DEBUG JwtTokenService: Token JWT malformado: " + ex.getMessage());
         } catch (ExpiredJwtException ex) {
-            // Token JWT expirado
-            System.err.println("Token JWT expirado: " + ex.getMessage());
+            System.err.println("DEBUG JwtTokenService: Token JWT expirado: " + ex.getMessage());
         } catch (UnsupportedJwtException ex) {
-            // Token JWT não suportado
-            System.err.println("Token JWT não suportado: " + ex.getMessage());
+            System.err.println("DEBUG JwtTokenService: Token JWT não suportado: " + ex.getMessage());
         } catch (IllegalArgumentException ex) {
-            // Cadeia de claims JWT vazia
-            System.err.println("Cadeia de claims JWT vazia: " + ex.getMessage());
+            System.err.println("DEBUG JwtTokenService: Cadeia de claims JWT vazia: " + ex.getMessage());
         }
         return false;
     }
@@ -75,15 +80,36 @@ public class JwtTokenService {
      * Obtém o e-mail (subject) do usuário a partir do token.
      * @param token O token do qual extrair o e-mail.
      * @return O e-mail (string) do usuário.
+     * @throws Exception se o token for inválido ou expirado
      */
-    public String getUsernameFromToken(String token) {
-        // Parser construído com a chave secreta para extrair as claims
-        Claims claims = Jwts.parser()
-                .setSigningKey(secret)
-                .build() // ESSENCIAL para a API moderna do JJWT
-                .parseClaimsJws(token)
-                .getBody();
+    public String getUsernameFromToken(String token) throws Exception {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith((javax.crypto.SecretKey) getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
 
-        return claims.getSubject();
+            String subject = claims.getSubject();
+            if (subject == null || subject.isEmpty()) {
+                throw new Exception("Token JWT não contém subject (email) válido");
+            }
+            return subject;
+        } catch (SignatureException ex) {
+            System.err.println("Assinatura JWT inválida ao extrair username: " + ex.getMessage());
+            throw new Exception("Assinatura JWT inválida", ex);
+        } catch (MalformedJwtException ex) {
+            System.err.println("Token JWT malformado ao extrair username: " + ex.getMessage());
+            throw new Exception("Token JWT malformado", ex);
+        } catch (ExpiredJwtException ex) {
+            System.err.println("Token JWT expirado ao extrair username: " + ex.getMessage());
+            throw new Exception("Token JWT expirado", ex);
+        } catch (UnsupportedJwtException ex) {
+            System.err.println("Token JWT não suportado ao extrair username: " + ex.getMessage());
+            throw new Exception("Token JWT não suportado", ex);
+        } catch (IllegalArgumentException ex) {
+            System.err.println("Cadeia de claims JWT vazia ao extrair username: " + ex.getMessage());
+            throw new Exception("Cadeia de claims JWT vazia", ex);
+        }
     }
 }

@@ -7,8 +7,8 @@
 
 .btn-accessibility {
   background-color: var(--color-primary);
-  color: var(--color-surface);
-  border: none;
+  color: var(--color-on-primary);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 70%, #ffffff 30%);
   border-radius: 6px;
   padding: 6px 10px; /* botões maiores */
   cursor: pointer;
@@ -45,6 +45,7 @@
 .btn-accessibility:hover {
   background-color: var(--color-primary-light);
   transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ============================
@@ -75,4 +76,8 @@
 /* DARK MODE */
 body.dark-theme .accessibility-container {
   background-color: var(--color-surface);
+}
+
+body.dark-theme .btn-accessibility {
+  border-color: color-mix(in srgb, var(--color-primary) 70%, #0b1220 30%);
 }

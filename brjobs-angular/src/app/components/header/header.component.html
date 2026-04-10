@@ -4,25 +4,31 @@
   </div>
 
   <nav class="nav-links" role="navigation" aria-label="Menu principal">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Home</a>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/', 'nav_home')">Home</a>
     
     <!-- Links de autenticação (mostrar quando NOT logado) -->
     <ng-container *ngIf="!isLoggedIn">
-      <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Cadastre-se</a>
-      <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Login</a>
+      <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/register', 'nav_register')">Cadastre-se</a>
+      <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/login', 'nav_login')">Login</a>
     </ng-container>
 
-    <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Sobre nós</a>
-    <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Contato</a>
+    <a routerLink="/publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/publicacoes', 'nav_publicacoes')">Publicar serviço</a>
+
+    <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/sobre', 'nav_sobre')">Sobre nós</a>
+    <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/contato', 'nav_contato')">Contato</a>
 
     <!-- Componente de acessibilidade inline -->
     <app-accessibility></app-accessibility>
   </nav>
 
-  <!-- Botão de Tema -->
-  <button class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="isDarkTheme ? 'Modo claro' : 'Modo escuro'">
-    <span class="theme-icon">{{ isDarkTheme ? '☀️' : '🌙' }}</span>
-  </button>
+  <label class="theme-switcher" aria-label="Selecionar tema da interface">
+    <span class="sr-only">Tema</span>
+    <select class="theme-select" [value]="themeMode" (change)="definirTema($event)">
+      <option value="system">Sistema</option>
+      <option value="light">Claro</option>
+      <option value="dark">Escuro</option>
+    </select>
+  </label>
 
   <!-- Dropdown do usuário (lado direito) -->
   <ng-container *ngIf="isLoggedIn">
@@ -35,7 +41,7 @@
       <!-- Dropdown menu -->
       <div *ngIf="usuarioMenuAberto" class="usuario-menu" (click)="fecharUsuarioMenu()">
         <a class="menu-item" (click)="irParaPerfil()">
-          <span class="menu-icon">�</span>
+          <span class="menu-icon">P</span>
           <span class="menu-text">Ver Perfil</span>
         </a>
         <a class="menu-item" (click)="editarPerfil()">
@@ -64,19 +70,21 @@
 
 <!-- Menu móvel -->
 <nav *ngIf="menuAberto" class="mobile-menu" role="navigation" aria-label="Menu móvel">
-  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Home</a>
+  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/', 'mobile_nav_home')">Home</a>
   
   <ng-container *ngIf="!isLoggedIn">
-    <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Cadastre-se</a>
-    <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Login</a>
+    <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/register', 'mobile_nav_register')">Cadastre-se</a>
+    <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/login', 'mobile_nav_login')">Login</a>
   </ng-container>
 
   <ng-container *ngIf="isLoggedIn">
-    <a (click)="irParaPerfil()" class="usuario-nome-mobile">👤 {{ usuarioNome }}</a>
-    <a (click)="editarPerfil()">⚙️ Editar Perfil</a>
-    <button class="btn-logout" (click)="logout()">🚪 Sair</button>
+    <a (click)="irParaPerfil()" class="usuario-nome-mobile">Perfil {{ usuarioNome }}</a>
+    <a (click)="editarPerfil()">Editar Perfil</a>
+    <button class="btn-logout" (click)="logout()">Sair</button>
   </ng-container>
 
-  <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Sobre nós</a>
-  <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="fecharMenu()">Contato</a>
+  <a routerLink="/publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/publicacoes', 'mobile_nav_publicacoes')">Publicar serviço</a>
+
+  <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/sobre', 'mobile_nav_sobre')">Sobre nós</a>
+  <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/contato', 'mobile_nav_contato')">Contato</a>
 </nav>

@@ -11,7 +11,6 @@ export class AccessibilityComponent {
   private defaultFontSize = 1; // 1rem
   private maxFontSize = 1.6;
   private minFontSize = 0.8;
-  isDarkTheme = false;
   isReading = false;
   private synth = window.speechSynthesis;
   private utterance?: SpeechSynthesisUtterance;
@@ -35,12 +34,6 @@ export class AccessibilityComponent {
 
   resetarFonte() {
     document.documentElement.style.fontSize = `${16 * this.defaultFontSize}px`;
-  }
-
-  // ======== 🌗 CONTRASTE / TEMA ESCURO ========
-  alternarContraste() {
-    this.isDarkTheme = !this.isDarkTheme;
-    document.body.classList.toggle('dark-theme', this.isDarkTheme);
   }
 
   // ======== 🔊 LEITURA DE TEXTO ========
@@ -85,9 +78,6 @@ export class AccessibilityComponent {
     } else if (event.altKey && event.key === '0') {
       event.preventDefault();
       this.resetarFonte();
-    } else if (event.altKey && event.key.toLowerCase() === 'c') {
-      event.preventDefault();
-      this.alternarContraste();
     } else if (event.altKey && event.key.toLowerCase() === 'l') {
       event.preventDefault();
       this.lerTexto();

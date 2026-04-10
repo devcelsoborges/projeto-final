@@ -1,0 +1,216 @@
+import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+import { HttpClient } from "@angular/common/http";
+import { catchError, of, switchMap } from "rxjs";
+import { AuthService } from "../../service/auth.service";
+
+interface UsuarioPerfil {
+  id: number;
+  nome: string;
+  email: string;
+  telefone?: string;
+  endereco?: string;
+  tipoUsuario?: string;
+}
+
+interface PrestadorPerfil {
+  id: number;
+  funcao?: string;
+  experienciaProfissional?: string;
+  especialidades?: string;
+  descricao?: string;
+}
+
+interface AvaliacaoItem {
+  id: number;
+  nota: number;
+  comentario?: string;
+  dataCriacao?: string;
+}
+
+interface AvaliacaoStats {
+  media_avaliacao: number;
+  total_avaliacoes: number;
+}
+
+@Component({
+  selector: "app-perfil-publico",
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  templateUrl: "./perfil-publico.component.html",
+  styleUrls: ["./perfil-publico.component.css"]
+})
+export class PerfilPublicoComponent implements OnInit {
+  private readonly apiBase = "http://localhost:8080/api";
+
+  carregando = true;
+  erro = "";
+
+  usuario: UsuarioPerfil | null = null;
+  prestador: PrestadorPerfil | null = null;
+  avaliacoes: AvaliacaoItem[] = [];
+  stats: AvaliacaoStats = { media_avaliacao: 0, total_avaliacoes: 0 };
+  usuarioIdSolicitado = 0;
+
+  constructor(
+    private readonly route: ActivatedRoute,
+    private readonly http: HttpClient,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly router: Router,
+    private readonly authService: AuthService
+  ) {}
+
+  ngOnInit(): void {
+    this.route.paramMap
+      .pipe(
+        switchMap((params) => {
+          const usuarioId = Number(params.get("usuarioId"));
+          this.usuarioIdSolicitado = usuarioId;
+          if (!usuarioId) {
+            this.erro = "Perfil inválido.";
+            this.carregando = false;
+            this.cdr.markForCheck();
+            return of(null);
+          }
+
+          return this.http.get<UsuarioPerfil>(`${this.apiBase}/usuarios/${usuarioId}`).pipe(
+            catchError(() => {
+              if (this.hidratarPerfilLocalSeForProprio(usuarioId)) {
+                this.erro = "";
+                this.carregando = false;
+                this.cdr.markForCheck();
+                return of(this.usuario);
+              }
+
+              this.erro = "Não foi possível carregar o perfil.";
+              this.carregando = false;
+              this.cdr.markForCheck();
+              return of(null);
+            })
+          );
+        })
+      )
+      .subscribe((usuario) => {
+        if (!usuario) {
+          return;
+        }
+
+        this.usuario = usuario;
+        this.cdr.markForCheck();
+        this.carregarDadosPrestador(usuario.id);
+      });
+  }
+
+  private carregarDadosPrestador(usuarioId: number): void {
+    this.http.get<PrestadorPerfil>(`${this.apiBase}/prestadores/usuario/${usuarioId}`)
+      .pipe(catchError(() => of(null)))
+      .subscribe((prestador) => {
+        this.prestador = prestador;
+        this.cdr.markForCheck();
+
+        if (prestador?.id) {
+          this.carregarAvaliacoes(prestador.id);
+        } else {
+          this.carregando = false;
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  private carregarAvaliacoes(prestadorId: number): void {
+    this.http.get<AvaliacaoItem[]>(`${this.apiBase}/avaliacoes/prestador/${prestadorId}`)
+      .pipe(catchError(() => of([])))
+      .subscribe((avaliacoes) => {
+        this.avaliacoes = avaliacoes;
+        this.cdr.markForCheck();
+      });
+
+    this.http.get<AvaliacaoStats>(`${this.apiBase}/avaliacoes/v1/prestador/${prestadorId}/stats`)
+      .pipe(catchError(() => of({ media_avaliacao: 0, total_avaliacoes: 0 })))
+      .subscribe((stats) => {
+        this.stats = stats;
+        this.carregando = false;
+        this.cdr.markForCheck();
+      });
+  }
+
+  podeEntrarEmContato(): boolean {
+    return !!this.usuario && !this.isProprioPerfil();
+  }
+
+  podeIrParaMeuPerfil(): boolean {
+    return !!this.usuario && this.isProprioPerfil();
+  }
+
+  isProprioPerfil(): boolean {
+    if (!this.usuario) {
+      return false;
+    }
+
+    const idAuth = this.authService.getUsuarioAtual()?.id;
+    const idStorage = Number(localStorage.getItem("usuario_id") || "0");
+    const usuarioLogadoId = idAuth || idStorage;
+
+    if (!usuarioLogadoId) {
+      return false;
+    }
+
+    return this.usuario.id === usuarioLogadoId;
+  }
+
+  getTextoBotaoContato(): string {
+    return this.authService.isLoggedIn()
+      ? "Entrar em contato por chat"
+      : "Entrar para conversar";
+  }
+
+  entrarEmContato(): void {
+    if (!this.usuario) {
+      return;
+    }
+
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(["/login"]);
+      return;
+    }
+
+    this.router.navigate(["/chat"], {
+      queryParams: {
+        usuarioId: this.usuario.id,
+        nome: this.usuario.nome
+      }
+    });
+  }
+
+  irParaMeuPerfil(): void {
+    this.router.navigate(["/profile"]);
+  }
+
+  private hidratarPerfilLocalSeForProprio(usuarioId: number): boolean {
+    const idStorage = Number(localStorage.getItem("usuario_id") || "0");
+    const idAuth = this.authService.getUsuarioAtual()?.id || 0;
+    const idLogado = idAuth || idStorage;
+
+    if (!idLogado || idLogado !== usuarioId) {
+      return false;
+    }
+
+    const nome = localStorage.getItem("usuario_nome") || "Usuário";
+    const email = localStorage.getItem("usuario_email") || "";
+    const telefone = localStorage.getItem("usuario_telefone") || "";
+    const endereco = localStorage.getItem("usuario_endereco") || "";
+    const tipoUsuario = localStorage.getItem("usuario_tipo") || "";
+
+    this.usuario = {
+      id: idLogado,
+      nome,
+      email,
+      telefone,
+      endereco,
+      tipoUsuario
+    };
+
+    return true;
+  }
+}

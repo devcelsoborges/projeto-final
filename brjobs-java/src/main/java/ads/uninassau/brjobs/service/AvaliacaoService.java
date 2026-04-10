@@ -185,10 +185,10 @@ public class AvaliacaoService {
      */
     @Transactional(readOnly = true)
     public List<AvaliacaoDTO> listarAvaliacoesPorUsuario(Long usuarioId) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
+        usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
 
-        return avaliacaoRepository.findByUsuario(usuario)
+        return avaliacaoRepository.findByUsuarioId(usuarioId)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
@@ -242,6 +242,124 @@ public class AvaliacaoService {
         entity.setNota(dto.getNota());
         entity.setComentario(dto.getComentario());
         return entity;
+    }
+
+    /**
+     * Valida e filtra palavrões no comentário
+     * 
+     * @param texto Texto para validar
+     * @return Texto com palavrões substituídos por "[censurado]"
+     */
+    private String filtrarPalavras(String texto) {
+        if (texto == null || texto.isEmpty()) {
+            return texto;
+        }
+
+        // Lista de palavrões (simplificada - em produção usar base externa)
+        String[] palavras = {
+            "droga", "maldito", "inferno", "porcaria", "excremento",
+            "xingamento1", "xingamento2"
+        };
+
+        String resultado = texto.toLowerCase();
+        for (String palavra : palavras) {
+            resultado = resultado.replaceAll("(?i)" + palavra, "[censurado]");
+        }
+
+        return resultado;
+    }
+
+    /**
+     * Cria avaliação com validação de palavrões e isolamento por tenant
+     * 
+     * @param tenantId ID do usuário logado (do JWT)
+     * @param prestadorId ID do prestador a avaliar
+     * @param nota Entre 1 e 5
+     * @param comentario Texto do comentário (será filtrado)
+     * @return AvaliacaoDTO criada
+     */
+    @Transactional
+    public AvaliacaoDTO criarComValidacao(Long tenantId, Long prestadorId, Integer nota, String comentario) {
+        // 1. Validar tenant
+        Usuario avaliadoor = usuarioRepository.findById(tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        // 2. Validar nota
+        if (nota == null || nota < 1 || nota > 5) {
+            throw new IllegalArgumentException("Nota deve estar entre 1 e 5");
+        }
+
+        // 3. Validar prestador
+        Prestador prestador = prestadorRepository.findById(prestadorId)
+                .orElseThrow(() -> new IllegalArgumentException("Prestador não encontrado"));
+
+        // 4. Verificar se há transação (serviço concluído) entre eles
+        boolean temTransacao = solicitacaoServicoRepository
+            .existsTransaction(tenantId, prestadorId);
+
+        if (!temTransacao) {
+            throw new IllegalArgumentException("Apenas contratantes com transação concluída podem avaliar");
+        }
+
+        // 5. Validar que não existe avaliação anterior
+        if (avaliacaoRepository.existsByUsuarioIdAndPrestadorId(tenantId, prestadorId)) {
+            throw new IllegalArgumentException("Você já avaliou este prestador");
+        }
+
+        // 6. Filtrar palavrões
+        String comentarioFiltrado = filtrarPalavras(comentario);
+
+        // 7. Criar e salvar
+        Avaliacao avaliacao = new Avaliacao();
+        avaliacao.setNota(nota);
+        avaliacao.setComentario(comentarioFiltrado);
+        avaliacao.setUsuario(avaliadoor);
+        avaliacao.setPrestador(prestador);
+
+        avaliacao = avaliacaoRepository.save(avaliacao);
+
+        // 8. Atualizar média
+        prestador.atualizarNotaMedia();
+        prestadorRepository.save(prestador);
+
+        return toDTO(avaliacao);
+    }
+
+    /**
+     * Lista avaliações recebidas por um prestador (com validação de acesso)
+     * 
+     * @param tenantId ID do usuário logado
+     * @return Lista de avaliações recebidas
+     */
+    @Transactional(readOnly = true)
+    public List<AvaliacaoDTO> listarAvaliacoesRecebidas(Long tenantId) {
+        // Validar que é prestador
+        Usuario usuario = usuarioRepository.findById(tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        Prestador prestador = prestadorRepository.findByUsuarioId(tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não é prestador"));
+
+        return avaliacaoRepository.findByPrestador(prestador)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtém média de avaliações de um prestador
+     */
+    @Transactional(readOnly = true)
+    public Double obterMedia(Long prestadorId) {
+        return avaliacaoRepository.getAvaliacaoMedia(prestadorId);
+    }
+
+    /**
+     * Conta avaliações de um prestador
+     */
+    @Transactional(readOnly = true)
+    public Long contarAvaliacoes(Long prestadorId) {
+        return avaliacaoRepository.countByPrestador(prestadorId);
     }
 }
 

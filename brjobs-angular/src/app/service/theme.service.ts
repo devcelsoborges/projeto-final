@@ -1,65 +1,85 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
+export type ThemeMode = 'system' | 'light' | 'dark';
+
 @Injectable({
   providedIn: 'root'
 })
 export class ThemeService {
-  private darkModeSubject = new BehaviorSubject<boolean>(this.isDarkMode());
-  public darkMode$: Observable<boolean> = this.darkModeSubject.asObservable();
+  private static readonly STORAGE_KEY = 'theme-preference';
+
+  private readonly themeModeSubject = new BehaviorSubject<ThemeMode>(this.readInitialThemeMode());
+  public readonly themeMode$: Observable<ThemeMode> = this.themeModeSubject.asObservable();
+
+  private readonly darkModeSubject = new BehaviorSubject<boolean>(false);
+  public readonly darkMode$: Observable<boolean> = this.darkModeSubject.asObservable();
+
+  private mediaQueryList: MediaQueryList | null = null;
 
   constructor() {
-    // Aplicar tema ao inicializar
-    this.applyTheme(this.isDarkMode());
+    this.initializeThemeListener();
+    this.applyMode(this.themeModeSubject.value, false);
   }
 
-  /**
-   * Verifica se o dark mode está ativo
-   */
-  private isDarkMode(): boolean {
-    // Verificar localStorage
-    const savedTheme = localStorage.getItem('theme-preference');
-    if (savedTheme) {
-      return savedTheme === 'dark';
-    }
-
-    // Verificar preferência do sistema
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  getThemeMode(): ThemeMode {
+    return this.themeModeSubject.value;
   }
 
-  /**
-   * Toggle do tema escuro
-   */
   toggleDarkMode(): void {
-    const isDark = !this.darkModeSubject.value;
-    this.setDarkMode(isDark);
+    const current = this.resolveEffectiveTheme(this.themeModeSubject.value);
+    this.setThemeMode(current === 'dark' ? 'light' : 'dark');
   }
 
-  /**
-   * Define o tema escuro
-   */
   setDarkMode(isDark: boolean): void {
-    this.darkModeSubject.next(isDark);
-    this.applyTheme(isDark);
-    localStorage.setItem('theme-preference', isDark ? 'dark' : 'light');
+    this.setThemeMode(isDark ? 'dark' : 'light');
   }
 
-  /**
-   * Aplica o tema ao documento
-   */
-  private applyTheme(isDark: boolean): void {
-    const html = document.documentElement;
-    if (isDark) {
-      html.classList.add('dark-theme');
-    } else {
-      html.classList.remove('dark-theme');
+  setThemeMode(mode: ThemeMode): void {
+    this.applyMode(mode, true);
+  }
+
+  private applyMode(mode: ThemeMode, persist: boolean): void {
+    this.themeModeSubject.next(mode);
+
+    const effectiveTheme = this.resolveEffectiveTheme(mode);
+    const isDark = effectiveTheme === 'dark';
+    this.darkModeSubject.next(isDark);
+
+    const root = document.documentElement;
+    root.setAttribute('data-theme', effectiveTheme);
+    root.classList.toggle('dark-theme', isDark);
+
+    if (persist) {
+      localStorage.setItem(ThemeService.STORAGE_KEY, mode);
     }
   }
 
-  /**
-   * Retorna o estado atual do tema
-   */
   isDarkModeActive(): boolean {
     return this.darkModeSubject.value;
+  }
+
+  private readInitialThemeMode(): ThemeMode {
+    const savedTheme = localStorage.getItem(ThemeService.STORAGE_KEY);
+    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+      return savedTheme;
+    }
+    return 'system';
+  }
+
+  private resolveEffectiveTheme(mode: ThemeMode): 'light' | 'dark' {
+    if (mode === 'light' || mode === 'dark') {
+      return mode;
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  private initializeThemeListener(): void {
+    this.mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+    this.mediaQueryList.addEventListener('change', () => {
+      if (this.themeModeSubject.value === 'system') {
+        this.applyMode('system', false);
+      }
+    });
   }
 }

@@ -9,6 +9,7 @@ public class ServicoDTO {
     private String titulo;
     private String descricao;
     private Double preco;
+    private String categoria;
     private Long prestadorId;
 
 }

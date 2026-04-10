@@ -1,0 +1,81 @@
+<section class="detalhe-publicacao" *ngIf="!carregando && !erro && publicacao">
+  <div class="detalhe-header">
+    <h1>{{ publicacao.titulo }}</h1>
+    <span class="tipo-badge">{{ formatarTipo(publicacao.tipoPublicacao) }}</span>
+  </div>
+
+  <p class="descricao">{{ publicacao.descricao }}</p>
+
+  <div class="meta-grid">
+    <div class="meta-card">
+      <h3>Valor</h3>
+      <p>{{ formatarValor(publicacao) }}</p>
+    </div>
+
+    <div class="meta-card">
+      <h3>Criado em</h3>
+      <p>{{ publicacao.dataCriacao | date: "dd/MM/yyyy HH:mm" }}</p>
+    </div>
+
+    <div class="meta-card" *ngIf="publicacao.categoria">
+      <h3>Categoria</h3>
+      <p>{{ publicacao.categoria }}</p>
+    </div>
+
+  </div>
+
+  <article class="perfil-card" *ngIf="usuario">
+    <h2>Perfil de quem publicou</h2>
+    <p><strong>Nome:</strong> {{ usuario.nome }}</p>
+    <p><strong>Email:</strong> {{ usuario.email }}</p>
+    <p *ngIf="usuario.telefone"><strong>Telefone:</strong> {{ usuario.telefone }}</p>
+    <p *ngIf="usuario.endereco"><strong>Endereço:</strong> {{ usuario.endereco }}</p>
+    <p *ngIf="prestador?.funcao"><strong>Função:</strong> {{ prestador?.funcao }}</p>
+    <p *ngIf="prestador?.especialidades"><strong>Especialidades:</strong> {{ prestador?.especialidades }}</p>
+    <p *ngIf="prestador?.experienciaProfissional"><strong>Experiência:</strong> {{ prestador?.experienciaProfissional }}</p>
+
+    <div class="perfil-rating" *ngIf="prestador">
+      <span class="rating-title">Avaliação do perfil</span>
+      <span class="rating-value">{{ stats.media_avaliacao | number: "1.1-2" }} / 5</span>
+      <span class="rating-count">{{ stats.total_avaliacoes }} avaliação(ões)</span>
+    </div>
+
+    <div class="perfil-actions">
+      <a class="perfil-link" [routerLink]="['/perfil', usuario.id]">Acessar perfil da pessoa</a>
+      <button class="chat-link" type="button" *ngIf="podeEntrarEmContato()" (click)="entrarEmContato()">
+        {{ getTextoBotaoContato() }}
+      </button>
+    </div>
+  </article>
+
+  <article class="avaliacoes-card" *ngIf="prestador">
+    <h2>Avaliações</h2>
+    <div class="stats">
+      <span>Média: {{ stats.media_avaliacao | number: "1.1-2" }}</span>
+      <span>Total: {{ stats.total_avaliacoes }}</span>
+    </div>
+
+    <div class="avaliacoes-lista" *ngIf="avaliacoes.length > 0; else semAvaliacoes">
+      <div class="avaliacao-item" *ngFor="let av of avaliacoes">
+        <p class="nota">Nota: {{ av.nota }}/5</p>
+        <p class="comentario" *ngIf="av.comentario">{{ av.comentario }}</p>
+        <p class="data" *ngIf="av.dataCriacao">{{ av.dataCriacao | date: "dd/MM/yyyy" }}</p>
+      </div>
+    </div>
+
+    <ng-template #semAvaliacoes>
+      <p class="vazio">Ainda não há avaliações para este perfil.</p>
+    </ng-template>
+  </article>
+
+  <a routerLink="/" class="voltar-link">Voltar para início</a>
+</section>
+
+<section class="estado" *ngIf="carregando">
+  <p>Carregando detalhes da publicação...</p>
+</section>
+
+<section class="estado erro" *ngIf="!carregando && erro">
+  <p>{{ erro }}</p>
+  <a routerLink="/" class="voltar-link">Voltar para início</a>
+</section>

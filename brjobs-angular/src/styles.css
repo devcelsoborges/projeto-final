@@ -1,315 +1,316 @@
-/* =================================================================
- * 1. PALETA DE CORES E VARIÁVEIS CSS NATIVAS (:root)
- * (Profissionalismo, Personalidade e Acessibilidade)
- * ================================================================= */
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap");
+
 :root {
-    /* Cores de Marca (Light Mode) */
-    --color-primary: #1C5D99;       /* Azul Corporativo */
-    --color-primary-light: #4A8CD0; /* Azul Claro */
-    --color-accent: #61C0BF;        /* Verde-Água */
-    --color-warning: #FF6B6B;       /* Vermelho */
-    
-    /* Cores de Fundo (Light Mode) */
-    --color-background: #F8F9FA;
-    --color-surface: #FFFFFF;
-    
-    /* Cores de Texto (Light Mode) */
-    --color-text-dark: #343A40;
-    --color-text-secondary: #6C757D;
-    
-    /* Bordas e Sombras */
-    --color-border: #E0E0E0;
-    --color-border-dark: #D0D0D0;
+    color-scheme: light;
+    --font-heading: "Outfit", "Segoe UI", sans-serif;
+    --font-body: "Manrope", "Segoe UI", sans-serif;
 
-    /* Espaçamento */
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --border-radius-md: 8px;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
 
-    /* Transição global */
-    --transition-base: background-color 0.3s ease, color 0.3s ease;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-pill: 999px;
+
+    --shadow-1: 0 1px 2px rgba(2, 6, 23, 0.08);
+    --shadow-2: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+    --duration-fast: 140ms;
+    --duration-base: 220ms;
+
+    --color-primary-500: #1f7aa9;
+    --color-primary-600: #17688f;
+    --color-primary-700: #125474;
+    --color-secondary-500: #0f2846;
+    --color-accent-500: #ef8d32;
+
+    --color-success: #1f9d63;
+    --color-danger: #c0392b;
+    --color-warning: #c57a12;
+    --color-on-primary: #f8fcff;
+
+    --color-bg: #f3f7fb;
+    --color-surface: #ffffff;
+    --color-surface-muted: #edf3f9;
+    --color-border: #d7e1eb;
+    --color-text: #10233c;
+    --color-text-muted: #5f7086;
+
+    --focus-ring: 0 0 0 3px rgba(31, 122, 169, 0.3);
+
+    /* Aliases de compatibilidade com estilos legados */
+    --color-primary: var(--color-primary-500);
+    --color-primary-light: var(--color-primary-600);
+    --color-text-dark: var(--color-text);
+    --color-text-secondary: var(--color-text-muted);
+    --border-radius-md: var(--radius-md);
+    --shadow-sm: var(--shadow-1);
+    --shadow-md: var(--shadow-2);
+    --shadow-lg: var(--shadow-2);
+    --transition-base: background-color var(--duration-base) ease, color var(--duration-base) ease;
 }
 
-/* =================================================================
- * 1.1. TEMA ESCURO (VS CODE Dark Theme)
- * ================================================================= */
-.dark-theme {
-    /* Paleta VS Code Dark */
-    --color-background: #1e1e1e;      /* Editor background */
-    --color-surface: #252526;         /* Slightly lighter for cards */
-    --color-text-dark: #d4d4d4;       /* Primary text */
-    --color-text-secondary: #858585;  /* Secondary/dimmed text */
-    --color-border: #3e3e42;          /* Border color */
-    --color-border-dark: #2d2d30;     /* Darker border */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-primary-500: #49a3d2;
+    --color-primary-600: #2f8dbd;
+    --color-primary-700: #22749d;
+    --color-secondary-500: #d5e6fb;
+    --color-accent-500: #f6a85c;
 
-    /* VS Code Colors */
-    --color-primary: #007acc;         /* VS Code blue */
-    --color-primary-light: #1f96ff;   /* Lighter blue */
-    --color-accent: #4ec9b0;          /* VS Code teal/cyan */
-    --color-warning: #f48771;         /* VS Code orange-red */
-    
-    /* Additional VS Code colors */
-    --vscode-green: #6a9955;          /* Comments/strings */
-    --vscode-red: #f48771;            /* Error/warning */
-    --vscode-yellow: #ce9178;         /* Strings */
+    --color-success: #3ccf88;
+    --color-danger: #ff7a67;
+    --color-warning: #e9b44b;
+
+    --color-bg: #0b1220;
+    --color-surface: #101b2d;
+    --color-surface-muted: #14243a;
+    --color-border: #22344f;
+    --color-text: #e7effa;
+    --color-text-muted: #b5c3d7;
+
+    --shadow-1: 0 1px 2px rgba(2, 6, 23, 0.4);
+    --shadow-2: 0 10px 28px rgba(2, 6, 23, 0.55);
+    --focus-ring: 0 0 0 3px rgba(73, 163, 210, 0.35);
+    --color-on-primary: #eef6ff;
 }
 
-/* =================================================================
- * 2. RESET, TIPOGRAFIA E ESTILOS GLOBAIS (UX/UI)
- * ================================================================= */
-*, *::before, *::after {
+* {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
 }
 
-html, body {
+html,
+body {
     height: 100%;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    color: var(--color-text-dark);
-    background-color: var(--color-background);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    transition: var(--transition-base);
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    line-height: 1.5;
+    transition: background-color var(--duration-base) ease, color var(--duration-base) ease;
 }
 
-/* Links e Foco (Acessibilidade) */
+h1,
+h2,
+h3,
+h4 {
+    font-family: var(--font-heading);
+    margin: 0 0 var(--space-3);
+    letter-spacing: -0.01em;
+}
+
+p {
+    margin: 0;
+}
+
 a {
-    color: var(--color-primary);
-    text-decoration: none;
-    transition: color 0.2s ease-in-out;
+    color: var(--color-primary-600);
 }
 
-a:hover {
-    color: var(--color-primary-light);
-    text-decoration: underline;
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
 }
 
-a:focus-visible {
-    outline: 3px solid var(--color-accent); 
-    outline-offset: 2px;
-    border-radius: var(--border-radius-md);
-}
-
-/* Hierarquia de Títulos */
-h1, h2, h3 {
-    color: var(--color-text-dark);
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 0.8rem;
-    margin-top: 1.2rem;
-}
-
-/* =================================================================
- * 3. CLASSES UTILITÁRIAS (Aplicação em Componentes)
- * ================================================================= */
-
-/* Contêiner Principal Responsivo */
 .container {
-    width: 95%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
+    width: min(1200px, 100% - 2rem);
+    margin-inline: auto;
 }
 
-/* Botão Primário (CTA Principal) */
-.btn-primary {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: var(--color-primary);
-    color: var(--color-surface);
-    border-radius: var(--border-radius-md);
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-accent,
+.btn-outline,
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 2.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    font-family: var(--font-body);
     font-weight: 600;
-    text-align: center;
-    transition: all 0.2s ease-in-out;
-    border: none;
+    font-size: 0.95rem;
     cursor: pointer;
+    text-decoration: none;
+    transition: transform var(--duration-fast) ease, background-color var(--duration-fast) ease,
+        border-color var(--duration-fast) ease, color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+
+.btn-primary {
+    background: var(--color-primary-500);
+    color: #fff;
 }
 
 .btn-primary:hover {
-    background-color: var(--color-primary-light);
-    box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
+    background: var(--color-primary-600);
 }
 
-/* Botão de Destaque (Accent) */
+.btn-primary:active {
+    transform: translateY(1px);
+    background: var(--color-primary-700);
+}
+
+.btn-secondary {
+    background: var(--color-secondary-500);
+    color: var(--color-bg);
+}
+
+.btn-outline {
+    background: transparent;
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+.btn-outline:hover {
+    border-color: var(--color-primary-500);
+    color: var(--color-primary-600);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--color-text-muted);
+}
+
 .btn-accent {
-    background-color: var(--color-accent);
-    color: var(--color-text-dark); 
-    border: 1px solid var(--color-accent);
+    background: var(--color-accent-500);
+    color: #1b1b1b;
 }
 
-.btn-accent:hover {
-    background-color: var(--color-primary);
-    color: var(--color-surface);
+.btn[disabled],
+.btn-primary[disabled],
+.btn-secondary[disabled],
+.btn-accent[disabled],
+.btn-outline[disabled],
+.btn-ghost[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
-/* Elemento de Card (Vaga-Card) */
+.form-control {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    padding: 0.7rem 0.8rem;
+    font: inherit;
+    transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+
+.form-control::placeholder {
+    color: var(--color-text-muted);
+}
+
+.form-control:focus {
+    border-color: var(--color-primary-500);
+}
+
+.form-control.is-error {
+    border-color: var(--color-danger);
+}
+
+.field-error {
+    margin-top: var(--space-2);
+    font-size: 0.85rem;
+    color: var(--color-danger);
+}
+
+.ui-card,
 .app-card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-sm);
-    padding: var(--spacing-md);
-    transition: all 0.2s ease-in-out;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    padding: var(--space-5);
 }
 
+.ui-card.is-clickable,
 .app-card:hover {
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    transform: translateY(-3px);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
 }
 
-/* =================================================================
- * 4. FOOTER GLOBAL
- * ================================================================= */
-footer {
-    background-color: var(--color-surface);
-    color: var(--color-text-secondary);
+.state-loading,
+.state-empty,
+.state-error,
+.state-success {
+    padding: var(--space-6);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--color-border);
+    background: var(--color-surface-muted);
     text-align: center;
-    padding: var(--spacing-md);
+}
+
+.state-error {
+    border-color: color-mix(in srgb, var(--color-danger) 55%, var(--color-border));
+    color: var(--color-danger);
+}
+
+.state-success {
+    border-color: color-mix(in srgb, var(--color-success) 55%, var(--color-border));
+    color: var(--color-success);
+}
+
+.table-shell {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-surface);
+}
+
+.table-shell th,
+.table-shell td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+}
+
+.table-shell th {
+    font-family: var(--font-heading);
     font-size: 0.9rem;
-    border-top: 1px solid var(--color-border);
-    transition: var(--transition-base);
+    background: var(--color-surface-muted);
 }
 
-footer a {
-    color: var(--color-primary);
-    text-decoration: none;
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
 }
 
-footer a:hover {
-    text-decoration: underline;
-}
-
-/* =================================================================
- * 5. RESPONSIVIDADE BASE (Mobile First)
- * ================================================================= */
-@media (max-width: 768px) {
-    h1 { font-size: 2rem; }
-    h2 { font-size: 1.5rem; }
-
+@media (max-width: 900px) {
     .container {
-        padding: 0 10px;
+        width: min(1200px, 100% - 1.25rem);
     }
 
-    .btn-primary, .btn-accent {
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-accent,
+    .btn-outline,
+    .btn-ghost {
         width: 100%;
     }
-}
-
-/* =================================================================
- * 6. DARK THEME - ESTILOS ESPECÍFICOS
- * ================================================================= */
-
-/* Cards em modo escuro */
-.dark-theme .app-card {
-    background: #2d2d30;
-    border-color: #3e3e42;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.dark-theme .app-card:hover {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-}
-
-/* Inputs em modo escuro */
-.dark-theme input,
-.dark-theme textarea,
-.dark-theme select {
-    background-color: #2d2d30;
-    color: #d4d4d4;
-    border-color: #3e3e42;
-}
-
-.dark-theme input:focus,
-.dark-theme textarea:focus,
-.dark-theme select:focus {
-    background-color: #252526;
-    border-color: #007acc;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.1);
-}
-
-.dark-theme input::placeholder {
-    color: #858585;
-}
-
-/* Botões em modo escuro */
-.dark-theme .btn-primary {
-    background-color: #007acc;
-    color: #d4d4d4;
-}
-
-.dark-theme .btn-primary:hover {
-    background-color: #0098ff;
-    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
-}
-
-.dark-theme .btn-accent {
-    background-color: #4ec9b0;
-    color: #1e1e1e;
-    border-color: #4ec9b0;
-}
-
-.dark-theme .btn-accent:hover {
-    background-color: #6fd8c3;
-    border-color: #6fd8c3;
-}
-
-/* Links em modo escuro */
-.dark-theme a {
-    color: #4ec9b0;
-}
-
-.dark-theme a:hover {
-    color: #6fd8c3;
-}
-
-/* Footer em modo escuro */
-.dark-theme footer {
-    background-color: #252526;
-    border-top-color: #3e3e42;
-}
-
-.dark-theme footer a {
-    color: #4ec9b0;
-}
-
-/* Tabelas em modo escuro */
-.dark-theme table {
-    background-color: #252526;
-    border-color: #3e3e42;
-}
-
-.dark-theme th {
-    background-color: #2d2d30;
-    color: #d4d4d4;
-    border-color: #3e3e42;
-}
-
-.dark-theme td {
-    border-color: #3e3e42;
-    color: #d4d4d4;
-}
-
-/* Scroll customizado em modo escuro */
-.dark-theme ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-.dark-theme ::-webkit-scrollbar-track {
-    background: #1e1e1e;
-}
-
-.dark-theme ::-webkit-scrollbar-thumb {
-    background: #3e3e42;
-    border-radius: 5px;
-}
-
-.dark-theme ::-webkit-scrollbar-thumb:hover {
-    background: #4e4e52;
 }

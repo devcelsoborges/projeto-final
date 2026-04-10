@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -60,6 +61,12 @@ public class Usuario {
 
     @Column(name = "data_atualizacao")
     private LocalDateTime dataAtualizacao;
+
+    @Column(name = "password_reset_code", length = 6)
+    private String passwordResetCode;
+
+    @Column(name = "password_reset_expires_at")
+    private LocalDateTime passwordResetExpiresAt;
 
     @PreUpdate
     protected void onUpdate() {
