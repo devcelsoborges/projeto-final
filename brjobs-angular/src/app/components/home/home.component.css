@@ -239,6 +239,22 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    position: relative;
+}
+
+.highlight-chip {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-accent-500) 18%, var(--color-surface) 82%);
+    border: 1px solid color-mix(in srgb, var(--color-accent-500) 50%, var(--color-border) 50%);
+    color: #8a4f04;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 /* Dinamismo: Efeito de elevação no hover */
@@ -260,6 +276,26 @@
     font-size: 0.9rem;
     color: var(--color-text-secondary);
     margin-bottom: 15px;
+}
+
+.card-rating {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface) 94%);
+}
+
+.rating-stars {
+    color: #d97706;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+}
+
+.card-rating small {
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
 }
 
 /* Estilo das Tags (Nível) - Claridade e Identificação Rápida */

@@ -27,6 +27,7 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
   tipoFiltro: "TODAS" | TipoPublicacao = "TODAS";
   carregando = false;
   erro = "";
+  erroCarregamento = "";
   sucesso = "";
   paginaAtual = 0;
   readonly tamanhoPagina = 10;
@@ -34,7 +35,9 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
 
   publicacoes: PublicacaoServico[] = [];
   usuarioLogado = false;
+  usuarioLogadoId: number | null = null;
   subcategoriaSelecionada = "";
+  removendoPublicacaoId: number | null = null;
 
   readonly categoriasServico: CategoriaServico[] = [
     {
@@ -111,8 +114,10 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.usuarioLogado = this.authService.isLoggedIn();
+    this.atualizarUsuarioLogadoId();
     this.authSubscription = this.authService.isLoggedIn$.subscribe((logged) => {
       this.usuarioLogado = logged;
+      this.atualizarUsuarioLogadoId();
       this.cdr.markForCheck();
     });
 
@@ -129,7 +134,7 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
     }
 
     this.carregando = true;
-    this.erro = "";
+    this.erroCarregamento = "";
 
     const tipo = this.tipoFiltro === "TODAS" ? undefined : this.tipoFiltro;
     this.publicacaoService.buscarPaginado({
@@ -138,17 +143,43 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
       size: this.tamanhoPagina
     }).subscribe({
       next: (resp) => {
-        this.publicacoes = resp.content;
-        this.ultimaPagina = resp.last;
+        const payload = resp as unknown as { content?: PublicacaoServico[]; last?: boolean } | PublicacaoServico[];
+
+        if (Array.isArray(payload)) {
+          this.aplicarPaginacaoLocal(payload);
+        } else {
+          this.publicacoes = payload.content ?? [];
+          this.ultimaPagina = payload.last ?? true;
+        }
+
         this.carregando = false;
         this.cdr.markForCheck();
       },
       error: () => {
-        this.erro = "Não foi possível carregar as publicações.";
-        this.carregando = false;
-        this.cdr.markForCheck();
+        // Fallback para compatibilidade com APIs sem endpoint paginado.
+        this.publicacaoService.listar(tipo).subscribe({
+          next: (lista) => {
+            this.aplicarPaginacaoLocal(lista ?? []);
+            this.carregando = false;
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.erroCarregamento = "Não foi possível carregar as publicações.";
+            this.publicacoes = [];
+            this.ultimaPagina = true;
+            this.carregando = false;
+            this.cdr.markForCheck();
+          }
+        });
       }
     });
+  }
+
+  private aplicarPaginacaoLocal(lista: PublicacaoServico[]): void {
+    const start = this.paginaAtual * this.tamanhoPagina;
+    const end = start + this.tamanhoPagina;
+    this.publicacoes = lista.slice(start, end);
+    this.ultimaPagina = end >= lista.length;
   }
 
   get subcategoriasDisponiveis(): string[] {
@@ -286,5 +317,58 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
     const min = publicacao.orcamentoMin?.toFixed(2) ?? "0,00";
     const max = publicacao.orcamentoMax?.toFixed(2) ?? "0,00";
     return `R$ ${min} - R$ ${max}`;
+  }
+
+  podeRemoverPublicacao(publicacao: PublicacaoServico): boolean {
+    return this.usuarioLogado && this.usuarioLogadoId != null && publicacao.usuarioId === this.usuarioLogadoId;
+  }
+
+  removerPublicacao(publicacao: PublicacaoServico): void {
+    this.erro = "";
+    this.sucesso = "";
+
+    if (!this.podeRemoverPublicacao(publicacao)) {
+      this.erro = "Você não tem permissão para remover esta publicação.";
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const confirmou = window.confirm("Tem certeza que deseja remover esta publicação?");
+    if (!confirmou) {
+      return;
+    }
+
+    this.removendoPublicacaoId = publicacao.id;
+
+    this.publicacaoService.encerrar(publicacao.id).subscribe({
+      next: () => {
+        this.sucesso = "Publicação removida com sucesso.";
+        this.removendoPublicacaoId = null;
+        this.carregarPublicacoes(false);
+      },
+      error: (err) => {
+        if (err?.status === 403) {
+          this.erro = "Apenas o usuário que publicou pode remover a publicação.";
+        } else if (typeof err?.error === "string") {
+          this.erro = err.error;
+        } else {
+          this.erro = "Falha ao remover publicação.";
+        }
+        this.removendoPublicacaoId = null;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private atualizarUsuarioLogadoId(): void {
+    if (!this.usuarioLogado) {
+      this.usuarioLogadoId = null;
+      return;
+    }
+
+    const idAuth = this.authService.getUsuarioAtual()?.id;
+    const idStorage = Number(localStorage.getItem("usuario_id") || "0");
+    const resolvedId = idAuth || idStorage;
+    this.usuarioLogadoId = resolvedId > 0 ? resolvedId : null;
   }
 }

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { HttpClient } from "@angular/common/http";
 import { catchError, of, switchMap } from "rxjs";
 import { AuthService } from "../../service/auth.service";
+import { RatingComponent } from "../rating/rating.component";
 
 interface UsuarioPerfil {
   id: number;
@@ -11,6 +12,8 @@ interface UsuarioPerfil {
   email: string;
   telefone?: string;
   endereco?: string;
+  bairro?: string;
+  cidade?: string;
   tipoUsuario?: string;
 }
 
@@ -37,7 +40,7 @@ interface AvaliacaoStats {
 @Component({
   selector: "app-perfil-publico",
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, RatingComponent],
   templateUrl: "./perfil-publico.component.html",
   styleUrls: ["./perfil-publico.component.css"]
 })
@@ -109,12 +112,24 @@ export class PerfilPublicoComponent implements OnInit {
         this.prestador = prestador;
         this.cdr.markForCheck();
 
-        if (prestador?.id) {
-          this.carregarAvaliacoes(prestador.id);
-        } else {
-          this.carregando = false;
-          this.cdr.markForCheck();
-        }
+        this.carregarAvaliacoesUsuario(usuarioId);
+      });
+  }
+
+  private carregarAvaliacoesUsuario(usuarioId: number): void {
+    this.http.get<AvaliacaoItem[]>(`${this.apiBase}/avaliacoes/usuario/${usuarioId}/recebidas`)
+      .pipe(catchError(() => of([])))
+      .subscribe((avaliacoes) => {
+        this.avaliacoes = avaliacoes;
+        this.cdr.markForCheck();
+      });
+
+    this.http.get<AvaliacaoStats>(`${this.apiBase}/avaliacoes/v1/usuario/${usuarioId}/stats`)
+      .pipe(catchError(() => of({ media_avaliacao: 0, total_avaliacoes: 0 })))
+      .subscribe((stats) => {
+        this.stats = stats;
+        this.carregando = false;
+        this.cdr.markForCheck();
       });
   }
 
@@ -135,12 +150,27 @@ export class PerfilPublicoComponent implements OnInit {
       });
   }
 
+  getEstrelas(nota?: number | null): string {
+    const estrelas = Math.max(0, Math.min(5, Math.round(nota ?? 0)));
+    return `${"★".repeat(estrelas)}${"☆".repeat(5 - estrelas)}`;
+  }
+
   podeEntrarEmContato(): boolean {
     return !!this.usuario && !this.isProprioPerfil();
   }
 
   podeIrParaMeuPerfil(): boolean {
     return !!this.usuario && this.isProprioPerfil();
+  }
+
+  podeAvaliar(): boolean {
+    return this.authService.isLoggedIn() && !!this.usuario?.id && !this.isProprioPerfil();
+  }
+
+  recarregarAvaliacoes(): void {
+    if (this.usuario?.id) {
+      this.carregarAvaliacoesUsuario(this.usuario.id);
+    }
   }
 
   isProprioPerfil(): boolean {
@@ -212,5 +242,55 @@ export class PerfilPublicoComponent implements OnInit {
     };
 
     return true;
+  }
+
+  getCidadeExibicao(): string {
+    const cidade = this.normalizarCidadeExibicao(this.usuario?.cidade);
+    if (cidade) {
+      return cidade;
+    }
+
+    return this.normalizarCidadeExibicao(this.extrairCidadeDoEndereco(this.usuario?.endereco));
+  }
+
+  private normalizarCidadeExibicao(valor?: string): string {
+    const cidade = (valor ?? "").trim();
+    if (!cidade) {
+      return "";
+    }
+
+    if (/\d/.test(cidade)) {
+      return "";
+    }
+
+    if (/^(rua|r\.|avenida|av\.|travessa|tv\.|estrada|rodovia|alameda|ladeira)\b/i.test(cidade)) {
+      return "";
+    }
+
+    return cidade;
+  }
+
+  private extrairCidadeDoEndereco(endereco?: string): string {
+    const texto = (endereco ?? "").trim();
+    if (!texto) {
+      return "";
+    }
+
+    const partes = texto
+      .split(",")
+      .map((parte) => parte.trim())
+      .filter(Boolean);
+
+    const parteCidadeUf = partes.find((parte) => /\s-\s[A-Za-z]{2}$/.test(parte));
+    if (parteCidadeUf) {
+      return parteCidadeUf.replace(/\s-\s[A-Za-z]{2}$/, "").trim();
+    }
+
+    const parteCidadeLabel = partes.find((parte) => /^cidade\s*:/i.test(parte));
+    if (parteCidadeLabel) {
+      return parteCidadeLabel.replace(/^cidade\s*:/i, "").trim();
+    }
+
+    return "";
   }
 }

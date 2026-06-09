@@ -22,6 +22,11 @@
       <p>{{ publicacao.categoria }}</p>
     </div>
 
+    <div class="meta-card destaque-card" *ngIf="publicacao.isHighlighted">
+      <h3>Destaque ativo</h3>
+      <p>{{ publicacao.highlightPlanName || "Plano ativo" }}</p>
+      <p *ngIf="publicacao.highlightExpiresAt">Expira em {{ publicacao.highlightExpiresAt | date: "dd/MM/yyyy" }}</p>
+    </div>
   </div>
 
   <article class="perfil-card" *ngIf="usuario">
@@ -29,35 +34,38 @@
     <p><strong>Nome:</strong> {{ usuario.nome }}</p>
     <p><strong>Email:</strong> {{ usuario.email }}</p>
     <p *ngIf="usuario.telefone"><strong>Telefone:</strong> {{ usuario.telefone }}</p>
-    <p *ngIf="usuario.endereco"><strong>Endereço:</strong> {{ usuario.endereco }}</p>
+    <p><strong>Cidade:</strong> {{ getCidadeExibicao() || "Não informada" }}</p>
     <p *ngIf="prestador?.funcao"><strong>Função:</strong> {{ prestador?.funcao }}</p>
     <p *ngIf="prestador?.especialidades"><strong>Especialidades:</strong> {{ prestador?.especialidades }}</p>
     <p *ngIf="prestador?.experienciaProfissional"><strong>Experiência:</strong> {{ prestador?.experienciaProfissional }}</p>
 
-    <div class="perfil-rating" *ngIf="prestador">
-      <span class="rating-title">Avaliação do perfil</span>
-      <span class="rating-value">{{ stats.media_avaliacao | number: "1.1-2" }} / 5</span>
-      <span class="rating-count">{{ stats.total_avaliacoes }} avaliação(ões)</span>
-    </div>
-
     <div class="perfil-actions">
-      <a class="perfil-link" [routerLink]="['/perfil', usuario.id]">Acessar perfil da pessoa</a>
+      <a class="perfil-link" [routerLink]="['/perfil', usuario.id]">Acessar perfil</a>
       <button class="chat-link" type="button" *ngIf="podeEntrarEmContato()" (click)="entrarEmContato()">
         {{ getTextoBotaoContato() }}
       </button>
     </div>
   </article>
 
-  <article class="avaliacoes-card" *ngIf="prestador">
+  <article class="avaliacoes-card" *ngIf="usuario">
     <h2>Avaliações</h2>
     <div class="stats">
-      <span>Média: {{ stats.media_avaliacao | number: "1.1-2" }}</span>
+      <span class="rating-stars">{{ getEstrelas(stats.media_avaliacao) }}</span>
+      <span>Média: {{ stats.media_avaliacao | number: "1.1-2" }} / 5</span>
       <span>Total: {{ stats.total_avaliacoes }}</span>
+    </div>
+
+    <div class="avaliacao-form" *ngIf="podeAvaliar()">
+      <app-rating
+        [prestadorId]="prestador?.id || 0"
+        [usuarioAvaliadoId]="usuario.id"
+        (avaliacaoEnviada)="recarregarAvaliacoes()"
+      ></app-rating>
     </div>
 
     <div class="avaliacoes-lista" *ngIf="avaliacoes.length > 0; else semAvaliacoes">
       <div class="avaliacao-item" *ngFor="let av of avaliacoes">
-        <p class="nota">Nota: {{ av.nota }}/5</p>
+        <p class="nota">{{ getEstrelas(av.nota) }} <span>{{ av.nota }}/5</span></p>
         <p class="comentario" *ngIf="av.comentario">{{ av.comentario }}</p>
         <p class="data" *ngIf="av.dataCriacao">{{ av.dataCriacao | date: "dd/MM/yyyy" }}</p>
       </div>

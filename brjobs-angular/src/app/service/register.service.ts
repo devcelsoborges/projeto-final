@@ -12,6 +12,14 @@ interface CadastroContratanteDTO {
   cpf: string;
   genero: string;
   endereco: string;
+  cep?: string;
+  rua?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  numero?: string;
+  complemento?: string;
+  bio?: string;
 }
 
 interface CadastroPrestadorDTO {
@@ -23,6 +31,14 @@ interface CadastroPrestadorDTO {
   cpf: string;
   genero: string;
   endereco: string;
+  cep?: string;
+  rua?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  numero?: string;
+  complemento?: string;
+  bio?: string;
   funcao: string;
   experienciaProfissional?: string;
   especialidades?: string;
@@ -37,6 +53,14 @@ interface UsuarioDTO {
   genero: string;
   dataNascimento: string;
   endereco: string;
+  cep?: string;
+  rua?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  numero?: string;
+  complemento?: string;
+  bio?: string;
   tipoUsuario: string;
   ativo: boolean;
   dataCadastro?: string;

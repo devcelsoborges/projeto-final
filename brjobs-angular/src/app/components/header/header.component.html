@@ -12,6 +12,12 @@
       <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/login', 'nav_login')">Login</a>
     </ng-container>
 
+    <!-- Abas do usuário logado -->
+    <ng-container *ngIf="isLoggedIn">
+      <a routerLink="/profile" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/profile', 'nav_perfil')">Perfil</a>
+      <a routerLink="/minhas-publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/minhas-publicacoes', 'nav_minhas_publicacoes')">Minhas Publicações</a>
+    </ng-container>
+
     <a routerLink="/publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/publicacoes', 'nav_publicacoes')">Publicar serviço</a>
 
     <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/sobre', 'nav_sobre')">Sobre nós</a>
@@ -29,6 +35,16 @@
       <option value="dark">Escuro</option>
     </select>
   </label>
+
+  <button
+    *ngIf="isLoggedIn"
+    class="chat-bell"
+    (click)="irParaChat()"
+    aria-label="Abrir chat"
+  >
+    <span class="bell-icon">🔔</span>
+    <span *ngIf="unreadChatCount > 0" class="bell-badge">{{ unreadChatCount > maxChatBadge ? maxChatBadge + '+' : unreadChatCount }}</span>
+  </button>
 
   <!-- Dropdown do usuário (lado direito) -->
   <ng-container *ngIf="isLoggedIn">
@@ -77,7 +93,15 @@
     <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/login', 'mobile_nav_login')">Login</a>
   </ng-container>
 
+  <!-- Abas do usuário logado -->
   <ng-container *ngIf="isLoggedIn">
+    <a routerLink="/profile" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/profile', 'mobile_nav_perfil')">Perfil</a>
+    <a routerLink="/minhas-publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/minhas-publicacoes', 'mobile_nav_minhas_publicacoes')">Minhas Publicações</a>
+
+    <a (click)="irParaChat()" class="chat-mobile-link">
+      Chat
+      <span *ngIf="unreadChatCount > 0" class="mobile-chat-badge">{{ unreadChatCount > maxChatBadge ? maxChatBadge + '+' : unreadChatCount }}</span>
+    </a>
     <a (click)="irParaPerfil()" class="usuario-nome-mobile">Perfil {{ usuarioNome }}</a>
     <a (click)="editarPerfil()">Editar Perfil</a>
     <button class="btn-logout" (click)="logout()">Sair</button>

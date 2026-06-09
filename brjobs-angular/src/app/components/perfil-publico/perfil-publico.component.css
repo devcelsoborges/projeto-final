@@ -23,6 +23,15 @@
   color: var(--color-text-muted);
 }
 
+.header-rating {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
 .btn-chat {
   margin-top: 12px;
   border: 0;
@@ -79,7 +88,20 @@ p {
   gap: 14px;
   font-weight: 700;
   color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent-500) 8%, var(--color-surface) 92%);
+  border: 1px solid color-mix(in srgb, var(--color-accent-500) 28%, var(--color-border) 72%);
+  border-radius: var(--radius-md);
   margin-bottom: 10px;
+  padding: 10px 12px;
+}
+
+.avaliacao-form {
+  margin: 12px 0 16px;
+}
+
+.rating-stars {
+  color: #b86a05;
+  letter-spacing: 0;
 }
 
 .avaliacoes-lista {
@@ -88,13 +110,15 @@ p {
 }
 
 .avaliacao-item {
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 10px;
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-accent-500) 22%, var(--color-border) 78%);
+  border-left: 4px solid var(--color-accent-500);
+  border-radius: var(--radius-md);
+  padding: 12px;
 }
 
 .nota {
-  color: var(--color-text);
+  color: #8a4f04;
   font-weight: 700;
 }
 
@@ -102,6 +126,10 @@ p {
 .data,
 .vazio {
   color: var(--color-text-muted);
+}
+
+.comentario {
+  color: var(--color-text);
 }
 
 .voltar-link {

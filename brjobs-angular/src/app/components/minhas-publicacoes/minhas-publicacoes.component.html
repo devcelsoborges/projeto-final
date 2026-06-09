@@ -1,0 +1,119 @@
+<section class="minhas-publicacoes-page">
+  <div class="container">
+    <h1 class="page-title">Minhas Publicações</h1>
+    <p class="page-subtitle">
+      Gerencie aqui suas publicações e ative destaque quando quiser mais visibilidade.
+    </p>
+
+    <ng-container *ngIf="!usuarioLogado">
+      <div class="login-necessario card">
+        <p>Você precisa estar logado para visualizar suas publicações.</p>
+        <a routerLink="/login" class="btn btn-primary">Fazer login</a>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="usuarioLogado">
+      <div *ngIf="erroCarregamento" class="card erro-banner">
+        <p>{{ erroCarregamento }}</p>
+      </div>
+
+      <div *ngIf="erroPlanos" class="card erro-banner">
+        <p>{{ erroPlanos }}</p>
+      </div>
+
+      <div *ngIf="carregando" class="card carregando-banner">
+        <p>Carregando publicações...</p>
+      </div>
+
+      <div *ngIf="!carregando && publicacoes.length === 0" class="card vazio-banner">
+        <p>Você não tem nenhuma publicação ainda.</p>
+        <a routerLink="/publicacoes" class="btn btn-primary">Criar publicação</a>
+      </div>
+
+      <div *ngIf="!carregando && publicacoes.length > 0" class="publicacoes-list">
+        <div *ngFor="let pub of publicacoes" class="publicacao-card card">
+          <div class="publicacao-header">
+            <div class="titulo-bloco">
+              <h3 class="publicacao-titulo">{{ pub.titulo }}</h3>
+              <div class="badges-linha">
+                <span
+                  class="tipo-badge"
+                  [class.prestacao]="pub.tipoPublicacao === 'PRESTACAO'"
+                  [class.contratacao]="pub.tipoPublicacao === 'CONTRATACAO'"
+                >
+                  {{ pub.tipoPublicacao === 'PRESTACAO' ? 'Prestação' : 'Contratação' }}
+                </span>
+                <span *ngIf="isPublicacaoDestacada(pub)" class="highlight-badge">
+                  Destaque {{ pub.highlightPlanName || 'ativo' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p class="publicacao-descricao">{{ pub.descricao }}</p>
+
+          <div class="publicacao-info">
+            <span class="categoria-badge">{{ pub.categoria || 'Sem categoria' }}</span>
+            <span *ngIf="pub.tipoPublicacao === 'PRESTACAO' && pub.preco" class="preco">R$ {{ pub.preco | number:'1.2-2' }}</span>
+            <span *ngIf="isPublicacaoDestacada(pub)" class="highlight-expira">
+              Expira em {{ formatarDataDestaque(pub.highlightExpiresAt) }}
+            </span>
+          </div>
+
+          <div class="acoes-publicacao">
+            <a [routerLink]="['/publicacoes', pub.id]" class="btn btn-secondary">
+              Ver publicação
+            </a>
+            <button
+              type="button"
+              class="btn btn-highlight"
+              [disabled]="carregandoPlanos || destacandoPublicacaoId === pub.id"
+              (click)="togglePlanos(pub.id)"
+            >
+              {{ destacandoPublicacaoId === pub.id ? 'Iniciando...' : (isPublicacaoDestacada(pub) ? 'Renovar destaque' : 'Destacar') }}
+            </button>
+            <button
+              *ngIf="podeRemoverPublicacao(pub)"
+              class="btn btn-remover-publicacao"
+              [disabled]="removendoPublicacaoId === pub.id"
+              (click)="removerPublicacao(pub)"
+            >
+              {{ removendoPublicacaoId === pub.id ? 'Removendo...' : 'Remover' }}
+            </button>
+          </div>
+
+          <div *ngIf="publicacaoExpandidaId === pub.id" class="planos-shell">
+            <p class="planos-titulo">Escolha um plano de destaque</p>
+            <div class="planos-grid" *ngIf="planos.length > 0; else semPlanos">
+              <button
+                type="button"
+                class="plano-card"
+                *ngFor="let plano of planos"
+                [disabled]="destacandoPublicacaoId === pub.id"
+                (click)="destacarPublicacao(pub, plano)"
+              >
+                <strong>{{ plano.name }}</strong>
+                <span>{{ plano.durationDays }} dias</span>
+                <span>R$ {{ plano.price | number:'1.2-2' }}</span>
+              </button>
+            </div>
+
+            <ng-template #semPlanos>
+              <p class="planos-vazio">Nenhum plano disponivel no momento.</p>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="paginacao" *ngIf="!carregando">
+          <button class="btn btn-secondary" (click)="paginaAnterior()" [disabled]="paginaAtual === 0">
+            Anterior
+          </button>
+          <span class="pagina-info">Pagina {{ paginaAtual + 1 }}</span>
+          <button class="btn btn-secondary" (click)="proximaPagina()" [disabled]="ultimaPagina">
+            Proxima
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</section>

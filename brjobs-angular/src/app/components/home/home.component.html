@@ -46,7 +46,7 @@
             type="text"
             placeholder="Bairro ou cidade"
             [(ngModel)]="localizacaoBusca"
-            (input)="onFiltroAvancadoChange()"
+            (input)="onLocalizacaoInput()"
           />
         </label>
 
@@ -118,11 +118,20 @@
     <div class="lista-vagas">
       
       <div *ngFor="let pub of publicacoesFiltradas; trackBy: trackByPublicacao" class="card-vaga">
+        <span *ngIf="pub.isHighlighted" class="highlight-chip">
+          Destaque {{ pub.highlightPlanName || '' }}
+        </span>
         <h3>{{ pub.titulo }}</h3>
         <p class="empresa-local">
           {{ pub.usuarioNome }} • {{ pub.categoria || 'Sem categoria' }}
         </p>
+        <p class="empresa-local" *ngIf="getCidadeCard(pub)">📍 {{ getCidadeCard(pub) }}</p>
         <p class="empresa-local">{{ pub.descricao }}</p>
+        <p class="empresa-local card-rating" *ngIf="pub.prestador">
+          <span class="rating-stars">{{ getEstrelas(pub.prestador.avaliacaoMedia) }}</span>
+          <span>{{ pub.prestador.avaliacaoMedia | number:'1.1-2' }} / 5</span>
+          <small>({{ pub.prestador.numAvaliacoes }} avaliações)</small>
+        </p>
         <span class="tag-nivel">{{ formatarTipo(pub.tipoPublicacao) }}</span>
         <p class="empresa-local">{{ formatarValor(pub) }}</p>
         <button class="btn-detalhes" [routerLink]="['/publicacoes', pub.id]">Ver Publicação</button>

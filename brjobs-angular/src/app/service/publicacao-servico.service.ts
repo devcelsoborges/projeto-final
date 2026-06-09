@@ -11,13 +11,28 @@ export interface PublicacaoServico {
   titulo: string;
   descricao: string;
   categoria?: string;
+  usuarioBairro?: string;
+  usuarioCidade?: string;
+  usuarioEndereco?: string;
   preco?: number;
   orcamentoMin?: number;
   orcamentoMax?: number;
   status: string;
   usuarioId: number;
   usuarioNome: string;
+  isHighlighted?: boolean;
+  highlightExpiresAt?: string;
+  highlightPlanId?: number;
+  highlightPlanName?: string;
+  highlightPriority?: number;
   dataCriacao: string;
+  prestador?: {
+    id: number;
+    nome: string;
+    avaliacaoMedia: number;
+    numAvaliacoes: number;
+    fotoUrl: string;
+  };
 }
 
 export interface CriarPublicacaoServicoDTO {

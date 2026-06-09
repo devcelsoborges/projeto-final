@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { ProfileStateService } from '../../service/profile-state.service';
 import { CepService } from '../../service/cep.service';
 import { Subject } from 'rxjs';
@@ -21,6 +22,7 @@ interface Usuario {
   estado?: string;
   cpf: string;
   genero: string;
+  bio?: string;
   dataNascimento: string;
   endereco: string;
   tipoUsuario: 'CONTRATANTE' | 'PRESTADOR';
@@ -53,6 +55,7 @@ interface Prestador {
   styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit, OnDestroy {
+  private readonly apiBase = 'http://localhost:8080/api';
   
   // Dados do usuário
   usuario!: Usuario;
@@ -80,7 +83,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private profileStateService: ProfileStateService,
-    private cepService: CepService
+    private cepService: CepService,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -117,6 +121,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       estado: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(2)]],
       genero: [''],
       dataNascimento: [''],
+      bio: ['', [Validators.maxLength(600)]],
       tipoUsuario: ['PRESTADOR', [Validators.required]]
     });
 
@@ -162,6 +167,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           dataCadastro: localStorage.getItem('usuario_dataCadastro') || new Date().toISOString(),
           fotoPerfil: 'assets/default-avatar.png'
         };
+        this.usuario.bio = localStorage.getItem('usuario_bio') || '';
       } else {
         // Fallback: Dados de exemplo
         this.usuario = {
@@ -185,6 +191,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           dataCadastro: '2024-01-15T10:30:00',
           fotoPerfil: 'assets/default-avatar.png'
         };
+        this.usuario.bio = '';
       }
 
       this.hidratarEnderecoLegado();
@@ -221,6 +228,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         estado: (this.usuario.estado || '').toUpperCase(),
         genero: this.usuario.genero,
         dataNascimento: this.usuario.dataNascimento,
+        bio: this.usuario.bio || '',
         tipoUsuario: this.usuario.tipoUsuario
       });
 
@@ -294,49 +302,107 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = null;
 
-    // Simula chamada ao backend
-    setTimeout(() => {
-      try {
-        const formData = this.profileForm.value;
-        const enderecoCompleto = this.montarEnderecoCompleto(formData);
-        
-        // Atualiza o objeto usuário
-        this.usuario = {
-          ...this.usuario,
-          ...formData,
-          estado: String(formData.estado || '').toUpperCase(),
-          endereco: enderecoCompleto
-        };
+    const formData = this.profileForm.value;
+    const enderecoCompleto = this.montarEnderecoCompleto(formData);
+    const dataNascimentoIso = this.toIsoDate(formData.dataNascimento);
 
-        // Salva no localStorage
-        localStorage.setItem('usuario_nome', formData.nome);
-        localStorage.setItem('usuario_email', formData.email);
-        localStorage.setItem('usuario_telefone', (formData.telefone || '').replace(/\D/g, ''));
-        localStorage.setItem('usuario_cep', (formData.cep || '').replace(/\D/g, ''));
-        localStorage.setItem('usuario_rua', formData.rua || '');
-        localStorage.setItem('usuario_numero', formData.numero || '');
-        localStorage.setItem('usuario_complemento', formData.complemento || '');
-        localStorage.setItem('usuario_bairro', formData.bairro || '');
-        localStorage.setItem('usuario_cidade', formData.cidade || '');
-        localStorage.setItem('usuario_estado', String(formData.estado || '').toUpperCase());
-        localStorage.setItem('usuario_endereco', enderecoCompleto);
-        localStorage.setItem('usuario_genero', formData.genero);
-        localStorage.setItem('usuario_dataNascimento', formData.dataNascimento);
-        localStorage.setItem('usuario_tipo', formData.tipoUsuario);
+    const payload = {
+      id: this.usuario.id,
+      tipoUsuario: formData.tipoUsuario,
+      nome: formData.nome,
+      email: formData.email,
+      telefone: (formData.telefone || '').replace(/\D/g, ''),
+      endereco: enderecoCompleto,
+      cep: (formData.cep || '').replace(/\D/g, ''),
+      rua: formData.rua || '',
+      numero: formData.numero || '',
+      complemento: formData.complemento || '',
+      bairro: formData.bairro || '',
+      cidade: formData.cidade || '',
+      estado: String(formData.estado || '').toUpperCase(),
+      cpf: this.usuario.cpf,
+      genero: formData.genero,
+      bio: formData.bio || '',
+      dataNascimento: dataNascimentoIso,
+      ativo: this.usuario.ativo
+    };
 
-        this.successMessage = 'Perfil atualizado com sucesso!';
-        this.isEditing = false;
-        this.isLoading = false;
+    this.http.put<Usuario>(`${this.apiBase}/usuarios/${this.usuario.id}`, payload)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (usuarioAtualizado) => {
+          this.usuario = {
+            ...this.usuario,
+            ...usuarioAtualizado,
+            ...formData,
+            dataNascimento: dataNascimentoIso,
+            endereco: usuarioAtualizado.endereco || enderecoCompleto,
+            cep: usuarioAtualizado.cep || (formData.cep || '').replace(/\D/g, ''),
+            rua: usuarioAtualizado.rua || formData.rua || '',
+            numero: usuarioAtualizado.numero || formData.numero || '',
+            complemento: usuarioAtualizado.complemento || formData.complemento || '',
+            bairro: usuarioAtualizado.bairro || formData.bairro || '',
+            cidade: usuarioAtualizado.cidade || formData.cidade || '',
+            estado: usuarioAtualizado.estado || String(formData.estado || '').toUpperCase(),
+            bio: usuarioAtualizado.bio || formData.bio || ''
+          };
 
-        setTimeout(() => {
-          this.successMessage = null;
-        }, 3000);
-      } catch (error) {
-        console.error('Erro ao salvar perfil:', error);
-        this.errorMessage = 'Erro ao salvar perfil. Tente novamente.';
-        this.isLoading = false;
-      }
-    }, 1500);
+          // Mantém sincronizado para fluxos locais/SSO.
+          localStorage.setItem('usuario_nome', formData.nome);
+          localStorage.setItem('usuario_email', formData.email);
+          localStorage.setItem('usuario_telefone', (formData.telefone || '').replace(/\D/g, ''));
+          localStorage.setItem('usuario_cep', (formData.cep || '').replace(/\D/g, ''));
+          localStorage.setItem('usuario_rua', formData.rua || '');
+          localStorage.setItem('usuario_numero', formData.numero || '');
+          localStorage.setItem('usuario_complemento', formData.complemento || '');
+          localStorage.setItem('usuario_bairro', formData.bairro || '');
+          localStorage.setItem('usuario_cidade', formData.cidade || '');
+          localStorage.setItem('usuario_estado', String(formData.estado || '').toUpperCase());
+          localStorage.setItem('usuario_endereco', enderecoCompleto);
+          localStorage.setItem('usuario_genero', formData.genero);
+          localStorage.setItem('usuario_dataNascimento', dataNascimentoIso);
+          localStorage.setItem('usuario_tipo', formData.tipoUsuario);
+          localStorage.setItem('usuario_bio', formData.bio || '');
+
+          // Recarrega o perfil para garantir que os dados estão sincronizados
+          this.successMessage = 'Perfil atualizado com sucesso!';
+          this.isLoading = false;
+
+          // Sincroniza com o serviço de estado e volta para visualização
+          this.profileStateService.resetToView();
+
+          setTimeout(() => {
+            this.successMessage = null;
+          }, 3000);
+        },
+        error: (error) => {
+          console.error('Erro ao salvar perfil no backend:', error);
+          console.error('Status:', error?.status);
+          console.error('Mensagem:', error?.error?.message || error?.message);
+          const errorMsg = error?.error?.message || error?.message || 'Erro ao salvar perfil. Tente novamente.';
+          this.errorMessage = `Erro ao salvar perfil: ${errorMsg}`;
+          this.isLoading = false;
+        }
+      });
+  }
+
+  private toIsoDate(value: string): string {
+    if (!value) {
+      return '';
+    }
+
+    const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoMatch) {
+      return value;
+    }
+
+    const brMatch = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (brMatch) {
+      const [, dia, mes, ano] = brMatch;
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    return value;
   }
 
   /**

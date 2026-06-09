@@ -368,7 +368,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
       dataNascimento: dataNascimento,
       cpf: formValue.cpf.replace(/\D/g, ''),
       genero: formValue.genero,
-      endereco: this.montarEnderecoCompleto(formValue)
+      endereco: this.montarEnderecoCompleto(formValue),
+      cep: (formValue.cep || '').replace(/\D/g, ''),
+      rua: formValue.rua || '',
+      numero: formValue.numero || '',
+      complemento: formValue.complemento || '',
+      bairro: formValue.bairro || '',
+      cidade: formValue.cidade || '',
+      estado: String(formValue.estado || '').toUpperCase(),
+      bio: ''
     };
 
     if (tipoUsuario === 'PRESTADOR') {

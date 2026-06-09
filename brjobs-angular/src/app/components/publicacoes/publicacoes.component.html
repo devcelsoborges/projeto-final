@@ -122,6 +122,7 @@
         </div>
 
         <p *ngIf="carregando" class="estado-info">Carregando publicações...</p>
+        <p *ngIf="!carregando && erroCarregamento" class="mensagem erro">{{ erroCarregamento }}</p>
 
         <ul *ngIf="!carregando && publicacoes.length > 0" class="lista-publicacoes">
           <li *ngFor="let pub of publicacoes" class="item-publicacao">
@@ -135,7 +136,18 @@
               <span>{{ pub.categoria || "Sem categoria" }}</span>
               <span>por {{ pub.usuarioNome }}</span>
             </div>
-            <a class="btn-ver-publicacao" [routerLink]="['/publicacoes', pub.id]">Ver publicação</a>
+            <div class="acoes-publicacao">
+              <a class="btn-ver-publicacao" [routerLink]="['/publicacoes', pub.id]">Ver publicação</a>
+              <button
+                type="button"
+                class="btn-remover-publicacao"
+                *ngIf="podeRemoverPublicacao(pub)"
+                [disabled]="removendoPublicacaoId === pub.id"
+                (click)="removerPublicacao(pub)"
+              >
+                {{ removendoPublicacaoId === pub.id ? "Removendo..." : "Remover" }}
+              </button>
+            </div>
           </li>
         </ul>
 

@@ -1,6 +1,6 @@
 // src/app/components/home/home.component.ts
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -22,7 +22,7 @@ interface CategoriaServico {
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   titulo = 'Encontre prestação e contratação de serviços no BR-Jobs';
 
   termoBusca = '';
@@ -108,6 +108,7 @@ export class HomeComponent implements OnInit {
   private cachePublicacoes: PublicacaoServico[] = [];
 
   private debounceHandle: ReturnType<typeof setTimeout> | null = null;
+  private localizacaoDebounceHandle: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly publicacaoService: PublicacaoServicoService,
@@ -116,6 +117,15 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.buscarPublicacoes(true);
+  }
+
+  ngOnDestroy(): void {
+    if (this.debounceHandle) {
+      clearTimeout(this.debounceHandle);
+    }
+    if (this.localizacaoDebounceHandle) {
+      clearTimeout(this.localizacaoDebounceHandle);
+    }
   }
 
   buscarPublicacoes(resetPage = false): void {
@@ -206,18 +216,31 @@ export class HomeComponent implements OnInit {
     const precoMax = this.normalizarNumero(this.precoMax);
 
     return lista.filter((pub) => {
+      const cidadeCard = this.getCidadeCard(pub);
+
       const textoBase = this.normalizar([
         pub.titulo,
         pub.descricao,
         pub.categoria,
-        pub.usuarioNome
+        pub.usuarioNome,
+        pub.usuarioBairro,
+        cidadeCard
       ].filter(Boolean).join(' '));
+
+      const localizacaoPublicacao = this.normalizar([
+        pub.usuarioBairro,
+        cidadeCard
+      ].filter(Boolean).join(' '));
+      const possuiLocalizacaoEstruturada = localizacaoPublicacao.length > 0;
 
       const tagMatch = this.tagsSelecionadas.length === 0 || this.tagsSelecionadas.some((tag) => textoBase.includes(this.normalizar(tag)));
       const termoMatch = !termo || textoBase.includes(termo);
       const categoriaMatch = !categoria || textoBase.includes(categoria);
       const subcategoriaMatch = !subcategoria || textoBase.includes(subcategoria);
-      const localizacaoMatch = !localizacao || textoBase.includes(localizacao);
+      const localizacaoMatch = !localizacao
+        || !possuiLocalizacaoEstruturada
+        || localizacaoPublicacao.includes(localizacao)
+        || textoBase.includes(localizacao);
       const disponibilidadeMatch = !disponibilidade || textoBase.includes(disponibilidade);
       const atendimentoMatch = !atendimento || textoBase.includes(atendimento);
 
@@ -227,7 +250,9 @@ export class HomeComponent implements OnInit {
 
       const notaMedia = (pub as PublicacaoServico & { notaMedia?: number; avaliacaoMedia?: number }).notaMedia
         ?? (pub as PublicacaoServico & { notaMedia?: number; avaliacaoMedia?: number }).avaliacaoMedia;
-      const avaliacaoMatch = this.avaliacaoMinima <= 0 || (typeof notaMedia === 'number' && notaMedia >= this.avaliacaoMinima);
+      const avaliacaoMatch = this.avaliacaoMinima <= 0
+        || typeof notaMedia !== 'number'
+        || notaMedia >= this.avaliacaoMinima;
 
       return (
         termoMatch &&
@@ -326,6 +351,13 @@ export class HomeComponent implements OnInit {
 
   onFiltroAvancadoChange(): void {
     this.buscarPublicacoes(true);
+  }
+
+  onLocalizacaoInput(): void {
+    if (this.localizacaoDebounceHandle) {
+      clearTimeout(this.localizacaoDebounceHandle);
+    }
+    this.localizacaoDebounceHandle = setTimeout(() => this.buscarPublicacoes(true), 300);
   }
 
   alternarTag(tag: string): void {
@@ -469,5 +501,60 @@ export class HomeComponent implements OnInit {
     const min = (pub.orcamentoMin ?? 0).toFixed(2);
     const max = (pub.orcamentoMax ?? 0).toFixed(2);
     return `R$ ${min} - R$ ${max}`;
+  }
+
+  getEstrelas(nota?: number | null): string {
+    const estrelas = Math.max(0, Math.min(5, Math.round(nota ?? 0)));
+    return `${'★'.repeat(estrelas)}${'☆'.repeat(5 - estrelas)}`;
+  }
+
+  getCidadeCard(pub: PublicacaoServico): string {
+    const cidadeNormalizada = this.normalizarCidadeExibicao(pub.usuarioCidade);
+    if (cidadeNormalizada) {
+      return cidadeNormalizada;
+    }
+
+    return this.normalizarCidadeExibicao(this.extrairCidadeDoEndereco(pub.usuarioEndereco));
+  }
+
+  private normalizarCidadeExibicao(valor?: string): string {
+    const cidade = (valor ?? '').trim();
+    if (!cidade) {
+      return '';
+    }
+
+    if (/\d/.test(cidade)) {
+      return '';
+    }
+
+    if (/^(rua|r\.|avenida|av\.|travessa|tv\.|estrada|rodovia|alameda|ladeira)\b/i.test(cidade)) {
+      return '';
+    }
+
+    return cidade;
+  }
+
+  private extrairCidadeDoEndereco(endereco?: string): string {
+    const texto = (endereco ?? '').trim();
+    if (!texto) {
+      return '';
+    }
+
+    const partes = texto
+      .split(',')
+      .map((parte) => parte.trim())
+      .filter(Boolean);
+
+    const parteCidadeUf = partes.find((parte) => /\s-\s[A-Za-z]{2}$/.test(parte));
+    if (parteCidadeUf) {
+      return parteCidadeUf.replace(/\s-\s[A-Za-z]{2}$/, '').trim();
+    }
+
+    const parteCidadeLabel = partes.find((parte) => /^cidade\s*:/i.test(parte));
+    if (parteCidadeLabel) {
+      return parteCidadeLabel.replace(/^cidade\s*:/i, '').trim();
+    }
+
+    return '';
   }
 }

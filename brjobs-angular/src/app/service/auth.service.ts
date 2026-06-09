@@ -22,6 +22,14 @@ interface UsuarioDTO {
   genero: string;
   dataNascimento: string;
   endereco: string;
+  cep?: string;
+  rua?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  numero?: string;
+  complemento?: string;
+  bio?: string;
   tipoUsuario: string;
   ativo: boolean;
   dataCadastro?: string;
@@ -76,6 +84,7 @@ export class AuthService {
       .pipe(
         tap(usuario => {
           this.usuarioSubject.next(usuario);
+          this.persistUsuarioStorage(usuario);
         }),
         catchError(error => {
           console.error('Erro ao obter usuário autenticado:', error);
@@ -156,6 +165,7 @@ export class AuthService {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('token');
     localStorage.removeItem('app_token');
+    this.clearUsuarioStorage();
     this.tokenSubject.next(null);
     this.usuarioSubject.next(null);
     this.isLoggedInSubject.next(false);
@@ -180,6 +190,51 @@ export class AuthService {
    */
   setUsuarioAtual(usuario: UsuarioDTO): void {
     this.usuarioSubject.next(usuario);
+    this.persistUsuarioStorage(usuario);
+  }
+
+  private persistUsuarioStorage(usuario: UsuarioDTO): void {
+    localStorage.setItem('usuario_id', String(usuario.id ?? ''));
+    localStorage.setItem('usuario_nome', usuario.nome || '');
+    localStorage.setItem('usuario_email', usuario.email || '');
+    localStorage.setItem('usuario_telefone', usuario.telefone || '');
+    localStorage.setItem('usuario_cpf', usuario.cpf || '');
+    localStorage.setItem('usuario_genero', usuario.genero || '');
+    localStorage.setItem('usuario_dataNascimento', usuario.dataNascimento || '');
+    localStorage.setItem('usuario_endereco', usuario.endereco || '');
+    localStorage.setItem('usuario_cep', usuario.cep || '');
+    localStorage.setItem('usuario_rua', usuario.rua || '');
+    localStorage.setItem('usuario_bairro', usuario.bairro || '');
+    localStorage.setItem('usuario_cidade', usuario.cidade || '');
+    localStorage.setItem('usuario_estado', usuario.estado || '');
+    localStorage.setItem('usuario_numero', usuario.numero || '');
+    localStorage.setItem('usuario_complemento', usuario.complemento || '');
+    localStorage.setItem('usuario_bio', usuario.bio || '');
+    localStorage.setItem('usuario_tipo', usuario.tipoUsuario || '');
+    if (usuario.dataCadastro) {
+      localStorage.setItem('usuario_dataCadastro', usuario.dataCadastro);
+    }
+  }
+
+  private clearUsuarioStorage(): void {
+    localStorage.removeItem('usuario_id');
+    localStorage.removeItem('usuario_nome');
+    localStorage.removeItem('usuario_email');
+    localStorage.removeItem('usuario_telefone');
+    localStorage.removeItem('usuario_cpf');
+    localStorage.removeItem('usuario_genero');
+    localStorage.removeItem('usuario_dataNascimento');
+    localStorage.removeItem('usuario_endereco');
+    localStorage.removeItem('usuario_cep');
+    localStorage.removeItem('usuario_rua');
+    localStorage.removeItem('usuario_numero');
+    localStorage.removeItem('usuario_complemento');
+    localStorage.removeItem('usuario_bairro');
+    localStorage.removeItem('usuario_cidade');
+    localStorage.removeItem('usuario_estado');
+    localStorage.removeItem('usuario_bio');
+    localStorage.removeItem('usuario_tipo');
+    localStorage.removeItem('usuario_dataCadastro');
   }
 
   /**

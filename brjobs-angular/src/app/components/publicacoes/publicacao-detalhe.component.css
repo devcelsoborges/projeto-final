@@ -53,6 +53,11 @@
   padding: 16px;
 }
 
+.destaque-card {
+  border-color: color-mix(in srgb, var(--color-accent-500) 35%, var(--color-border) 65%);
+  background: color-mix(in srgb, var(--color-accent-500) 7%, var(--color-surface) 93%);
+}
+
 .meta-card h3,
 .perfil-card h2,
 .avaliacoes-card h2 {
@@ -68,9 +73,14 @@
 
 .stats {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
-  font-weight: 600;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--color-accent-500) 8%, var(--color-surface) 92%);
+  border: 1px solid color-mix(in srgb, var(--color-accent-500) 28%, var(--color-border) 72%);
+  border-radius: var(--radius-md);
   margin-bottom: 12px;
+  padding: 10px 12px;
 }
 
 .avaliacoes-lista {
@@ -79,15 +89,17 @@
 }
 
 .avaliacao-item {
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 10px;
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-accent-500) 22%, var(--color-border) 78%);
+  border-left: 4px solid var(--color-accent-500);
+  border-radius: var(--radius-md);
+  padding: 12px;
 }
 
 .nota {
   margin: 0 0 6px;
   font-weight: 600;
-  color: var(--color-text);
+  color: #8a4f04;
 }
 
 .comentario,
@@ -107,44 +119,28 @@
   color: var(--color-primary-light);
 }
 
-.perfil-rating {
-  margin-top: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface) 92%);
-  display: grid;
-  gap: 4px;
-}
-
-.rating-title {
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.rating-value {
-  color: var(--color-text);
+.rating-stars {
+  color: #b86a05;
+  letter-spacing: 0;
   font-size: 1rem;
   font-weight: 700;
 }
 
-.rating-count {
-  color: var(--color-text-muted);
-  font-size: 0.88rem;
-}
-
 .perfil-link {
-  margin-top: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 9px 12px;
+  height: 40px;
+  padding: 0 12px;
   border-radius: 8px;
   background: var(--color-primary);
   color: var(--color-on-primary);
   text-decoration: none;
   font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .perfil-link:hover {
@@ -156,23 +152,42 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .chat-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 9px 12px;
+  height: 40px;
+  padding: 0 12px;
   border-radius: 8px;
-  border: 1px solid var(--color-primary);
-  background: transparent;
-  color: var(--color-primary);
+  border: none;
+  background: var(--color-success);
+  color: #fff;
   font-weight: 700;
   cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .chat-link:hover {
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent 88%);
+  background: var(--color-success-dark, color-mix(in srgb, var(--color-success) 90%, #000 10%));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+}
+
+.avaliacao-form {
+  border: 1px solid color-mix(in srgb, var(--color-accent-500) 24%, var(--color-border) 76%);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: color-mix(in srgb, var(--color-accent-500) 5%, var(--color-surface) 95%);
+}
+
+.avaliacao-form app-rating {
+  display: block;
 }
 
 .estado {

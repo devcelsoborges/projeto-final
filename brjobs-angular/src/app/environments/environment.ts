@@ -1,7 +1,12 @@
 // Configurações de ambiente
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8080/api/v1',
+  production: true,
+  apiUrl: 'http://34.224.86.236:8080',
+  chat: {
+    pollIntervalMs: 5000,
+    maxMessageLength: 500,
+    headerBadgeMax: 99
+  },
   defaultTheme: 'system' as 'system' | 'light' | 'dark',
   uxTelemetryEnabled: true,
   perfSampleRate: 0.2,

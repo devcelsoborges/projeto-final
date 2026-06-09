@@ -302,11 +302,27 @@ export class SocialLoginService {
    * Faz logout social
    */
   socialLogout(): void {
+    localStorage.removeItem('auth_token');
     localStorage.removeItem('app_token');
+    localStorage.removeItem('token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('usuario_id');
     localStorage.removeItem('usuario_email');
     localStorage.removeItem('usuario_nome');
+    localStorage.removeItem('usuario_telefone');
+    localStorage.removeItem('usuario_cpf');
+    localStorage.removeItem('usuario_genero');
+    localStorage.removeItem('usuario_dataNascimento');
+    localStorage.removeItem('usuario_endereco');
+    localStorage.removeItem('usuario_cep');
+    localStorage.removeItem('usuario_rua');
+    localStorage.removeItem('usuario_numero');
+    localStorage.removeItem('usuario_complemento');
+    localStorage.removeItem('usuario_bairro');
+    localStorage.removeItem('usuario_cidade');
+    localStorage.removeItem('usuario_estado');
+    localStorage.removeItem('usuario_tipo');
+    localStorage.removeItem('usuario_dataCadastro');
     this.router.navigate(['/login']);
   }
 }

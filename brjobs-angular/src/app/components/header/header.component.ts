@@ -6,8 +6,10 @@ import { ProfileStateService } from '../../service/profile-state.service';
 import { ThemeMode, ThemeService } from '../../service/theme.service';
 import { UxTelemetryService } from '../../service/ux-telemetry.service';
 import { AuthService } from '../../service/auth.service';
+import { ChatUnreadService } from '../../service/chat-unread.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-header',
@@ -23,6 +25,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   usuarioNome: string | null = null;
   usuarioMenuAberto = false;
+  unreadChatCount = 0;
+  readonly maxChatBadge = environment.chat.headerBadgeMax;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -30,7 +34,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private profileStateService: ProfileStateService,
     private themeService: ThemeService,
     private telemetry: UxTelemetryService,
-    private authService: AuthService
+    private authService: AuthService,
+    private chatUnreadService: ChatUnreadService
   ) {}
 
   ngOnInit(): void {
@@ -42,6 +47,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.isLoggedIn = logged;
         if (!logged) {
           this.usuarioNome = null;
+          this.unreadChatCount = 0;
+        } else {
+          this.chatUnreadService.refreshNow();
         }
       });
 
@@ -51,6 +59,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
         if (usuario?.nome) {
           this.usuarioNome = usuario.nome;
         }
+      });
+
+    this.chatUnreadService.unreadCount$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((count) => {
+        this.unreadChatCount = count;
       });
     
     // Observar mudanças de tema
@@ -69,6 +83,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Inicializar com o tema atual
     this.isDarkTheme = this.themeService.isDarkModeActive();
     this.themeMode = this.themeService.getThemeMode();
+  }
+
+  irParaChat(): void {
+    this.router.navigate(['/chat']);
+    this.fecharMenu();
+    this.fecharUsuarioMenu();
   }
 
   ngOnDestroy(): void {

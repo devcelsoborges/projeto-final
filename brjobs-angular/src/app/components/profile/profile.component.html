@@ -8,6 +8,7 @@
         <h1 class="card-title">{{ usuario.nome }}</h1>
         <p class="card-subtitle">{{ usuario.tipoUsuario === 'PRESTADOR' ? '💼 Prestador de Serviços' : '🏢 Contratante' }}</p>
         <p class="email-text">{{ usuario.email }}</p>
+        <p class="bio-text" *ngIf="usuario.bio">{{ usuario.bio }}</p>
       </div>
       
       <div class="header-actions">
@@ -169,6 +170,17 @@
             >
           </div>
 
+          <div class="form-group grid-span-full">
+            <label for="bio">Descrição / Bio</label>
+            <textarea
+              id="bio"
+              formControlName="bio"
+              placeholder="Fale um pouco sobre você (máx. 600 caracteres)"
+              rows="4"
+            ></textarea>
+            <div class="helper-text">{{ profileForm.get('bio')?.value?.length || 0 }} / 600</div>
+          </div>
+
           <div class="form-group">
             <label for="numero">Número *</label>
             <input
@@ -278,6 +290,11 @@
           <div class="info-item">
             <label>Data de Nascimento</label>
             <p>{{ usuario.dataNascimento ? formatData(usuario.dataNascimento) : '—' }}</p>
+          </div>
+
+          <div class="info-item grid-span-full">
+            <label>Descrição / Bio</label>
+            <p>{{ usuario.bio || '—' }}</p>
           </div>
 
           <div class="info-item">
