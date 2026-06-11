@@ -67,11 +67,11 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Toggle do checkbox "Lembrar e-mail"
+   * Atualiza a preferencia de lembrar e-mail sem registrar o checkbox no formGroup.
    */
-  toggleRememberMe(): void {
-    this.rememberMe = !this.rememberMe;
-    if (this.rememberMe && this.form.get('email')?.valid) {
+  onRememberMeChange(checked: boolean): void {
+    this.rememberMe = checked;
+    if (checked && this.form.get('email')?.valid) {
       localStorage.setItem('rememberedEmail', this.form.get('email')?.value);
     } else {
       localStorage.removeItem('rememberedEmail');
@@ -92,8 +92,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.loading = true;
     const { email, senha } = this.form.value;
 
-    console.log('Tentativa de login:', { email });
-
     // Chamada real ao backend via AuthService
     this.authService.login(email, senha)
       .pipe(takeUntil(this.destroy$))
@@ -106,13 +104,10 @@ export class LoginComponent implements OnInit, OnDestroy {
             localStorage.removeItem('rememberedEmail');
           }
 
-          console.log('Login realizado com sucesso!', response);
           // Redirecionar para home após login bem-sucedido
           this.router.navigate(['/home']);
         },
         error: (error) => {
-          console.error('Erro durante login:', error);
-          
           if (error.status === 401) {
             this.errorMessage = 'E-mail ou senha inválidos. Tente novamente.';
           } else if (error.status === 0) {
@@ -161,41 +156,31 @@ export class LoginComponent implements OnInit, OnDestroy {
    * Login via Google
    */
   loginWithGoogle(): void {
-    console.log('🔐 Iniciando login com Google...');
-    this.errorMessage = null;
+this.errorMessage = null;
     this.socialLoading = true;
 
     try {
       this.socialLoginService.initiateGoogleSignIn(
         (credential: string) => {
-          console.log('✅ Credencial Google recebida:', credential.substring(0, 20) + '...');
-
-          // Extrair informações do token Google
+// Extrair informações do token Google
           const googleData = this.socialLoginService.decodeGoogleToken(credential);
-          console.log('📊 Dados do Google:', googleData);
-
-          this.socialLoginService.loginWithGoogle(credential)
+this.socialLoginService.loginWithGoogle(credential)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
               next: (response) => {
-                console.log('✅ Login Google bem-sucedido:', response);
-
-                // Se o backend retornou Demo User, usar dados do Google
+// Se o backend retornou Demo User, usar dados do Google
                 if (response.nome === 'Demo User' && googleData) {
                   response.nome = googleData.name || googleData.email || 'Usuário';
                 }
 
                 this.socialLoginService.storeSocialAuthTokens(response);
-                this.authService.syncAuthStateFromStorage(true);
-
-                console.log('🔄 Redirecionando para /home...');
-                setTimeout(() => {
+                this.authService.markAuthenticated(response as any);
+setTimeout(() => {
                   this.router.navigate(['/home']);
                 }, 500);
               },
               error: (error) => {
-                console.error('❌ Erro ao fazer login com Google:', error);
-                const backendMessage =
+const backendMessage =
                   error?.error?.error ||
                   error?.error?.message ||
                   (typeof error?.error === 'string' ? error.error : null) ||
@@ -213,9 +198,8 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.socialLoading = false;
         }
       );
-    } catch (error) {
-      console.error('❌ Erro ao inicializar Google Sign-In:', error);
-      this.errorMessage = 'Erro ao inicializar Google Sign-In. Verifique console.';
+    } catch {
+      this.errorMessage = 'Erro ao inicializar Google Sign-In.';
       this.socialLoading = false;
     }
   }
@@ -233,27 +217,14 @@ export class LoginComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (response) => {
             this.socialLoginService.storeSocialAuthTokens(response);
+            this.authService.markAuthenticated(response as any);
             this.router.navigate(['/home']);
           },
           error: (error) => {
-            console.error('Erro ao fazer login com Facebook:', error);
-            this.errorMessage = 'Erro ao fazer login com Facebook. Tente novamente.';
+this.errorMessage = 'Erro ao fazer login com Facebook. Tente novamente.';
             this.socialLoading = false;
           }
         });
     });
-  }
-
-  /**
-   * Login via Apple (Sign in with Apple)
-   */
-  loginWithApple(): void {
-    this.errorMessage = null;
-    this.socialLoading = true;
-
-    // Simular chamada ao Apple Sign In
-    // Note: Implementação real requer Apple SDK
-    this.errorMessage = 'Apple Sign In em desenvolvimento. Tente novamente em breve.';
-    this.socialLoading = false;
   }
 }

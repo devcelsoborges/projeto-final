@@ -60,7 +60,7 @@ export interface PublicacaoPage {
   providedIn: "root"
 })
 export class PublicacaoServicoService {
-  private readonly apiUrl = `${environment.apiUrl}/publicacoes`;
+  private readonly apiUrl = `${environment.apiUrl}/api/v1/publicacoes`;
 
   constructor(private readonly http: HttpClient) {}
 

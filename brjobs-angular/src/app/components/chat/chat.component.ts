@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -323,7 +323,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private chatUnreadService: ChatUnreadService,
-    private telemetry: UxTelemetryService
+    private telemetry: UxTelemetryService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -334,12 +335,13 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     this.usuarioLogado = Number(localStorage.getItem('usuario_id') || '0');
     this.carregarConversas();
-    this.chatUnreadService.refreshNow();
+    this.chatUnreadService.startPolling();
 
     this.chatUnreadService.unreadCount$
       .pipe(takeUntil(this.destroy$))
       .subscribe((count) => {
         this.naoLidas = count;
+        this.cdr.markForCheck();
       });
 
     this.route.queryParamMap
@@ -351,6 +353,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (usuarioId && usuarioId !== this.usuarioLogado) {
           this.iniciarConversaDireta(usuarioId, nome);
         }
+        this.cdr.markForCheck();
       });
 
     this.pollIntervalId = setInterval(() => {
@@ -370,6 +373,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       clearInterval(this.pollIntervalId);
       this.pollIntervalId = null;
     }
+    this.chatUnreadService.stopPolling();
 
     this.destroy$.next();
     this.destroy$.complete();
@@ -382,6 +386,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   carregarConversas(silent = false) {
     if (!silent) {
       this.isLoadingConversas = true;
+      this.cdr.markForCheck();
     }
 
     this.chatService.obterConversas()
@@ -397,9 +402,11 @@ export class ChatComponent implements OnInit, OnDestroy {
               this.conversaSelecionada = atualizada;
             }
           }
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isLoadingConversas = false;
+          this.cdr.markForCheck();
           this.handleHttpError(err, 'Não foi possível carregar suas conversas agora.');
         }
       });
@@ -408,6 +415,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   selecionarConversa(conversa: Conversa) {
     this.mensagemErro = '';
     this.conversaSelecionada = conversa;
+    this.cdr.markForCheck();
     this.carregarMensagens(conversa.contatoId);
   }
 
@@ -424,11 +432,13 @@ export class ChatComponent implements OnInit, OnDestroy {
     };
 
     this.carregarMensagens(outroUsuarioId);
+    this.cdr.markForCheck();
   }
 
   carregarMensagens(outroUsuarioId: number, silent = false) {
     if (!silent) {
       this.isLoadingMensagens = true;
+      this.cdr.markForCheck();
     }
 
     this.chatService.obterConversa(outroUsuarioId, 50)
@@ -441,9 +451,11 @@ export class ChatComponent implements OnInit, OnDestroy {
 
           this.isLoadingMensagens = false;
           this.marcarConversaComoLida(outroUsuarioId);
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isLoadingMensagens = false;
+          this.cdr.markForCheck();
           this.handleHttpError(err, 'Não foi possível carregar as mensagens desta conversa.');
         }
       });
@@ -462,6 +474,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     this.mensagemErro = '';
     this.isSending = true;
+    this.cdr.markForCheck();
 
     this.telemetry.logEvent('chat_message_send_attempt', {
       destinatarioId: outroUsuarioId,
@@ -478,6 +491,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.isSending = false;
           this.chatUnreadService.refreshNow();
           this.carregarConversas(true);
+          this.cdr.markForCheck();
           this.telemetry.logEvent('chat_message_send_success', {
             destinatarioId: outroUsuarioId
           });
@@ -496,6 +510,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           }
 
           this.isSending = false;
+          this.cdr.markForCheck();
           this.telemetry.logEvent('chat_ui_send_error', {
             destinatarioId: outroUsuarioId,
             errorCode: err?.status || 0
@@ -510,6 +525,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.conversaSelecionada = null;
     this.mensagensConversa = [];
     this.mensagemErro = '';
+    this.cdr.markForCheck();
   }
 
   private marcarConversaComoLida(outroUsuarioId: number) {
@@ -519,6 +535,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         next: () => {
           this.chatUnreadService.refreshNow();
           this.carregarConversas(true);
+          this.cdr.markForCheck();
         },
         error: () => {
           // Não interrompe a UX do chat se marcar como lida falhar.

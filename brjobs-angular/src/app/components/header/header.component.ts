@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { AccessibilityComponent } from '../accessibility/accessibility.component';
 import { CommonModule } from '@angular/common';
@@ -7,6 +7,7 @@ import { ThemeMode, ThemeService } from '../../service/theme.service';
 import { UxTelemetryService } from '../../service/ux-telemetry.service';
 import { AuthService } from '../../service/auth.service';
 import { ChatUnreadService } from '../../service/chat-unread.service';
+import { NotificationItem, NotificationService } from '../../service/notification.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -25,6 +26,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   usuarioNome: string | null = null;
   usuarioMenuAberto = false;
+  notificacoesAberto = false;
+  carregandoNotificacoes = false;
+  notificacoes: NotificationItem[] = [];
   unreadChatCount = 0;
   readonly maxChatBadge = environment.chat.headerBadgeMax;
   private destroy$ = new Subject<void>();
@@ -35,7 +39,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private themeService: ThemeService,
     private telemetry: UxTelemetryService,
     private authService: AuthService,
-    private chatUnreadService: ChatUnreadService
+    private chatUnreadService: ChatUnreadService,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -48,9 +54,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
         if (!logged) {
           this.usuarioNome = null;
           this.unreadChatCount = 0;
-        } else {
-          this.chatUnreadService.refreshNow();
         }
+        this.cdr.markForCheck();
       });
 
     this.authService.usuario$
@@ -59,12 +64,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
         if (usuario?.nome) {
           this.usuarioNome = usuario.nome;
         }
+        this.cdr.markForCheck();
       });
 
     this.chatUnreadService.unreadCount$
       .pipe(takeUntil(this.destroy$))
       .subscribe((count) => {
         this.unreadChatCount = count;
+        this.cdr.markForCheck();
       });
     
     // Observar mudanças de tema
@@ -72,12 +79,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(isDark => {
         this.isDarkTheme = isDark;
+        this.cdr.markForCheck();
       });
 
     this.themeService.themeMode$
       .pipe(takeUntil(this.destroy$))
       .subscribe(mode => {
         this.themeMode = mode;
+        this.cdr.markForCheck();
       });
     
     // Inicializar com o tema atual
@@ -89,6 +98,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.router.navigate(['/chat']);
     this.fecharMenu();
     this.fecharUsuarioMenu();
+    this.fecharNotificacoes();
   }
 
   ngOnDestroy(): void {
@@ -96,24 +106,26 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  get themeSelectValue(): 'light' | 'dark' {
+    return this.isDarkTheme ? 'dark' : 'light';
+  }
+
   /**
    * Verifica se o usuário está logado analisando o localStorage
    */
   verificarLogin(): void {
-    const token = localStorage.getItem('app_token');
-    this.isLoggedIn = !!token;
-    
-    if (this.isLoggedIn) {
-      this.usuarioNome = localStorage.getItem('usuario_nome');
-    }
+    this.isLoggedIn = this.authService.isLoggedIn();
+    this.usuarioNome = localStorage.getItem('usuario_nome');
   }
 
   toggleMenu(): void {
     this.menuAberto = !this.menuAberto;
+    this.cdr.markForCheck();
   }
 
   fecharMenu(): void {
     this.menuAberto = false;
+    this.cdr.markForCheck();
   }
 
   navegar(rota: string, label: string): void {
@@ -131,6 +143,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   toggleUsuarioMenu(): void {
     this.usuarioMenuAberto = !this.usuarioMenuAberto;
+    this.cdr.markForCheck();
   }
 
   /**
@@ -138,6 +151,32 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   fecharUsuarioMenu(): void {
     this.usuarioMenuAberto = false;
+    this.cdr.markForCheck();
+  }
+
+  toggleNotificacoes(): void {
+    this.notificacoesAberto = !this.notificacoesAberto;
+    this.fecharUsuarioMenu();
+
+    if (this.notificacoesAberto) {
+      this.carregarNotificacoes();
+    }
+    this.cdr.markForCheck();
+  }
+
+  fecharNotificacoes(): void {
+    this.notificacoesAberto = false;
+    this.cdr.markForCheck();
+  }
+
+  abrirTodasNotificacoes(): void {
+    this.router.navigate(['/notificacoes']);
+    this.fecharNotificacoes();
+    this.fecharMenu();
+  }
+
+  navegarNotificacao(): void {
+    this.fecharNotificacoes();
   }
 
   /**
@@ -167,6 +206,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (!usuarioDropdown && this.usuarioMenuAberto) {
       this.fecharUsuarioMenu();
     }
+
+    const notificationDropdown = (event.target as HTMLElement)?.closest('.chat-bell, .notification-menu');
+    if (!notificationDropdown && this.notificacoesAberto) {
+      this.fecharNotificacoes();
+    }
   }
 
   /**
@@ -183,6 +227,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.isLoggedIn = false;
     this.usuarioNome = null;
     this.usuarioMenuAberto = false;
+    this.notificacoesAberto = false;
+    this.notificacoes = [];
+    this.cdr.markForCheck();
     
     this.router.navigate(['/login']);
   }
@@ -192,13 +239,32 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   definirTema(event: Event): void {
     const target = event.target as HTMLSelectElement;
-    const nextMode = target.value as ThemeMode;
+    const nextMode = target.value as 'light' | 'dark';
     const previousMode = this.themeMode;
     this.themeService.setThemeMode(nextMode);
     this.telemetry.logEvent('theme_changed', {
       fromTheme: previousMode,
       toTheme: nextMode,
       userState: this.isLoggedIn ? 'auth' : 'anon'
+    });
+  }
+
+  private carregarNotificacoes(): void {
+    this.carregandoNotificacoes = true;
+    this.cdr.markForCheck();
+
+    this.notificationService.listRecent(5).subscribe({
+      next: (notificacoes) => {
+        this.notificacoes = notificacoes;
+        this.unreadChatCount = notificacoes.filter((item) => item.unread).length;
+        this.carregandoNotificacoes = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.notificacoes = [];
+        this.carregandoNotificacoes = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 }

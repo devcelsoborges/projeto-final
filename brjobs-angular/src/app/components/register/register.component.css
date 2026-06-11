@@ -477,17 +477,6 @@
   border-color: #0a66c2;
 }
 
-.btn-apple {
-  color: #ffffff;
-  background-color: #000000;
-  border-color: #000000;
-}
-
-.btn-apple:hover:not(:disabled) {
-  background-color: #1a1a1a;
-  border-color: #1a1a1a;
-}
-
 .signup-divider {
   display: flex;
   align-items: center;

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -30,7 +30,8 @@ export class ForgotPasswordComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private passwordResetService: PasswordResetService
+    private passwordResetService: PasswordResetService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -100,6 +101,7 @@ export class ForgotPasswordComponent implements OnInit {
     this.successMessage = null;
     this.debugCode = null;
     this.userEmail = this.emailForm.get('email')?.value;
+    this.cdr.markForCheck();
 
     this.passwordResetService.requestCode(this.userEmail).subscribe({
       next: (response) => {
@@ -107,10 +109,12 @@ export class ForgotPasswordComponent implements OnInit {
         this.debugCode = response.debugCode || null;
         this.currentStep = 'code';
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.errorMessage = this.extractErrorMessage(error, 'Erro ao solicitar recuperação de senha.');
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -128,16 +132,19 @@ export class ForgotPasswordComponent implements OnInit {
     this.errorMessage = null;
     this.successMessage = null;
     this.resetCode = this.codeForm.get('code')?.value;
+    this.cdr.markForCheck();
 
     this.passwordResetService.verifyCode(this.userEmail, this.resetCode).subscribe({
       next: () => {
         this.successMessage = 'Código verificado com sucesso! Digite sua nova senha.';
         this.currentStep = 'password';
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.errorMessage = this.extractErrorMessage(error, 'Erro ao verificar código.');
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -154,6 +161,7 @@ export class ForgotPasswordComponent implements OnInit {
     this.loading = true;
     this.errorMessage = null;
     this.successMessage = null;
+    this.cdr.markForCheck();
 
     const newPassword = this.passwordForm.get('newPassword')?.value;
 
@@ -161,10 +169,12 @@ export class ForgotPasswordComponent implements OnInit {
       next: () => {
         this.currentStep = 'success';
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.errorMessage = this.extractErrorMessage(error, 'Erro ao redefinir a senha.');
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -193,16 +203,19 @@ export class ForgotPasswordComponent implements OnInit {
     this.errorMessage = null;
     this.successMessage = null;
     this.debugCode = null;
+    this.cdr.markForCheck();
 
     this.passwordResetService.requestCode(this.userEmail).subscribe({
       next: (response) => {
         this.successMessage = response.message || 'Novo código enviado.';
         this.debugCode = response.debugCode || null;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.errorMessage = this.extractErrorMessage(error, 'Erro ao reenviar código.');
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }

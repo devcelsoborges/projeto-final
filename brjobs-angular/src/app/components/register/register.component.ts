@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule, NgForOf } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -35,7 +35,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
     private registerService: RegisterService,
     private authService: AuthService,
     private socialLoginService: SocialLoginService,
-    private cepService: CepService
+    private cepService: CepService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -287,8 +288,10 @@ export class RegisterComponent implements OnInit, OnDestroy {
           });
 
           this.errorMessage = null;
+          this.cdr.markForCheck();
         },
         error: () => {
+          this.cdr.markForCheck();
           this.errorMessage = 'Não foi possível consultar o CEP agora.';
         }
       });
@@ -346,6 +349,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     }
 
     this.loading = true;
+    this.cdr.markForCheck();
     const formValue = this.registerForm.value;
     const tipoUsuario = formValue.tipoUsuario.toUpperCase();
 
@@ -409,8 +413,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
    * Trata sucesso no registro
    */
   private handleRegistroSucesso(usuario: any): void {
-    console.log('Cadastro realizado com sucesso!', usuario);
     this.successMessage = `Bem-vindo, ${usuario.nome}! Redirecionando para o login...`;
+    this.loading = false;
+    this.cdr.markForCheck();
     
     setTimeout(() => {
       this.router.navigate(['/login']);
@@ -421,7 +426,6 @@ export class RegisterComponent implements OnInit, OnDestroy {
    * Trata erro no registro
    */
   private handleRegistroErro(error: any): void {
-    console.error('Erro ao registrar:', error);
     const backendMessage =
       error?.error?.message ||
       (typeof error?.error === 'string' ? error.error : null) ||
@@ -437,6 +441,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.errorMessage = backendMessage || 'Erro ao realizar cadastro. Tente novamente.';
     }
     this.loading = false;
+    this.cdr.markForCheck();
   }
 
   /**
@@ -533,6 +538,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   signUpWithGoogle(): void {
     this.errorMessage = null;
     this.socialLoading = true;
+    this.cdr.markForCheck();
 
     this.socialLoginService.initiateGoogleSignIn(
       (credential: string) => {
@@ -543,12 +549,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
               this.socialLoginService.storeSocialAuthTokens(response);
               this.authService.syncAuthStateFromStorage(true);
               this.successMessage = `Bem-vindo, ${response.nome}! Redirecionando...`;
+              this.socialLoading = false;
+              this.cdr.markForCheck();
               setTimeout(() => {
                 this.router.navigate(['/home']);
               }, 1500);
             },
             error: (error) => {
-              console.error('Erro ao registrar com Google:', error);
               const backendMessage =
                 error?.error?.error ||
                 error?.error?.message ||
@@ -556,15 +563,18 @@ export class RegisterComponent implements OnInit, OnDestroy {
                 error?.message;
               this.errorMessage = backendMessage || 'Erro ao registrar com Google. Tente novamente.';
               this.socialLoading = false;
+              this.cdr.markForCheck();
             }
           });
       },
       (message: string) => {
         this.errorMessage = message;
         this.socialLoading = false;
+        this.cdr.markForCheck();
       },
       () => {
         this.socialLoading = false;
+        this.cdr.markForCheck();
       }
     );
   }
@@ -575,6 +585,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   signUpWithFacebook(): void {
     this.errorMessage = null;
     this.socialLoading = true;
+    this.cdr.markForCheck();
 
     this.socialLoginService.initiateFacebookSignIn((token: string) => {
       this.socialLoginService.loginWithFacebook(token)
@@ -583,28 +594,19 @@ export class RegisterComponent implements OnInit, OnDestroy {
           next: (response) => {
             this.socialLoginService.storeSocialAuthTokens(response);
             this.successMessage = `Bem-vindo, ${response.nome}! Redirecionando...`;
+            this.socialLoading = false;
+            this.cdr.markForCheck();
             setTimeout(() => {
               this.router.navigate(['/home']);
             }, 1500);
           },
           error: (error) => {
-            console.error('Erro ao registrar com Facebook:', error);
             this.errorMessage = 'Erro ao registrar com Facebook. Tente novamente.';
             this.socialLoading = false;
+            this.cdr.markForCheck();
           }
         });
     });
   }
-
-  /**
-   * Signup via Apple
-   */
-  signUpWithApple(): void {
-    this.errorMessage = null;
-    this.socialLoading = true;
-
-    // Simular chamada ao Apple Sign In
-    this.errorMessage = 'Apple Sign In em desenvolvimento. Tente novamente em breve.';
-    this.socialLoading = false;
-  }
 }
+

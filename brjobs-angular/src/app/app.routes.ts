@@ -11,6 +11,7 @@ import { MinhasPublicacoesComponent } from './components/minhas-publicacoes/minh
 import { PublicacaoDetalheComponent } from './components/publicacoes/publicacao-detalhe.component';
 import { ChatComponent } from './components/chat/chat.component';
 import { ForgotPasswordComponent } from './components/forgot-password.component/forgot-password.component';
+import { NotificacoesComponent } from './components/notificacoes/notificacoes.component';
 import { authGuard } from './guards/auth.guard';
 //import { AcessibilidadeComponent } from './components/acessibilidade/acessibilidade.component';
 
@@ -26,6 +27,7 @@ export const routes: Routes = [
   { path: 'minhas-publicacoes', component: MinhasPublicacoesComponent, canActivate: [authGuard] },
   { path: 'publicacoes/:id', component: PublicacaoDetalheComponent },
   { path: 'chat', component: ChatComponent, canActivate: [authGuard] },
+  { path: 'notificacoes', component: NotificacoesComponent, canActivate: [authGuard] },
   { path: 'sobre', component: SobreComponent },
   { path: 'contato', component: ContatoComponent },
   // { path: 'acessibilidade', component: AcessibilidadeComponent },

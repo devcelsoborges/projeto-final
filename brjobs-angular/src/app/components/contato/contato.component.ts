@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
@@ -14,7 +14,10 @@ export class ContatoComponent {
   form: FormGroup;
   enviado = false;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
+  ) {
     this.form = this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
@@ -27,10 +30,12 @@ export class ContatoComponent {
     if (this.form.valid) {
       this.enviado = true;
       this.form.reset();
+      this.cdr.markForCheck();
       
       // Resetar a mensagem após 3 segundos
       setTimeout(() => {
         this.enviado = false;
+        this.cdr.markForCheck();
       }, 3000);
     }
   }

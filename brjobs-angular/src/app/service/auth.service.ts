@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap, catchError } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, BehaviorSubject, tap, catchError, map, of, switchMap } from 'rxjs';
 import { throwError } from 'rxjs';
-
+import { environment } from '../environments/environment';
 interface LoginRequest {
   email: string;
   senha: string;
 }
 
-interface LoginResponse {
+interface CsrfResponse {
+  headerName: string;
   token: string;
-  message?: string;
 }
 
-interface UsuarioDTO {
+export interface UsuarioDTO {
   id: number;
   nome: string;
   email: string;
@@ -40,157 +40,194 @@ interface UsuarioDTO {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8080/api/auth';
-  private tokenSubject = new BehaviorSubject<string | null>(this.getStoredToken());
+  private apiUrl = `${environment.apiUrl}/api/v1/auth`;
+  private tokenSubject = new BehaviorSubject<string | null>(null);
   public token$ = this.tokenSubject.asObservable();
 
   private usuarioSubject = new BehaviorSubject<UsuarioDTO | null>(null);
   public usuario$ = this.usuarioSubject.asObservable();
 
-  private isLoggedInSubject = new BehaviorSubject<boolean>(!!this.getStoredToken());
+  private isLoggedInSubject = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
 
   constructor(private http: HttpClient) {
     this.syncAuthStateFromStorage(true);
   }
 
-  /**
-   * Realiza login com email e senha
-   */
-  login(email: string, senha: string): Observable<LoginResponse> {
+  login(email: string, senha: string): Observable<UsuarioDTO> {
     const loginRequest: LoginRequest = { email, senha };
-    
-    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, loginRequest)
+
+    return this.ensureCsrf().pipe(
+      switchMap((csrf) => this.http.post<UsuarioDTO>(`${this.apiUrl}/login`, loginRequest, {
+        withCredentials: true,
+        headers: this.csrfHeaders(csrf)
+      }))
+    ).pipe(
+      tap((usuario) => this.applyAuthenticatedUser(usuario)),
+      catchError((error) => throwError(() => error))
+    );
+  }
+
+  obterUsuarioAutenticado(silent = false): Observable<UsuarioDTO> {
+    return this.http.get<UsuarioDTO>(`${this.apiUrl}/me`, { withCredentials: true })
       .pipe(
-        tap(response => {
-          if (response.token) {
-            this.setToken(response.token);
-            // Carregar dados do usuário após login bem-sucedido
-            this.obterUsuarioAutenticado().subscribe();
-          }
-        }),
+        tap((usuario) => this.applyAuthenticatedUser(usuario)),
         catchError(error => {
-          console.error('Erro ao fazer login:', error);
+          this.clearAuthState(error?.status === 401 || error?.status === 403);
           return throwError(() => error);
         })
       );
   }
 
-  /**
-   * Obtém os dados do usuário autenticado
-   */
-  obterUsuarioAutenticado(): Observable<UsuarioDTO> {
-    return this.http.get<UsuarioDTO>(`${this.apiUrl}/me`)
-      .pipe(
-        tap(usuario => {
-          this.usuarioSubject.next(usuario);
-          this.persistUsuarioStorage(usuario);
-        }),
-        catchError(error => {
-          console.error('Erro ao obter usuário autenticado:', error);
-          return throwError(() => error);
-        })
-      );
-  }
-
-  /**
-   * Valida se o token atual é válido
-   */
   validarToken(): Observable<void> {
-    return this.http.get<void>(`${this.apiUrl}/validate`)
-      .pipe(
-        catchError(error => {
-          console.error('Token inválido:', error);
-          this.logout();
-          return throwError(() => error);
-        })
-      );
+    return this.obterUsuarioAutenticado().pipe(map(() => undefined));
   }
 
-  /**
-   * Realiza logout e limpa dados armazenados
-   */
+  refreshSession(): Observable<void> {
+    return this.ensureCsrf().pipe(
+      switchMap((csrf) => this.http.post<void>(`${this.apiUrl}/refresh`, {}, {
+        withCredentials: true,
+        headers: this.csrfHeaders(csrf)
+      }))
+    );
+  }
+
   logout(): void {
-    // Atualiza a UI imediatamente.
-    this.clearToken();
+    this.clearAuthState(true);
 
-    // Notifica o backend em segundo plano.
-    this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
-      error: (error) => {
-        console.error('Erro ao fazer logout:', error);
-      }
-    });
+    this.ensureCsrf().pipe(
+      switchMap((csrf) => this.http.post(`${this.apiUrl}/logout`, {}, {
+        withCredentials: true,
+        headers: this.csrfHeaders(csrf)
+      }))
+    ).subscribe({ error: () => undefined });
   }
 
-  /**
-   * Define o token JWT e atualiza states
-   */
-  private setToken(token: string): void {
-    localStorage.setItem('auth_token', token);
-    this.tokenSubject.next(token);
-    this.isLoggedInSubject.next(true);
-  }
-
-  /**
-   * Obtém o token armazenado
-   */
   getStoredToken(): string | null {
-    return localStorage.getItem('auth_token')
-      || localStorage.getItem('token')
-      || localStorage.getItem('app_token');
+    return null;
   }
 
-  /**
-   * Retorna o token atual
-   */
   getToken(): string | null {
-    const tokenAtual = this.tokenSubject.value;
-    if (tokenAtual) {
-      return tokenAtual;
-    }
-
-    const tokenPersistido = this.getStoredToken();
-    if (tokenPersistido) {
-      this.tokenSubject.next(tokenPersistido);
-      this.isLoggedInSubject.next(true);
-    }
-
-    return tokenPersistido;
+    return null;
   }
 
-  /**
-   * Limpa o token e atualiza states
-   */
-  private clearToken(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('app_token');
-    this.clearUsuarioStorage();
-    this.tokenSubject.next(null);
-    this.usuarioSubject.next(null);
-    this.isLoggedInSubject.next(false);
-  }
-
-  /**
-   * Verifica se o usuário está autenticado
-   */
   isLoggedIn(): boolean {
-    return !!this.getStoredToken();
+    return this.isLoggedInSubject.value;
   }
 
-  /**
-   * Obtém o usuário atual armazenado
-   */
   getUsuarioAtual(): UsuarioDTO | null {
     return this.usuarioSubject.value;
   }
 
-  /**
-   * Define o usuário atual
-   */
   setUsuarioAtual(usuario: UsuarioDTO): void {
+    this.applyAuthenticatedUser(usuario);
+  }
+
+  syncAuthStateFromStorage(loadUser = true): void {
+    this.removeLegacyTokens();
+
+    if (!loadUser) {
+      this.hydrateUserFromStorage();
+      return;
+    }
+
+    if (!this.hasStoredUserHint()) {
+      this.clearAuthState(false);
+      return;
+    }
+
+    this.obterUsuarioAutenticado(true).subscribe({
+      error: (error) => {
+        if (error?.status === 401 || error?.status === 403) {
+          this.clearAuthState(true);
+        } else {
+          this.clearAuthState(false);
+        }
+      }
+    });
+  }
+
+  markAuthenticated(usuario?: UsuarioDTO): void {
+    if (usuario) {
+      this.applyAuthenticatedUser(usuario);
+      return;
+    }
+
+    this.obterUsuarioAutenticado().subscribe({
+      error: () => this.clearAuthState(false)
+    });
+  }
+
+  private ensureCsrf(): Observable<CsrfResponse> {
+    return this.http.get<CsrfResponse>(`${this.apiUrl}/csrf`, { withCredentials: true }).pipe(
+      tap((csrf) => {
+        if (csrf?.token) {
+          sessionStorage.setItem('XSRF-TOKEN', csrf.token);
+        }
+      })
+    );
+  }
+
+  private csrfHeaders(csrf: CsrfResponse): HttpHeaders {
+    return new HttpHeaders({ [csrf.headerName || 'X-XSRF-TOKEN']: csrf.token });
+  }
+
+  private applyAuthenticatedUser(usuario: UsuarioDTO): void {
+    this.removeLegacyTokens();
     this.usuarioSubject.next(usuario);
+    this.isLoggedInSubject.next(true);
     this.persistUsuarioStorage(usuario);
+  }
+
+  private clearAuthState(clearStorage: boolean): void {
+    this.removeLegacyTokens();
+    this.tokenSubject.next(null);
+    this.usuarioSubject.next(null);
+    this.isLoggedInSubject.next(false);
+
+    if (clearStorage) {
+      this.clearUsuarioStorage();
+    }
+  }
+
+  private hydrateUserFromStorage(): Observable<UsuarioDTO | null> {
+    const id = localStorage.getItem('usuario_id');
+    const email = localStorage.getItem('usuario_email');
+
+    if (!id || !email) {
+      this.clearAuthState(false);
+      return of(null);
+    }
+
+    const usuario = {
+      id: Number(id),
+      nome: localStorage.getItem('usuario_nome') || '',
+      email,
+      telefone: localStorage.getItem('usuario_telefone') || '',
+      cpf: localStorage.getItem('usuario_cpf') || '',
+      genero: localStorage.getItem('usuario_genero') || '',
+      dataNascimento: localStorage.getItem('usuario_dataNascimento') || '',
+      endereco: localStorage.getItem('usuario_endereco') || '',
+      cep: localStorage.getItem('usuario_cep') || '',
+      rua: localStorage.getItem('usuario_rua') || '',
+      bairro: localStorage.getItem('usuario_bairro') || '',
+      cidade: localStorage.getItem('usuario_cidade') || '',
+      estado: localStorage.getItem('usuario_estado') || '',
+      numero: localStorage.getItem('usuario_numero') || '',
+      complemento: localStorage.getItem('usuario_complemento') || '',
+      bio: localStorage.getItem('usuario_bio') || '',
+      tipoUsuario: localStorage.getItem('usuario_tipo') || '',
+      ativo: true,
+      dataCadastro: localStorage.getItem('usuario_dataCadastro') || undefined
+    };
+
+    this.usuarioSubject.next(usuario);
+    this.isLoggedInSubject.next(true);
+    return of(usuario);
+  }
+
+  private hasStoredUserHint(): boolean {
+    return !!localStorage.getItem('usuario_id') && !!localStorage.getItem('usuario_email');
   }
 
   private persistUsuarioStorage(usuario: UsuarioDTO): void {
@@ -217,46 +254,35 @@ export class AuthService {
   }
 
   private clearUsuarioStorage(): void {
-    localStorage.removeItem('usuario_id');
-    localStorage.removeItem('usuario_nome');
-    localStorage.removeItem('usuario_email');
-    localStorage.removeItem('usuario_telefone');
-    localStorage.removeItem('usuario_cpf');
-    localStorage.removeItem('usuario_genero');
-    localStorage.removeItem('usuario_dataNascimento');
-    localStorage.removeItem('usuario_endereco');
-    localStorage.removeItem('usuario_cep');
-    localStorage.removeItem('usuario_rua');
-    localStorage.removeItem('usuario_numero');
-    localStorage.removeItem('usuario_complemento');
-    localStorage.removeItem('usuario_bairro');
-    localStorage.removeItem('usuario_cidade');
-    localStorage.removeItem('usuario_estado');
-    localStorage.removeItem('usuario_bio');
-    localStorage.removeItem('usuario_tipo');
-    localStorage.removeItem('usuario_dataCadastro');
+    [
+      'usuario_id',
+      'usuario_nome',
+      'usuario_email',
+      'usuario_telefone',
+      'usuario_cpf',
+      'usuario_genero',
+      'usuario_dataNascimento',
+      'usuario_endereco',
+      'usuario_cep',
+      'usuario_rua',
+      'usuario_numero',
+      'usuario_complemento',
+      'usuario_bairro',
+      'usuario_cidade',
+      'usuario_estado',
+      'usuario_bio',
+      'usuario_tipo',
+      'usuario_dataCadastro'
+    ].forEach((key) => localStorage.removeItem(key));
   }
 
-  /**
-   * Sincroniza estado reativo com o token armazenado (útil após login social).
-   */
-  syncAuthStateFromStorage(loadUser = true): void {
-    const token = this.getStoredToken();
-
-    this.tokenSubject.next(token);
-    this.isLoggedInSubject.next(!!token);
-
-    if (!token) {
-      this.usuarioSubject.next(null);
-      return;
-    }
-
-    if (loadUser) {
-      this.obterUsuarioAutenticado().subscribe({
-        error: () => {
-          // Evita quebrar UI quando /auth/me falha temporariamente.
-        }
-      });
-    }
+  private removeLegacyTokens(): void {
+    [
+      'auth_token',
+      'token',
+      'app_token',
+      'refresh_token',
+      'refreshToken'
+    ].forEach((key) => localStorage.removeItem(key));
   }
 }

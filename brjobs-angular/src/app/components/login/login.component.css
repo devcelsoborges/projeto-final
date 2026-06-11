@@ -419,22 +419,6 @@
     height: 20px;
 }
 
-.btn-apple {
-    color: #ffffff;
-    background-color: #000000;
-    border-color: #000000;
-}
-
-.btn-apple:hover:not(:disabled) {
-    background-color: #1a1a1a;
-    border-color: #1a1a1a;
-}
-
-.btn-apple svg {
-    width: 20px;
-    height: 20px;
-}
-
 @media (max-width: 500px) {
     .social-login {
         flex-wrap: wrap;

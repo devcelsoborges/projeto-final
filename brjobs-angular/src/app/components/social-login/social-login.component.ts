@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, Input } from '@angular/core';
+﻿import { ChangeDetectorRef, Component, Output, EventEmitter, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SocialAuthService, AuthResponseDTO } from '../../service/social-auth.service';
 import { Router } from '@angular/router';
@@ -37,18 +37,6 @@ import { Router } from '@angular/router';
             <path fill="currentColor" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
           </svg>
           <span>Facebook</span>
-        </button>
-
-        <!-- Apple Login -->
-        <button 
-          class="btn-social btn-apple"
-          (click)="loginApple()"
-          [disabled]="carregando"
-          title="Login com Apple">
-          <svg class="icon" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.48-2.53 3.2l-.42-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-          </svg>
-          <span>Apple</span>
         </button>
       </div>
 
@@ -155,15 +143,6 @@ import { Router } from '@angular/router';
     .btn-facebook:hover:not(:disabled) {
       background: #f0f2ff;
     }
-
-    .btn-apple {
-      color: #000;
-    }
-
-    .btn-apple:hover:not(:disabled) {
-      background: #f5f5f5;
-    }
-
     @media (max-width: 600px) {
       .social-buttons {
         grid-template-columns: repeat(3, 1fr);
@@ -203,12 +182,14 @@ export class SocialLoginComponent {
 
   constructor(
     private socialAuthService: SocialAuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async loginGoogle() {
     this.carregando = true;
     this.erro = '';
+    this.cdr.markForCheck();
 
     try {
       const response = await this.socialAuthService.loginComGoogle();
@@ -217,12 +198,14 @@ export class SocialLoginComponent {
       this.erro = 'Erro ao fazer login com Google';
       this.loginErro.emit(this.erro);
       this.carregando = false;
+      this.cdr.markForCheck();
     }
   }
 
   async loginFacebook() {
     this.carregando = true;
     this.erro = '';
+    this.cdr.markForCheck();
 
     try {
       const response = await this.socialAuthService.loginComFacebook();
@@ -231,39 +214,24 @@ export class SocialLoginComponent {
       this.erro = 'Erro ao fazer login com Facebook';
       this.loginErro.emit(this.erro);
       this.carregando = false;
+      this.cdr.markForCheck();
     }
   }
-
-  async loginApple() {
-    this.carregando = true;
-    this.erro = '';
-
-    try {
-      const response = await this.socialAuthService.loginComApple();
-      this.processarLogin(response);
-    } catch (error) {
-      this.erro = 'Erro ao fazer login com Apple';
-      this.loginErro.emit(this.erro);
-      this.carregando = false;
-    }
-  }
-
   private processarLogin(response: AuthResponseDTO) {
     if (response.error) {
       this.erro = response.error;
       this.loginErro.emit(this.erro);
       this.carregando = false;
+      this.cdr.markForCheck();
       return;
     }
 
     // Armazena tokens
-    localStorage.setItem('auth_token', response.token);
-    localStorage.setItem('token', response.token);
-    localStorage.setItem('refreshToken', response.refreshToken);
-    localStorage.setItem('usuarioId', response.usuarioId.toString());
+    localStorage.setItem('usuarioId', String(response.id ?? response.usuarioId ?? ''));
 
     this.loginSucesso.emit(response);
     this.carregando = false;
+    this.cdr.markForCheck();
 
     // Redireciona para home
     if (this.redirecionar) {
@@ -271,3 +239,5 @@ export class SocialLoginComponent {
     }
   }
 }
+
+

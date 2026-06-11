@@ -16,11 +16,8 @@ export class UxTelemetryService {
       return;
     }
 
-    // Placeholder estruturado para futura integração com provider de analytics.
-    console.info('[UX_TELEMETRY]', {
-      eventName,
-      ...payload,
-      timestamp: new Date().toISOString()
-    });
+    // Placeholder for a future analytics provider.
+    void eventName;
+    void payload;
   }
 }

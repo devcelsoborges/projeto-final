@@ -15,26 +15,47 @@ export class JwtInterceptor implements HttpInterceptor {
   constructor(private router: Router) { }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    const token = this.getStoredToken();
+    const requestWithCookies = this.shouldUseCredentials(request)
+      ? request.clone({
+          withCredentials: true,
+          setHeaders: this.csrfHeaders(request)
+        })
+      : request;
 
-    if (token && !this.isPublicEndpoint(request)) {
-      request = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-    }
-
-    return next.handle(request).pipe(
+    return next.handle(requestWithCookies).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 && !this.isPublicEndpoint(request)) {
-          this.clearStoredAuth();
+        if (error.status === 401 && !this.isPublicEndpoint(requestWithCookies)) {
+          this.clearLegacyAuth();
           this.router.navigate(['/login']);
         }
 
         return throwError(() => error);
       })
     );
+  }
+
+  private shouldUseCredentials(request: HttpRequest<unknown>): boolean {
+    return request.url.includes('/api/');
+  }
+
+  private csrfHeaders(request: HttpRequest<unknown>): Record<string, string> {
+    const method = request.method.toUpperCase();
+    if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+      return {};
+    }
+
+    const token = this.readCookie('XSRF-TOKEN') || sessionStorage.getItem('XSRF-TOKEN');
+    return token ? { 'X-XSRF-TOKEN': token } : {};
+  }
+
+  private readCookie(name: string): string | null {
+    const prefix = `${name}=`;
+    const value = document.cookie
+      .split(';')
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith(prefix));
+
+    return value ? decodeURIComponent(value.substring(prefix.length)) : null;
   }
 
   private isPublicEndpoint(request: HttpRequest<unknown>): boolean {
@@ -49,12 +70,12 @@ export class JwtInterceptor implements HttpInterceptor {
       }
     }
 
-    if (url.includes('/api/auth/login') ||
-        url.includes('/api/auth/social-login') ||
-        url.includes('/api/v1/auth/') ||
+    if (url.includes('/api/v1/auth/login') ||
+        url.includes('/api/v1/auth/refresh') ||
+        url.includes('/api/v1/auth/social/google') ||
+        url.includes('/api/v1/auth/social/facebook') ||
         url.includes('/api/usuarios/contratante') ||
-        url.includes('/api/usuarios/prestador') ||
-        url.includes('/api/auth/logout')) {
+        url.includes('/api/usuarios/prestador')) {
       return true;
     }
 
@@ -80,15 +101,13 @@ export class JwtInterceptor implements HttpInterceptor {
     return false;
   }
 
-  private getStoredToken(): string | null {
-    return localStorage.getItem('auth_token')
-      || localStorage.getItem('token')
-      || localStorage.getItem('app_token');
-  }
-
-  private clearStoredAuth(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('app_token');
+  private clearLegacyAuth(): void {
+    [
+      'auth_token',
+      'token',
+      'app_token',
+      'refresh_token',
+      'refreshToken'
+    ].forEach((key) => localStorage.removeItem(key));
   }
 }

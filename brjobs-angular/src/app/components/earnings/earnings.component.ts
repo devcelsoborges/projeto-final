@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GanhosService, RelatorioGanhos } from '../../service/ganhos.service';
@@ -195,7 +195,10 @@ export class EarningsComponent implements OnInit {
   erro = '';
   mesSelecionado = 'corrente';
 
-  constructor(private ganhosService: GanhosService) {}
+  constructor(
+    private ganhosService: GanhosService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     this.carregarRelatorio();
@@ -204,16 +207,19 @@ export class EarningsComponent implements OnInit {
   carregarRelatorio() {
     this.carregando = true;
     this.erro = '';
+    this.cdr.markForCheck();
 
     if (this.mesSelecionado === 'corrente') {
       this.ganhosService.gerarCorrente().subscribe({
         next: (rel) => {
           this.relatorio = rel;
           this.carregando = false;
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.erro = 'Erro ao carregar relatório de ganhos';
           this.carregando = false;
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -222,10 +228,12 @@ export class EarningsComponent implements OnInit {
         next: (rel) => {
           this.relatorio = rel;
           this.carregando = false;
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.erro = 'Erro ao carregar relatório de ganhos';
           this.carregando = false;
+          this.cdr.markForCheck();
         }
       });
     }

@@ -2,12 +2,17 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 
+interface CsrfResponse {
+  headerName: string;
+  token: string;
+}
+
 export interface SocialAuthResponse {
-  accessToken: string;
-  refreshToken?: string;
-  usuarioId: number;
+  id: number;
+  usuarioId?: number;
   email: string;
   nome: string;
   tipoUsuario?: string;
@@ -17,7 +22,7 @@ export interface SocialAuthResponse {
   providedIn: 'root'
 })
 export class SocialLoginService {
-  private apiUrl = 'http://localhost:8080/api/auth/social-login';
+  private apiUrl = `${environment.apiUrl}/api/v1/auth/social`;
   private googleClientId = environment.oauth.google.clientId;
   private facebookAppId = environment.oauth.facebook.appId;
 
@@ -38,15 +43,12 @@ export class SocialLoginService {
       script.id = 'google-script';
       script.src = 'https://accounts.google.com/gsi/client';
       script.onload = () => {
-        console.log('✅ Google Sign-In SDK carregado');
-        // @ts-ignore
+// @ts-ignore
         if (window.google && window.google.accounts) {
-          console.log('✅ Google accounts API disponível');
-        }
+}
       };
       script.onerror = () => {
-        console.error('❌ Erro ao carregar Google Sign-In SDK');
-      };
+};
       window.document.head.appendChild(script);
     }
 
@@ -61,8 +63,7 @@ export class SocialLoginService {
             xfbml: true,
             version: 'v18.0'
           });
-          console.log('✅ Facebook SDK inicializado');
-        };
+};
       `;
       window.document.head.appendChild(script);
 
@@ -72,24 +73,22 @@ export class SocialLoginService {
       fbScript.defer = true;
       fbScript.crossOrigin = 'anonymous';
       fbScript.onerror = () => {
-        console.error('❌ Erro ao carregar Facebook SDK');
-      };
+};
       window.document.body.appendChild(fbScript);
     }
-
-    console.log('📱 OAuth Scripts carregados. Google Client ID:', 
-      this.googleClientId === 'YOUR_GOOGLE_CLIENT_ID' ? '⚠️ NÃO CONFIGURADO' : '✅ Configurado');
-  }
+}
 
   /**
    * Login via Google
    */
   loginWithGoogle(token: string): Observable<SocialAuthResponse> {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    return this.http.post<SocialAuthResponse>(
-      `${this.apiUrl}/google`,
-      { token },
-      { headers }
+    return this.ensureCsrf().pipe(
+      switchMap((csrf) => this.http.post<SocialAuthResponse>(
+        `${this.apiUrl}/google`,
+        { token },
+        { headers: headers.set(csrf.headerName || 'X-XSRF-TOKEN', csrf.token), withCredentials: true }
+      ))
     );
   }
 
@@ -98,22 +97,23 @@ export class SocialLoginService {
    */
   loginWithFacebook(token: string): Observable<SocialAuthResponse> {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    return this.http.post<SocialAuthResponse>(
-      `${this.apiUrl}/facebook`,
-      { token },
-      { headers }
+    return this.ensureCsrf().pipe(
+      switchMap((csrf) => this.http.post<SocialAuthResponse>(
+        `${this.apiUrl}/facebook`,
+        { token },
+        { headers: headers.set(csrf.headerName || 'X-XSRF-TOKEN', csrf.token), withCredentials: true }
+      ))
     );
   }
 
-  /**
-   * Login via Apple
-   */
-  loginWithApple(token: string, identityToken?: string): Observable<SocialAuthResponse> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    return this.http.post<SocialAuthResponse>(
-      `${this.apiUrl}/apple`,
-      { token, identityToken },
-      { headers }
+  private ensureCsrf(): Observable<CsrfResponse> {
+    return this.http.get<CsrfResponse>(`${environment.apiUrl}/api/v1/auth/csrf`, { withCredentials: true }).pipe(
+      switchMap((csrf) => {
+        if (csrf?.token) {
+          sessionStorage.setItem('XSRF-TOKEN', csrf.token);
+        }
+        return [csrf];
+      })
     );
   }
 
@@ -128,8 +128,7 @@ export class SocialLoginService {
     // @ts-ignore
     if (!window.google || !window.google.accounts) {
       const message = 'Google Sign-In SDK nao carregado.';
-      console.error(message, 'googleClientId:', this.googleClientId);
-      if (onError) {
+if (onError) {
         onError(message);
       }
       return;
@@ -151,8 +150,7 @@ export class SocialLoginService {
 
             const description = response?.error_description || response?.error || 'sem detalhes';
             const message = `Google OAuth nao retornou access token: ${description}`;
-            console.error(message, response);
-            if (onError) {
+if (onError) {
               onError(message);
             }
           },
@@ -174,8 +172,7 @@ export class SocialLoginService {
             }
 
             const message = `Falha no popup do Google OAuth: ${detail}`;
-            console.error(message, error);
-            if (onError) {
+if (onError) {
               onError(message);
             }
           }
@@ -184,8 +181,7 @@ export class SocialLoginService {
         tokenClient.requestAccessToken({ prompt: 'consent' });
         return;
       } catch (error) {
-        console.warn('Falha no fluxo OAuth2 popup. Tentando fallback ID token...', error);
-      }
+}
     }
 
     // @ts-ignore
@@ -198,15 +194,13 @@ export class SocialLoginService {
         }
 
         const message = 'Google nao retornou credencial.';
-        console.error(message, response);
-        if (onError) {
+if (onError) {
           onError(message);
         }
       },
       error_callback: () => {
         const message = 'Erro ao inicializar o Google Sign-In.';
-        console.error(message);
-        if (onError) {
+if (onError) {
           onError(message);
         }
       }
@@ -218,8 +212,7 @@ export class SocialLoginService {
         if (notification?.isNotDisplayed?.()) {
           const reason = notification.getNotDisplayedReason?.() || 'motivo desconhecido';
           const message = `Google Sign-In nao foi exibido neste navegador: ${reason}`;
-          console.warn(message, notification);
-          if (onError) {
+if (onError) {
             onError(message);
           }
         }
@@ -227,16 +220,14 @@ export class SocialLoginService {
         if (notification?.isSkippedMoment?.()) {
           const reason = notification.getSkippedReason?.() || 'motivo desconhecido';
           const message = `Google Sign-In foi ignorado ou bloqueado: ${reason}`;
-          console.warn(message, notification);
-          if (onError) {
+if (onError) {
             onError(message);
           }
         }
       });
     } catch (error) {
       const message = 'Falha ao abrir o prompt do Google Sign-In.';
-      console.error(message, error);
-      if (onError) {
+if (onError) {
         onError(message);
       }
     }
@@ -266,8 +257,7 @@ export class SocialLoginService {
       // JWT tem 3 partes separadas por ponto: header.payload.signature
       const parts = token.split('.');
       if (parts.length !== 3) {
-        console.error('Token inválido');
-        return null;
+return null;
       }
 
       // Decodificar payload (segunda parte)
@@ -275,12 +265,9 @@ export class SocialLoginService {
       // Adicionar padding se necessário
       const padded = payload + '='.repeat((4 - payload.length % 4) % 4);
       const decoded = atob(padded);
-      
-      console.log('[Google Token Decoded]', decoded);
-      return JSON.parse(decoded);
+return JSON.parse(decoded);
     } catch (error) {
-      console.error('Erro ao decodificar Google token:', error);
-      return null;
+return null;
     }
   }
 
@@ -288,12 +275,13 @@ export class SocialLoginService {
    * Armazena tokens e dados do usuário após autenticação social
    */
   storeSocialAuthTokens(response: SocialAuthResponse): void {
-    localStorage.setItem('auth_token', response.accessToken);
-    localStorage.setItem('app_token', response.accessToken);
-    if (response.refreshToken) {
-      localStorage.setItem('refresh_token', response.refreshToken);
-    }
-    localStorage.setItem('usuario_id', response.usuarioId.toString());
+    const usuarioId = response.id ?? response.usuarioId;
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('app_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('refreshToken');
+    localStorage.setItem('usuario_id', String(usuarioId ?? ''));
     localStorage.setItem('usuario_email', response.email);
     localStorage.setItem('usuario_nome', response.nome);
   }

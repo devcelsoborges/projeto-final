@@ -15,10 +15,10 @@
     <!-- Abas do usuário logado -->
     <ng-container *ngIf="isLoggedIn">
       <a routerLink="/profile" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/profile', 'nav_perfil')">Perfil</a>
-      <a routerLink="/minhas-publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/minhas-publicacoes', 'nav_minhas_publicacoes')">Minhas Publicações</a>
+      <a routerLink="/minhas-publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/minhas-publicacoes', 'nav_minhas_publicacoes')">Minhas publicações</a>
     </ng-container>
 
-    <a routerLink="/publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/publicacoes', 'nav_publicacoes')">Publicar serviço</a>
+    <a routerLink="/publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/publicacoes', 'nav_publicacoes')">Publicar</a>
 
     <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/sobre', 'nav_sobre')">Sobre nós</a>
     <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/contato', 'nav_contato')">Contato</a>
@@ -29,8 +29,7 @@
 
   <label class="theme-switcher" aria-label="Selecionar tema da interface">
     <span class="sr-only">Tema</span>
-    <select class="theme-select" [value]="themeMode" (change)="definirTema($event)">
-      <option value="system">Sistema</option>
+    <select class="theme-select" [value]="themeSelectValue" (change)="definirTema($event)">
       <option value="light">Claro</option>
       <option value="dark">Escuro</option>
     </select>
@@ -39,12 +38,43 @@
   <button
     *ngIf="isLoggedIn"
     class="chat-bell"
-    (click)="irParaChat()"
-    aria-label="Abrir chat"
+    (click)="toggleNotificacoes()"
+    aria-label="Abrir notificações"
+    [attr.aria-expanded]="notificacoesAberto"
   >
     <span class="bell-icon">🔔</span>
     <span *ngIf="unreadChatCount > 0" class="bell-badge">{{ unreadChatCount > maxChatBadge ? maxChatBadge + '+' : unreadChatCount }}</span>
   </button>
+
+  <div *ngIf="notificacoesAberto" class="notification-menu">
+    <div class="notification-title">Notificações</div>
+
+    <div *ngIf="carregandoNotificacoes" class="notification-empty">
+      Carregando...
+    </div>
+
+    <ng-container *ngIf="!carregandoNotificacoes">
+      <a
+        *ngFor="let notificacao of notificacoes"
+        class="notification-item"
+        [class.unread]="notificacao.unread"
+        [routerLink]="notificacao.path"
+        [queryParams]="notificacao.queryParams"
+        (click)="navegarNotificacao()"
+      >
+        <strong>{{ notificacao.title }}</strong>
+        <span>{{ notificacao.message }}</span>
+      </a>
+
+      <div *ngIf="notificacoes.length === 0" class="notification-empty">
+        Nenhuma notificação.
+      </div>
+    </ng-container>
+
+    <button type="button" class="notification-all" (click)="abrirTodasNotificacoes()">
+      Abrir todas as notificações
+    </button>
+  </div>
 
   <!-- Dropdown do usuário (lado direito) -->
   <ng-container *ngIf="isLoggedIn">
@@ -96,8 +126,9 @@
   <!-- Abas do usuário logado -->
   <ng-container *ngIf="isLoggedIn">
     <a routerLink="/profile" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/profile', 'mobile_nav_perfil')">Perfil</a>
-    <a routerLink="/minhas-publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/minhas-publicacoes', 'mobile_nav_minhas_publicacoes')">Minhas Publicações</a>
+    <a routerLink="/minhas-publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/minhas-publicacoes', 'mobile_nav_minhas_publicacoes')">Minhas publicações</a>
 
+    <a (click)="abrirTodasNotificacoes()">Notificações</a>
     <a (click)="irParaChat()" class="chat-mobile-link">
       Chat
       <span *ngIf="unreadChatCount > 0" class="mobile-chat-badge">{{ unreadChatCount > maxChatBadge ? maxChatBadge + '+' : unreadChatCount }}</span>
@@ -107,7 +138,7 @@
     <button class="btn-logout" (click)="logout()">Sair</button>
   </ng-container>
 
-  <a routerLink="/publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/publicacoes', 'mobile_nav_publicacoes')">Publicar serviço</a>
+  <a routerLink="/publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/publicacoes', 'mobile_nav_publicacoes')">Publicar</a>
 
   <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/sobre', 'mobile_nav_sobre')">Sobre nós</a>
   <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/contato', 'mobile_nav_contato')">Contato</a>

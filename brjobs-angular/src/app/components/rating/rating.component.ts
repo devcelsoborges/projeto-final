@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { AvaliacaoService } from "../../service/avaliacao.service";
@@ -212,7 +212,10 @@ export class RatingComponent {
   sucesso = false;
   erro = "";
 
-  constructor(private avaliacaoService: AvaliacaoService) {}
+  constructor(
+    private avaliacaoService: AvaliacaoService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   selecionarNota(novaNota: number): void {
     this.nota = this.nota === novaNota ? 0 : novaNota;
@@ -229,6 +232,7 @@ export class RatingComponent {
     this.enviando = true;
     this.erro = "";
     this.sucesso = false;
+    this.cdr.markForCheck();
 
     const comentario = this.comentario.trim();
 
@@ -243,14 +247,17 @@ export class RatingComponent {
         this.nota = 0;
         this.comentario = "";
         this.enviando = false;
+        this.cdr.markForCheck();
         setTimeout(() => {
           this.sucesso = false;
           this.avaliacaoEnviada.emit();
+          this.cdr.markForCheck();
         }, 2000);
       },
       error: (err) => {
         this.erro = err.error?.message || "Erro ao enviar avaliação";
         this.enviando = false;
+        this.cdr.markForCheck();
       }
     });
   }

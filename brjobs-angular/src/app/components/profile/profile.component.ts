@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -84,7 +84,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private profileStateService: ProfileStateService,
     private cepService: CepService,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -96,6 +97,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(isEditing => {
         this.isEditing = isEditing;
+        this.cdr.markForCheck();
       });
   }
 
@@ -110,7 +112,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private initializeForms(): void {
     this.profileForm = this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
+      email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
       telefone: ['', [Validators.required, this.telefoneValidator]],
       cep: ['', [Validators.required, this.cepValidator]],
       rua: ['', [Validators.required]],
@@ -242,10 +244,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
       }
 
       this.isLoading = false;
+      this.cdr.markForCheck();
     } catch (error) {
-      console.error('Erro ao carregar perfil:', error);
       this.errorMessage = 'Erro ao carregar perfil. Tente novamente.';
       this.isLoading = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -301,8 +304,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     this.errorMessage = null;
+    this.cdr.markForCheck();
 
-    const formData = this.profileForm.value;
+    const formData = this.profileForm.getRawValue();
     const enderecoCompleto = this.montarEnderecoCompleto(formData);
     const dataNascimentoIso = this.toIsoDate(formData.dataNascimento);
 
@@ -367,21 +371,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
           // Recarrega o perfil para garantir que os dados estão sincronizados
           this.successMessage = 'Perfil atualizado com sucesso!';
           this.isLoading = false;
+          this.cdr.markForCheck();
 
           // Sincroniza com o serviço de estado e volta para visualização
           this.profileStateService.resetToView();
 
           setTimeout(() => {
             this.successMessage = null;
+            this.cdr.markForCheck();
           }, 3000);
         },
         error: (error) => {
-          console.error('Erro ao salvar perfil no backend:', error);
-          console.error('Status:', error?.status);
-          console.error('Mensagem:', error?.error?.message || error?.message);
           const errorMsg = error?.error?.message || error?.message || 'Erro ao salvar perfil. Tente novamente.';
           this.errorMessage = `Erro ao salvar perfil: ${errorMsg}`;
           this.isLoading = false;
+          this.cdr.markForCheck();
         }
       });
   }
@@ -417,6 +421,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     this.errorMessage = null;
+    this.cdr.markForCheck();
 
     // Simula chamada ao backend
     setTimeout(() => {
@@ -433,13 +438,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
         this.successMessage = 'Perfil profissional atualizado com sucesso!';
         this.isLoading = false;
+        this.cdr.markForCheck();
 
         setTimeout(() => {
           this.successMessage = null;
+          this.cdr.markForCheck();
         }, 3000);
       } catch (error) {
         this.errorMessage = 'Erro ao salvar perfil profissional. Tente novamente.';
         this.isLoading = false;
+        this.cdr.markForCheck();
       }
     }, 1500);
   }
@@ -469,8 +477,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       reader.onload = (e: any) => {
         this.usuario.fotoPerfil = e.target.result;
         this.successMessage = 'Foto atualizada com sucesso!';
+        this.cdr.markForCheck();
         setTimeout(() => {
           this.successMessage = null;
+          this.cdr.markForCheck();
         }, 3000);
       };
       reader.readAsDataURL(file);
@@ -664,8 +674,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
           });
 
           this.errorMessage = null;
+          this.cdr.markForCheck();
         },
         error: () => {
+          this.cdr.markForCheck();
           this.errorMessage = 'Não foi possível consultar o CEP agora.';
         }
       });

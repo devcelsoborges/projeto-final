@@ -87,11 +87,9 @@ export class RegisterService {
     return this.http.post<UsuarioDTO>(`${this.apiUrl}/contratante`, dados)
       .pipe(
         tap(response => {
-          console.log('Contratante registrado com sucesso:', response);
-        }),
+}),
         catchError(error => {
-          console.error('Erro ao registrar contratante:', error);
-          return throwError(() => this.handleError(error));
+return throwError(() => this.handleError(error));
         })
       );
   }
@@ -103,11 +101,9 @@ export class RegisterService {
     return this.http.post<UsuarioDTO>(`${this.apiUrl}/prestador`, dados)
       .pipe(
         tap(response => {
-          console.log('Prestador registrado com sucesso:', response);
-        }),
+}),
         catchError(error => {
-          console.error('Erro ao registrar prestador:', error);
-          return throwError(() => this.handleError(error));
+return throwError(() => this.handleError(error));
         })
       );
   }

@@ -23,9 +23,7 @@ export class ChatUnreadService implements OnDestroy {
     this.authService.isLoggedIn$
       .pipe(takeUntil(this.destroy$))
       .subscribe((isLoggedIn) => {
-        if (isLoggedIn) {
-          this.startPolling();
-        } else {
+        if (!isLoggedIn) {
           this.stopPolling();
           this.unreadCountSubject.next(0);
         }
@@ -52,7 +50,7 @@ export class ChatUnreadService implements OnDestroy {
       });
   }
 
-  private startPolling(): void {
+  startPolling(): void {
     this.stopPolling();
     this.refreshNow();
 
@@ -67,7 +65,7 @@ export class ChatUnreadService implements OnDestroy {
       });
   }
 
-  private stopPolling(): void {
+  stopPolling(): void {
     this.pollStop$.next();
   }
 
