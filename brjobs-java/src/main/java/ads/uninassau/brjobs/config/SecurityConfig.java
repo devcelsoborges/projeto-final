@@ -120,6 +120,9 @@ public class SecurityConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers(request -> {
                             String path = request.getRequestURI();
+                            if (path.startsWith("/api/auth/")) {
+                                return true;
+                            }
                             return !path.startsWith("/api/v1/auth/")
                                     || "/api/v1/auth/csrf".equals(path)
                                     || "/api/v1/auth/login".equals(path)
@@ -149,6 +152,7 @@ public class SecurityConfig {
                 // Libera as rotas de autenticação (login, registro, social-login)
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/social/google").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/publicacoes/minhas").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/publicacoes/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/highlight/plans").permitAll()

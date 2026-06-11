@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,6 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthV1Controller {
 
     private final AuthSessionService authSessionService;
@@ -79,7 +81,17 @@ public class AuthV1Controller {
     public ResponseEntity<?> google(@RequestBody Map<String, String> body,
                                     HttpServletRequest request,
                                     HttpServletResponse response) {
-        String token = body.getOrDefault("idToken", body.get("token"));
+        String token = firstNonBlank(
+                body.get("idToken"),
+                body.get("credential"),
+                body.get("accessToken"),
+                body.get("token")
+        );
+        log.info(
+                "google_social_login_request bodyKeys={} authHeaderPresent={}",
+                body.keySet(),
+                request.getHeader("Authorization") != null
+        );
         AuthResponseDTO social = socialAuthService.loginComGoogle(token);
         return socialSessionResponse(social, "google", request, response);
     }
@@ -107,8 +119,12 @@ public class AuthV1Controller {
                                                     HttpServletRequest request,
                                                     HttpServletResponse response) {
         if (social == null || social.getError() != null || social.getEmail() == null) {
+            String message = social != null && social.getError() != null
+                    ? social.getError()
+                    : "Falha ao autenticar com " + provider + ".";
+            log.warn("social_login_failed provider={} reason={}", provider, message);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Falha ao autenticar com " + provider + "."));
+                    .body(Map.of("message", message));
         }
 
         Usuario usuario = usuarioRepository.findByEmail(social.getEmail())
@@ -116,5 +132,14 @@ public class AuthV1Controller {
         AuthSessionService.SessionResult session = authSessionService.issueSocialSession(usuario, request, provider);
         authSessionService.writeSessionCookies(response, session);
         return ResponseEntity.ok(session.usuario());
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
     }
 }

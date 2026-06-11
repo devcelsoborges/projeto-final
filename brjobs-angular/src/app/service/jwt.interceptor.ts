@@ -15,12 +15,13 @@ export class JwtInterceptor implements HttpInterceptor {
   constructor(private router: Router) { }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    const requestWithCookies = this.shouldUseCredentials(request)
-      ? request.clone({
+    const sanitizedRequest = this.stripAuthorizationFromPublicAuth(request);
+    const requestWithCookies = this.shouldUseCredentials(sanitizedRequest)
+      ? sanitizedRequest.clone({
           withCredentials: true,
-          setHeaders: this.csrfHeaders(request)
+          setHeaders: this.csrfHeaders(sanitizedRequest)
         })
-      : request;
+      : sanitizedRequest;
 
     return next.handle(requestWithCookies).pipe(
       catchError((error: HttpErrorResponse) => {
@@ -36,6 +37,16 @@ export class JwtInterceptor implements HttpInterceptor {
 
   private shouldUseCredentials(request: HttpRequest<unknown>): boolean {
     return request.url.includes('/api/');
+  }
+
+  private stripAuthorizationFromPublicAuth(request: HttpRequest<unknown>): HttpRequest<unknown> {
+    if (!this.isPublicAuthEndpoint(request.url) || !request.headers.has('Authorization')) {
+      return request;
+    }
+
+    return request.clone({
+      headers: request.headers.delete('Authorization')
+    });
   }
 
   private csrfHeaders(request: HttpRequest<unknown>): Record<string, string> {
@@ -70,10 +81,7 @@ export class JwtInterceptor implements HttpInterceptor {
       }
     }
 
-    if (url.includes('/api/v1/auth/login') ||
-        url.includes('/api/v1/auth/refresh') ||
-        url.includes('/api/v1/auth/social/google') ||
-        url.includes('/api/v1/auth/social/facebook') ||
+    if (this.isPublicAuthEndpoint(url) ||
         url.includes('/api/usuarios/contratante') ||
         url.includes('/api/usuarios/prestador')) {
       return true;
@@ -99,6 +107,10 @@ export class JwtInterceptor implements HttpInterceptor {
     }
 
     return false;
+  }
+
+  private isPublicAuthEndpoint(url: string): boolean {
+    return url.includes('/api/v1/auth/') || url.includes('/api/auth/');
   }
 
   private clearLegacyAuth(): void {
