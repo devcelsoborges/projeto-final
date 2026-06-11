@@ -92,8 +92,17 @@ public class AuthV1Controller {
                 body.keySet(),
                 request.getHeader("Authorization") != null
         );
-        AuthResponseDTO social = socialAuthService.loginComGoogle(token);
-        return socialSessionResponse(social, "google", request, response);
+        try {
+            AuthResponseDTO social = socialAuthService.loginComGoogle(token);
+            return socialSessionResponse(social, "google", request, response);
+        } catch (Exception ex) {
+            String message = ex.getMessage() != null && !ex.getMessage().isBlank()
+                    ? ex.getMessage()
+                    : "Falha ao autenticar com google.";
+            log.warn("social_login_failed provider=google reason={}", message);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", message));
+        }
     }
 
     @PostMapping("/social/facebook")

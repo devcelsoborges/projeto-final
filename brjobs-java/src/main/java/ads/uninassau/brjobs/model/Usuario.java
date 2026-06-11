@@ -33,19 +33,19 @@ public class Usuario {
     @Column(nullable = false)
     private String senha;
 
-    @Column(nullable = false)
+    @Column
     private String telefone;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true)
     private String cpf;
 
-    @Column(nullable = false)
+    @Column
     private String genero;
 
-    @Column(name = "data_nascimento", nullable = false)
+    @Column(name = "data_nascimento")
     private LocalDate dataNascimento;
 
-    @Column(nullable = false)
+    @Column
     private String endereco;
 
     @Column(name = "cep", length = 20)

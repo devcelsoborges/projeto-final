@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -78,16 +79,15 @@ public class SocialAuthService {
                 .build();
 
         } catch (Exception ex) {
+            String reason = googleFailureReason(ex);
             log.warn(
                     "google_social_login_failed reason={} tokenType={} clientIdConfigured={} tokenFingerprint={}",
-                    ex.getMessage(),
+                    reason,
                     tokenType,
                     googleClientIdConfigurado(),
                     tokenFingerprint(token)
             );
-            return AuthResponseDTO.builder()
-                .error(ex.getMessage())
-                .build();
+            throw new IllegalArgumentException(reason, ex);
         }
     }
 
@@ -311,6 +311,26 @@ public class SocialAuthService {
             return "missing";
         }
         return hashForLog(token);
+    }
+
+    private String googleFailureReason(Exception ex) {
+        if (ex instanceof DataIntegrityViolationException) {
+            return "Nao foi possivel criar a conta social por restricao de dados obrigatorios.";
+        }
+
+        Throwable cause = ex.getCause();
+        while (cause != null) {
+            if (cause instanceof DataIntegrityViolationException) {
+                return "Nao foi possivel criar a conta social por restricao de dados obrigatorios.";
+            }
+            cause = cause.getCause();
+        }
+
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return "Falha ao autenticar com Google.";
+        }
+        return message;
     }
 
     private String hashForLog(String value) {
