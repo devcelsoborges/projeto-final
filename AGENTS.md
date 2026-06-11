@@ -20,6 +20,8 @@ In `backend/`, entry points live in `cmd/`, business code in `internal/`, and sc
 
 Keep backend changes within the existing layered flow: handlers -> services -> repositories -> storage/platform. Run `gofmt` on Go code. Frontend code uses TypeScript, ESLint, 2-space indentation, double quotes, and semicolons. Keep filenames in English and feature code under `src/components/feature/`.
 
+For frontend visible text in Portuguese, always follow the ABNT2/pt-BR writing standard: use correct accents and characters such as `ç`, `ã`, `á`, `é`, `í`, `ó`, `ú`, preserve UTF-8 encoding, and do not replace accented Portuguese words with unaccented versions. Before finishing frontend changes, check for mojibake/corrupted text such as `Ã§`, `Ã£`, `Ã©`, `â`, or similar artifacts and fix them.
+
 ## Testing Guidelines
 
 Backend tests live next to the code as `*_test.go`; extend them when changing handlers, services, repositories, or config. Frontend and backoffice currently rely on static checks, so every UI change should pass `npm run lint`, `npm run typecheck`, and a quick manual smoke test.

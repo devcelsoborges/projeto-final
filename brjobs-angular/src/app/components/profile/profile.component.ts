@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ProfileStateService } from '../../service/profile-state.service';
 import { CepService } from '../../service/cep.service';
+import { environment } from '../../environments/environment';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -55,7 +56,7 @@ interface Prestador {
   styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit, OnDestroy {
-  private readonly apiBase = 'http://localhost:8080/api';
+  private readonly apiBase = `${environment.apiUrl}/api`;
   
   // Dados do usuário
   usuario!: Usuario;

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
 export interface BreakdownCategoria {
   categoria: string;
@@ -27,7 +28,7 @@ export interface RelatorioGanhos {
   providedIn: 'root'
 })
 export class GanhosService {
-  private apiUrl = '/api/v1/ganhos';
+  private apiUrl = `${environment.apiUrl}/api/v1/ganhos`;
 
   constructor(private http: HttpClient) {}
 

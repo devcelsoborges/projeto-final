@@ -1,5 +1,6 @@
 package ads.uninassau.brjobs.service;
 
+import ads.uninassau.brjobs.dto.ChatConversationDTO;
 import ads.uninassau.brjobs.dto.ChatMessageDTO;
 import ads.uninassau.brjobs.model.ChatMessage;
 import ads.uninassau.brjobs.model.ConversaChat;
@@ -9,11 +10,11 @@ import ads.uninassau.brjobs.repository.ConversaChatRepository;
 import ads.uninassau.brjobs.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +25,13 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ConversaChatRepository conversaChatRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ChatAntiSpamService chatAntiSpamService;
+
+    @Value("${app.chat.history.default-limit:50}")
+    private int defaultHistoryLimit;
+
+    @Value("${app.chat.history.max-limit:100}")
+    private int maxHistoryLimit;
 
     /**
      * Envia mensagem de um usuário (tenant) para outro
@@ -36,6 +44,20 @@ public class ChatService {
             throw new IllegalArgumentException("Não pode enviar mensagem para si mesmo");
         }
 
+        String conteudoNormalizado = conteudo == null ? "" : conteudo.trim();
+
+        if (conteudoNormalizado.isEmpty()) {
+            throw new IllegalArgumentException("Conteúdo da mensagem é obrigatório");
+        }
+
+        if (conteudoNormalizado.length() > 500) {
+            throw new IllegalArgumentException("Mensagem deve ter no máximo 500 caracteres");
+        }
+
+        log.info("chat_message_send_attempt user_id={} destinatario_id={} message_length={}", remetenteId, destinatarioId, conteudoNormalizado.length());
+
+        chatAntiSpamService.checkAllowed(remetenteId, conteudoNormalizado);
+
         // Buscar usuários
         Usuario remetente = usuarioRepository.findById(remetenteId)
             .orElseThrow(() -> new IllegalArgumentException("Remetente não encontrado"));
@@ -46,7 +68,7 @@ public class ChatService {
         ChatMessage msg = ChatMessage.builder()
             .remetente(remetente)
             .destinatario(destinatario)
-            .conteudo(conteudo)
+            .conteudo(conteudoNormalizado)
             .lido(false)
             .notificado(false)
             .build();
@@ -66,7 +88,7 @@ public class ChatService {
         conversa.setUltimaMensagem(msg);
         conversaChatRepository.save(conversa);
 
-        log.info("ChatService: Mensagem enviada de {} para {}", remetenteId, destinatarioId);
+        log.info("chat_message_send_success user_id={} destinatario_id={} mensagem_id={}", remetenteId, destinatarioId, msg.getId());
 
         return mapToDTO(msg);
     }
@@ -86,13 +108,30 @@ public class ChatService {
 
         msg.setLido(true);
         chatMessageRepository.save(msg);
+        log.info("chat_mark_read_success user_id={} mensagem_id={}", usuarioId, mensagemId);
+    }
+
+    @Transactional
+    public int marcarConversaComoLida(Long usuarioId, Long outroUsuarioId) {
+        int updated = chatMessageRepository.markConversationAsRead(usuarioId, outroUsuarioId);
+        log.info("chat_mark_read_bulk user_id={} other_user_id={} total_updated={}", usuarioId, outroUsuarioId, updated);
+        return updated;
     }
 
     /**
      * Obtém histórico de conversa entre dois usuários (com paginação)
      */
     public List<ChatMessageDTO> obterConversa(Long usuarioId, Long outroUsuarioId, int limit) {
-        List<ChatMessage> mensagens = chatMessageRepository.findConversationHistory(usuarioId, outroUsuarioId, limit);
+        int normalizedLimit = normalizeHistoryLimit(limit);
+
+        if (!usuarioRepository.existsById(outroUsuarioId)) {
+            throw new IllegalArgumentException("Usuário da conversa não encontrado");
+        }
+
+        List<ChatMessage> mensagens = chatMessageRepository.findConversationHistory(usuarioId, outroUsuarioId, normalizedLimit);
+
+        log.info("chat_messages_loaded user_id={} other_user_id={} messages_count={}", usuarioId, outroUsuarioId, mensagens.size());
+
         return mensagens.stream()
             .map(this::mapToDTO)
             .collect(Collectors.toList());
@@ -101,15 +140,53 @@ public class ChatService {
     /**
      * Obtém lista de conversas ativas de um usuário
      */
-    public List<ConversaChat> obterConversas(Long usuarioId) {
-        return conversaChatRepository.findActiveConversations(usuarioId);
+    public List<ChatConversationDTO> obterConversas(Long usuarioId) {
+        List<ConversaChat> conversas = conversaChatRepository.findActiveConversations(usuarioId);
+
+        List<ChatConversationDTO> dtos = conversas.stream()
+            .map(conversa -> mapConversationToDTO(conversa, usuarioId))
+            .collect(Collectors.toList());
+
+        log.info("chat_conversations_loaded user_id={} conversations_count={}", usuarioId, dtos.size());
+
+        return dtos;
     }
 
     /**
      * Conta mensagens não-lidas de um usuário
      */
     public long contarNaoLidas(Long usuarioId) {
-        return chatMessageRepository.countUnreadFor(usuarioId);
+        long unread = chatMessageRepository.countUnreadFor(usuarioId);
+        log.info("chat_unread_count_loaded user_id={} unread_total={}", usuarioId, unread);
+        return unread;
+    }
+
+    private ChatConversationDTO mapConversationToDTO(ConversaChat conversa, Long usuarioId) {
+        Usuario contato = conversa.getUsuario1().getId().equals(usuarioId)
+            ? conversa.getUsuario2()
+            : conversa.getUsuario1();
+
+        ChatMessage ultima = conversa.getUltimaMensagem();
+        long naoLidas = chatMessageRepository.countUnreadBySender(usuarioId, contato.getId());
+
+        return ChatConversationDTO.builder()
+            .id(conversa.getId())
+            .contatoId(contato.getId())
+            .contatoNome(contato.getNome())
+            .ultimaMensagem(ultima != null ? ultima.getConteudo() : null)
+            .ultimaMensagemEm(ultima != null ? ultima.getCreatedAt() : null)
+            .ultimaMensagemRemetenteId(ultima != null ? ultima.getRemetente().getId() : null)
+            .naoLidas(naoLidas)
+            .atualizadaEm(conversa.getUpdatedAt())
+            .build();
+    }
+
+    private int normalizeHistoryLimit(int requestedLimit) {
+        if (requestedLimit <= 0) {
+            return defaultHistoryLimit;
+        }
+
+        return Math.min(requestedLimit, maxHistoryLimit);
     }
 
     /**

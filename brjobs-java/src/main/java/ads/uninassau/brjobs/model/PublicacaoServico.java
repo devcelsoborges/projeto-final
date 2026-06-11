@@ -17,7 +17,8 @@ import java.time.LocalDateTime;
 @Builder
 @Table(name = "publicacoes_servico", indexes = {
     @Index(name = "idx_publicacoes_tipo_data", columnList = "tipo_publicacao,data_criacao DESC"),
-    @Index(name = "idx_publicacoes_usuario", columnList = "usuario_id")
+    @Index(name = "idx_publicacoes_usuario", columnList = "usuario_id"),
+    @Index(name = "idx_publicacoes_destaque", columnList = "is_highlighted,highlight_expires_at,data_criacao DESC")
 })
 public class PublicacaoServico {
 
@@ -66,4 +67,15 @@ public class PublicacaoServico {
     @Column(nullable = false)
     @Builder.Default
     private Boolean ativo = true;
+
+    @Column(name = "is_highlighted", nullable = false)
+    @Builder.Default
+    private Boolean isHighlighted = false;
+
+    @Column(name = "highlight_expires_at")
+    private LocalDateTime highlightExpiresAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "highlight_plan_id")
+    private HighlightPlan highlightPlan;
 }

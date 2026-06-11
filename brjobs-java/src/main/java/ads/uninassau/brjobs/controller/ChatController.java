@@ -1,7 +1,7 @@
 package ads.uninassau.brjobs.controller;
 
+import ads.uninassau.brjobs.dto.ChatConversationDTO;
 import ads.uninassau.brjobs.dto.ChatMessageDTO;
-import ads.uninassau.brjobs.model.ConversaChat;
 import ads.uninassau.brjobs.security.ValidateTenant;
 import ads.uninassau.brjobs.service.ChatService;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +49,20 @@ public class ChatController {
     }
 
     /**
+     * Marca todas as mensagens recebidas de um usuário como lidas
+     * PUT /api/v1/chat/marcar-lidas/:outroUsuarioId
+     */
+    @PutMapping("/marcar-lidas/{outroUsuarioId}")
+    @ValidateTenant
+    public ResponseEntity<Void> marcarConversaComoLida(
+        @RequestAttribute("tenant_id") Long tenantId,
+        @PathVariable Long outroUsuarioId
+    ) {
+        chatService.marcarConversaComoLida(tenantId, outroUsuarioId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Obtém histórico de conversa entre dois usuários
      * GET /api/v1/chat/conversa/:outroUsuarioId?limit=50
      */
@@ -69,10 +83,10 @@ public class ChatController {
      */
     @GetMapping("/conversas")
     @ValidateTenant
-    public ResponseEntity<List<ConversaChat>> obterConversas(
+    public ResponseEntity<List<ChatConversationDTO>> obterConversas(
         @RequestAttribute("tenant_id") Long tenantId
     ) {
-        List<ConversaChat> conversas = chatService.obterConversas(tenantId);
+        List<ChatConversationDTO> conversas = chatService.obterConversas(tenantId);
         return ResponseEntity.ok(conversas);
     }
 

@@ -2,6 +2,7 @@ package ads.uninassau.brjobs.security;
 
 import ads.uninassau.brjobs.model.Usuario;
 import ads.uninassau.brjobs.repository.UsuarioRepository;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,12 +37,10 @@ public class TenantFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        // 1. Extrair Authorization header
-        String authorization = request.getHeader("Authorization");
+        // 1. Extrair JWT do header Authorization ou do cookie HttpOnly ACCESS_TOKEN.
+        String token = getJwtFromRequest(request);
 
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            String token = authorization.substring(7); // Remove "Bearer "
-
+        if (token != null) {
             // 2. Validar token (signature + expiration)
             if (jwtTokenService.validateToken(token)) {
                 try {
@@ -76,11 +75,31 @@ public class TenantFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    private String getJwtFromRequest(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            return authorization.substring(7);
+        }
+
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("ACCESS_TOKEN".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null;
+    }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         // Rotas públicas que não requerem validação de tenant
         String path = request.getRequestURI();
-        boolean publicacaoPublicaGet = "GET".equalsIgnoreCase(request.getMethod()) && path.startsWith("/api/v1/publicacoes");
+        boolean publicacaoPublicaGet = "GET".equalsIgnoreCase(request.getMethod())
+            && path.startsWith("/api/v1/publicacoes")
+            && !path.startsWith("/api/v1/publicacoes/minhas");
         return path.startsWith("/api/auth/") ||     // login tradicional e social-login
                path.startsWith("/api/v1/auth/") ||  // login/register/refresh v1
                publicacaoPublicaGet ||               // listagem pública de publicações

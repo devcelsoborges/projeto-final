@@ -42,6 +42,17 @@ public class CadastroPrestadorDTO {
     @Size(min = 5, max = 255, message = "O endereço deve ter entre 5 e 255 caracteres.")
     private String endereco;
 
+    private String cep;
+    private String rua;
+    private String bairro;
+    private String cidade;
+    private String estado;
+    private String numero;
+    private String complemento;
+
+    @Size(max = 600, message = "A bio deve ter no maximo 600 caracteres.")
+    private String bio;
+
     // Campos específicos de Prestador
     @NotBlank(message = "A função/profissão é obrigatória.")
     @Size(min = 3, max = 100, message = "A função deve ter entre 3 e 100 caracteres.")

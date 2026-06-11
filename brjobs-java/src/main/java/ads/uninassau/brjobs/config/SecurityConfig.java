@@ -5,6 +5,7 @@ import ads.uninassau.brjobs.security.JwtAuthenticationFilter;
 import ads.uninassau.brjobs.security.TenantFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +20,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.security.config.Customizer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 
 @Configuration
@@ -38,8 +42,7 @@ public class SecurityConfig {
      */
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
@@ -67,16 +70,64 @@ public class SecurityConfig {
         return new RestTemplate();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:4200",
+                "https://brjobs.com.br",
+                "https://www.brjobs.com.br",
+                "https://brjobs-angular.pages.dev"
+        ));
+
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+        ));
+
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-XSRF-TOKEN"
+        ));
+
+        configuration.setExposedHeaders(List.of(
+                "Authorization"
+        ));
+
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+    }
+
     /**
      * Configura a cadeia de filtros de segurança HTTP.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Desabilita CSRF (Cross-Site Request Forgery) pois estamos usando JWT (stateless)
-                .csrf(csrf -> csrf.disable())
-            // Habilita configuração CORS definida em CorsConfig
-            .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .ignoringRequestMatchers(request -> {
+                            String path = request.getRequestURI();
+                            return !path.startsWith("/api/v1/auth/")
+                                    || "/api/v1/auth/csrf".equals(path)
+                                    || "/api/v1/auth/login".equals(path)
+                                    || "/api/v1/auth/social/google".equals(path)
+                                    || "/api/v1/auth/social/facebook".equals(path);
+                        })
+                )
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // Configura a política de criação de sessão como stateless (sem sessão HTTP)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
@@ -85,6 +136,7 @@ public class SecurityConfig {
 
         // Configuração de autorização das requisições
         http.authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Libera todas as rotas do Swagger/OpenAPI para que a documentação possa ser acessada
                 .requestMatchers(
                         "/swagger-ui/**",
@@ -97,16 +149,20 @@ public class SecurityConfig {
                 // Libera as rotas de autenticação (login, registro, social-login)
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/publicacoes/minhas").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/publicacoes/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/highlight/plans").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/webhook/stripe").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/usuarios/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/prestadores/usuario/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/avaliacoes/prestador/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/avaliacoes/usuario/*/recebidas").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/avaliacoes/v1/prestador/*/stats").permitAll()
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/avaliacoes/v1/usuario/*/stats").permitAll()
 
                 // Libera as rotas de registro de novos usuários
                 .requestMatchers("/api/usuarios/contratante", "/api/usuarios/prestador").permitAll()
-                .requestMatchers("GET", "/api/usuarios/email/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/usuarios/email/**").permitAll()
 
                 // Todas as outras requisições devem ser autenticadas
                 .anyRequest().authenticated()

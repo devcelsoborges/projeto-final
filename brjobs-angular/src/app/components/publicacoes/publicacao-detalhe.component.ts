@@ -6,6 +6,7 @@ import { catchError, of, switchMap } from "rxjs";
 import { PublicacaoServico, PublicacaoServicoService } from "../../service/publicacao-servico.service";
 import { AuthService } from "../../service/auth.service";
 import { RatingComponent } from "../rating/rating.component";
+import { environment } from "../../environments/environment";
 
 interface UsuarioPerfil {
   id: number;
@@ -46,7 +47,7 @@ interface AvaliacaoStats {
   styleUrls: ["./publicacao-detalhe.component.css"]
 })
 export class PublicacaoDetalheComponent implements OnInit {
-  private readonly apiBase = "http://localhost:8080/api";
+  private readonly apiBase = `${environment.apiUrl}/api`;
 
   carregando = true;
   erro = "";

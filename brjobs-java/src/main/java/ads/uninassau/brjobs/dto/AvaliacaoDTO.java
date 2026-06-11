@@ -22,7 +22,7 @@ public class AvaliacaoDTO {
     @Max(value = 5, message = "A nota máxima é 5.")
     private Integer nota;
 
-    @Size(max = 1000, message = "O comentário não pode exceder 1000 caracteres.")
+    @Size(max = 200, message = "O comentário não pode exceder 200 caracteres.")
     private String comentario;
 
     @NotNull(message = "O ID da solicitação é obrigatório.")
@@ -30,6 +30,8 @@ public class AvaliacaoDTO {
 
     @NotNull(message = "O ID do usuário é obrigatório.")
     private Long usuarioId;
+
+    private Long usuarioAvaliadoId;
 
     @NotNull(message = "O ID do prestador é obrigatório.")
     private Long prestadorId;

@@ -118,6 +118,14 @@ public class AuthService {
         dto.setTipoUsuario(entity.getTipoUsuario());
         dto.setTelefone(entity.getTelefone());
         dto.setEndereco(entity.getEndereco());
+        dto.setCep(entity.getCep());
+        dto.setRua(entity.getRua());
+        dto.setBairro(entity.getBairro());
+        dto.setCidade(entity.getCidade());
+        dto.setEstado(entity.getEstado());
+        dto.setNumero(entity.getNumero());
+        dto.setComplemento(entity.getComplemento());
+        dto.setBio(entity.getBio());
         dto.setCpf(entity.getCpf());
         dto.setGenero(entity.getGenero());
         dto.setDataNascimento(entity.getDataNascimento());

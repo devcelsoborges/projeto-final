@@ -25,6 +25,8 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
      */
     List<Avaliacao> findByUsuarioId(Long usuarioId);
 
+    List<Avaliacao> findByUsuarioAvaliadoId(Long usuarioAvaliadoId);
+
     /**
      * Verifica se existe uma avaliação para uma solicitação específica
      */
@@ -40,6 +42,8 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
      */
     boolean existsByUsuarioIdAndPrestadorId(Long usuarioId, Long prestadorId);
 
+    boolean existsByUsuarioIdAndUsuarioAvaliadoId(Long usuarioId, Long usuarioAvaliadoId);
+
     /**
      * Calcula média de avaliações um um prestador
      */
@@ -51,4 +55,10 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, Long> {
      */
     @Query("SELECT COUNT(a) FROM Avaliacao a WHERE a.prestador.id = :prestadorId")
     long countByPrestador(@Param("prestadorId") Long prestadorId);
+
+    @Query("SELECT AVG(a.nota) FROM Avaliacao a WHERE a.usuarioAvaliado.id = :usuarioId")
+    Double getAvaliacaoMediaUsuario(@Param("usuarioId") Long usuarioId);
+
+    @Query("SELECT COUNT(a) FROM Avaliacao a WHERE a.usuarioAvaliado.id = :usuarioId")
+    long countByUsuarioAvaliado(@Param("usuarioId") Long usuarioId);
 }

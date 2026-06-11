@@ -23,63 +23,6 @@ class UsuarioControllerUnitTest {
     @Test
     @DisplayName("Deve instanciar UsuarioController com sucesso")
     void testUsuarioControllerInstantiation() {
-        // Assert
         assertNotNull(usuarioController);
     }
-
-    // TODO: Métodos listar, obterPorId e criarUsuario ainda não implementados no service
-    // Estes testes necessitam ser reescritos quando os métodos do service forem implementados
 }
-                .thenReturn(usuario);
-
-        // Act
-        ResponseEntity<?> response = usuarioController.criarPrestador(usuario);
-
-        // Assert
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        verify(usuarioService, times(1)).criarUsuario(anyString(), anyString(), anyString(),
-                                                       anyString(), anyString(), any(TipoUsuario.class));
-    }
-
-    @Test
-    @DisplayName("Deve atualizar usuário com sucesso")
-    void testAtualizarComSucesso() {
-        // Arrange
-        Usuario usuarioAtualizado = new Usuario();
-        usuarioAtualizado.setNome("João Silva Atualizado");
-        when(usuarioService.atualizar(1L, usuarioAtualizado)).thenReturn(usuarioAtualizado);
-
-        // Act
-        ResponseEntity<?> response = usuarioController.atualizar(1L, usuarioAtualizado);
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(usuarioService, times(1)).atualizar(1L, usuarioAtualizado);
-    }
-
-    @Test
-    @DisplayName("Deve deletar usuário com sucesso")
-    void testDeletarComSucesso() {
-        // Act
-        ResponseEntity<?> response = usuarioController.deletar(1L);
-
-        // Assert
-        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(usuarioService, times(1)).deletar(1L);
-    }
-
-    @Test
-    @DisplayName("Deve buscar usuário por email com sucesso")
-    void testBuscarPorEmailComSucesso() {
-        // Arrange
-        when(usuarioService.obterPorEmail("joao@example.com")).thenReturn(usuario);
-
-        // Act
-        ResponseEntity<?> response = usuarioController.obterPorEmail("joao@example.com");
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(usuarioService, times(1)).obterPorEmail("joao@example.com");
-    }
-}
-

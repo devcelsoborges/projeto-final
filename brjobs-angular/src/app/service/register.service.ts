@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
+import { environment } from '../environments/environment';
 
 interface CadastroContratanteDTO {
   nome: string;
@@ -76,7 +77,7 @@ interface ApiResponse {
   providedIn: 'root'
 })
 export class RegisterService {
-  private apiUrl = 'http://localhost:8080/api/usuarios';
+  private apiUrl = `${environment.apiUrl}/api/usuarios`;
 
   constructor(private http: HttpClient) { }
 

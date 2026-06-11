@@ -57,6 +57,14 @@ public class UsuarioService {
         usuario.setGenero(dto.getGenero());
         usuario.setDataNascimento(dto.getDataNascimento());
         usuario.setEndereco(dto.getEndereco());
+        usuario.setCep(dto.getCep());
+        usuario.setRua(dto.getRua());
+        usuario.setBairro(dto.getBairro());
+        usuario.setCidade(dto.getCidade());
+        usuario.setEstado(dto.getEstado());
+        usuario.setNumero(dto.getNumero());
+        usuario.setComplemento(dto.getComplemento());
+        usuario.setBio(dto.getBio());
         usuario.setAtivo(true);
 
         usuario = usuarioRepository.save(usuario);
@@ -87,6 +95,14 @@ public class UsuarioService {
         usuario.setGenero(dto.getGenero());
         usuario.setDataNascimento(dto.getDataNascimento());
         usuario.setEndereco(dto.getEndereco());
+        usuario.setCep(dto.getCep());
+        usuario.setRua(dto.getRua());
+        usuario.setBairro(dto.getBairro());
+        usuario.setCidade(dto.getCidade());
+        usuario.setEstado(dto.getEstado());
+        usuario.setNumero(dto.getNumero());
+        usuario.setComplemento(dto.getComplemento());
+        usuario.setBio(dto.getBio());
         usuario.setAtivo(true);
 
         usuario = usuarioRepository.save(usuario);
@@ -137,6 +153,14 @@ public class UsuarioService {
         usuario.setNome(dto.getNome());
         usuario.setTelefone(dto.getTelefone());
         usuario.setEndereco(dto.getEndereco());
+        usuario.setCep(dto.getCep());
+        usuario.setRua(dto.getRua());
+        usuario.setBairro(dto.getBairro());
+        usuario.setCidade(dto.getCidade());
+        usuario.setEstado(dto.getEstado());
+        usuario.setNumero(dto.getNumero());
+        usuario.setComplemento(dto.getComplemento());
+        usuario.setBio(dto.getBio());
         usuario.setGenero(dto.getGenero());
         usuario.setDataNascimento(dto.getDataNascimento());
 
@@ -238,6 +262,14 @@ public class UsuarioService {
         dto.setEmail(usuario.getEmail());
         dto.setTelefone(usuario.getTelefone());
         dto.setEndereco(usuario.getEndereco());
+        dto.setCep(usuario.getCep());
+        dto.setRua(usuario.getRua());
+        dto.setBairro(usuario.getBairro());
+        dto.setCidade(usuario.getCidade());
+        dto.setEstado(usuario.getEstado());
+        dto.setNumero(usuario.getNumero());
+        dto.setComplemento(usuario.getComplemento());
+        dto.setBio(usuario.getBio());
         dto.setCpf(usuario.getCpf());
         dto.setGenero(usuario.getGenero());
         dto.setDataNascimento(usuario.getDataNascimento());

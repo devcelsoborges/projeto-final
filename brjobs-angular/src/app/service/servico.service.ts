@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
 export interface Servico {
   id: number;
@@ -29,7 +30,7 @@ export interface CreateServicoDTO {
   providedIn: 'root'
 })
 export class ServicoService {
-  private apiUrl = '/api/v1/servicos';
+  private apiUrl = `${environment.apiUrl}/api/v1/servicos`;
 
   constructor(private http: HttpClient) {}
 

@@ -35,7 +35,7 @@ public class Avaliacao {
 
     // Relacionamento com SolicitacaoServico (obrigatório, único)
     @OneToOne
-    @JoinColumn(name = "solicitacao_id", nullable = false, unique = true)
+    @JoinColumn(name = "solicitacao_id", unique = true)
     private SolicitacaoServico solicitacao;
 
     // Relacionamento com Usuario (quem está avaliando - contratante)
@@ -43,9 +43,13 @@ public class Avaliacao {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    // Relacionamento com Prestador (quem está sendo avaliado)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "prestador_id", nullable = false)
+    @JoinColumn(name = "usuario_avaliado_id", nullable = false)
+    private Usuario usuarioAvaliado;
+
+    // Relacionamento com Prestador (quem está sendo avaliado)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prestador_id")
     private Prestador prestador;
 
     @CreationTimestamp

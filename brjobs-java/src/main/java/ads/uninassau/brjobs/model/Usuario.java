@@ -48,6 +48,30 @@ public class Usuario {
     @Column(nullable = false)
     private String endereco;
 
+    @Column(name = "cep", length = 20)
+    private String cep;
+
+    @Column(name = "rua")
+    private String rua;
+
+    @Column(name = "bairro")
+    private String bairro;
+
+    @Column(name = "cidade")
+    private String cidade;
+
+    @Column(name = "estado", length = 2)
+    private String estado;
+
+    @Column(name = "numero")
+    private String numero;
+
+    @Column(name = "complemento")
+    private String complemento;
+
+    @Column(name = "bio", length = 600)
+    private String bio;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TipoUsuario tipoUsuario;

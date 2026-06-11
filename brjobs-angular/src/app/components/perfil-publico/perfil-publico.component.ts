@@ -5,6 +5,7 @@ import { HttpClient } from "@angular/common/http";
 import { catchError, of, switchMap } from "rxjs";
 import { AuthService } from "../../service/auth.service";
 import { RatingComponent } from "../rating/rating.component";
+import { environment } from "../../environments/environment";
 
 interface UsuarioPerfil {
   id: number;
@@ -45,7 +46,7 @@ interface AvaliacaoStats {
   styleUrls: ["./perfil-publico.component.css"]
 })
 export class PerfilPublicoComponent implements OnInit {
-  private readonly apiBase = "http://localhost:8080/api";
+  private readonly apiBase = `${environment.apiUrl}/api`;
 
   carregando = true;
   erro = "";

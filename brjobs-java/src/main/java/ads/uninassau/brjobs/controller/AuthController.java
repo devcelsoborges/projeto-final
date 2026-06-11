@@ -149,14 +149,14 @@ public class AuthController {
     /**
      * Endpoint para login social via Google
      * POST /api/auth/social-login/google
-     * 
+     *
      * @param request contém o token do Google (credential JWT)
      * @return 200 OK com token JWT do BRJobs
      */
     @PostMapping("/social-login/google")
     public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> request) {
         String googleToken = request.get("token");
-        
+
         if (googleToken == null || googleToken.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Google token é obrigatório"));
@@ -173,7 +173,7 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Token do Google invalido"));
             }
-            
+
             String email = (String) googleData.get("email");
             String nome = (String) googleData.get("name");
             String picture = (String) googleData.get("picture");
@@ -185,9 +185,9 @@ public class AuthController {
 
             Usuario usuario = authService.findOrCreateSocialUser(email, nome);
             String token = authService.generateTokenForEmail(usuario.getEmail());
-            
+
             // Log dos dados extraídos
-            log.info("✅ Google login bem-sucedido - Email: {}, Nome: {}", email, nome);
+            log.info("Google login bem-sucedido - Email: {}, Nome: {}", email, nome);
 
             return ResponseEntity.ok(Map.of(
                 "accessToken", token,
@@ -208,7 +208,7 @@ public class AuthController {
                         ? root.getMessage()
                         : root.getClass().getSimpleName());
 
-            log.error("❌ Erro ao autenticar com Google: {}", reason, e);
+            log.error("Erro ao autenticar com Google: {}", reason, e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Falha ao autenticar com Google: " + reason));
         }
@@ -217,14 +217,14 @@ public class AuthController {
     /**
      * Endpoint para login social via Facebook
      * POST /api/auth/social-login/facebook
-     * 
+     *
      * @param request contém o token do Facebook
      * @return 200 OK com token JWT do BRJobs
      */
     @PostMapping("/social-login/facebook")
     public ResponseEntity<?> loginWithFacebook(@RequestBody Map<String, String> request) {
         String facebookToken = request.get("token");
-        
+
         if (facebookToken == null || facebookToken.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Facebook token é obrigatório"));
@@ -233,7 +233,7 @@ public class AuthController {
         try {
             // TODO: Chamar um serviço para validar o token do Facebook
             // e extrair email, nome, foto, etc.
-            
+
             // Para desenvolvimento, retornar um token de teste
             return ResponseEntity.ok(Map.of(
                 "accessToken", authService.generateDemoToken(),
@@ -247,39 +247,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Endpoint para login social via Apple Sign-In
-     * POST /api/auth/social-login/apple
-     * 
-     * @param request contém o token do Apple
-     * @return 200 OK com token JWT do BRJobs
-     */
-    @PostMapping("/social-login/apple")
-    public ResponseEntity<?> loginWithApple(@RequestBody Map<String, String> request) {
-        String appleToken = request.get("token");
-        String identityToken = request.get("identityToken");
-        
-        if ((appleToken == null || appleToken.isEmpty()) && 
-            (identityToken == null || identityToken.isEmpty())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Apple token ou identityToken é obrigatório"));
-        }
-
-        try {
-            // TODO: Chamar um serviço para validar o token do Apple
-            
-            // Para desenvolvimento, retornar um token de teste
-            return ResponseEntity.ok(Map.of(
-                "accessToken", authService.generateDemoToken(),
-                "usuarioId", 1L,
-                "email", "demo@apple.com",
-                "nome", "Demo User"
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Falha ao autenticar com Apple: " + e.getMessage()));
-        }
-    }
 
     /**
      * Decodifica um JWT do Google para extrair informações do usuário
@@ -291,13 +258,13 @@ public class AuthController {
             // Dividir o token em 3 partes: header.payload.signature
             String[] parts = token.split("\\.");
             if (parts.length != 3) {
-                log.error("❌ Token possui formato inválido");
+                log.error("Token possui formato inválido");
                 return null;
             }
 
             // Decodificar a payload (parte do meio) de base64
             String payload = parts[1];
-            
+
             // Adicionar padding se necessário
             int padding = (4 - payload.length() % 4) % 4;
             for (int i = 0; i < padding; i++) {
@@ -307,17 +274,17 @@ public class AuthController {
             // Decodificar de base64
             byte[] decodedBytes = java.util.Base64.getUrlDecoder().decode(payload);
             String decodedPayload = new String(decodedBytes, "UTF-8");
-            
+
             // Parse JSON
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             @SuppressWarnings("unchecked")
             Map<String, Object> jsonPayload = mapper.readValue(decodedPayload, Map.class);
-            
-            log.debug("✅ Google token decodificado com sucesso: {}", jsonPayload.get("email"));
+
+            log.debug("Google token decodificado com sucesso: {}", jsonPayload.get("email"));
             return jsonPayload;
-            
+
         } catch (Exception e) {
-            log.error("❌ Erro ao decodificar Google token: {}", e.getMessage());
+            log.error("Erro ao decodificar Google token: {}", e.getMessage());
             return null;
         }
     }
@@ -345,7 +312,7 @@ public class AuthController {
 
             return (Map<String, Object>) response.getBody();
         } catch (Exception e) {
-            log.error("❌ Erro ao buscar userinfo do Google via access token: {}", e.getMessage());
+            log.error("Erro ao buscar userinfo do Google via access token: {}", e.getMessage());
             return null;
         }
     }

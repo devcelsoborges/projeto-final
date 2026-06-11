@@ -8,6 +8,7 @@ import ads.uninassau.brjobs.repository.PublicacaoServicoRepository;
 import ads.uninassau.brjobs.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,7 @@ public class PublicacaoServicoService {
 
     private final PublicacaoServicoRepository publicacaoServicoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PublicacaoCacheService publicacaoCacheService;
 
     public PublicacaoServicoDTO criarComTenant(Long tenantId, PublicacaoServicoDTO dto) {
         validarEntrada(dto);
@@ -52,15 +54,18 @@ public class PublicacaoServicoService {
             .build();
 
         entity = publicacaoServicoRepository.save(entity);
+        publicacaoCacheService.evictAll();
         log.info("PublicacaoServicoService: publicacao {} criada por tenant {}", entity.getId(), tenantId);
 
         return toDTO(entity);
     }
 
+    @Cacheable(cacheNames = "publicacoes-lista", key = "'listar:' + (#tipo == null ? 'all' : #tipo)")
     public List<PublicacaoServicoDTO> listar(String tipo) {
         return buscarPaginado(tipo, null, 0, 20).getContent();
     }
 
+    @Cacheable(cacheNames = "publicacoes-paginadas", key = "'p:' + (#tipo == null ? 'all' : #tipo) + ':t:' + (#termo == null ? '' : #termo) + ':page:' + #page + ':size:' + #size")
     public Page<PublicacaoServicoDTO> buscarPaginado(String tipo, String termo, int page, int size) {
         int pageSeguro = Math.max(page, 0);
         int sizeSeguro = Math.min(Math.max(size, 1), 50);
@@ -83,8 +88,8 @@ public class PublicacaoServicoService {
         }
 
         List<PublicacaoServico> base = (tipoFiltro == null)
-            ? publicacaoServicoRepository.findByAtivoTrueOrderByDataCriacaoDesc()
-            : publicacaoServicoRepository.findByAtivoTrueAndTipoPublicacaoOrderByDataCriacaoDesc(tipoFiltro);
+            ? publicacaoServicoRepository.findAtivasOrdenadas()
+            : publicacaoServicoRepository.findAtivasOrdenadasPorTipo(tipoFiltro);
 
         String termoLower = termoFiltro.toLowerCase(Locale.ROOT);
         List<PublicacaoServicoDTO> filtradas = new ArrayList<>();
@@ -93,11 +98,17 @@ public class PublicacaoServicoService {
             String descricao = safeLower(entity.getDescricao());
             String categoria = safeLower(entity.getCategoria());
             String usuarioNome = safeLower(entity.getUsuario() != null ? entity.getUsuario().getNome() : null);
+            String usuarioEndereco = safeLower(entity.getUsuario() != null ? entity.getUsuario().getEndereco() : null);
+            String usuarioCidade = safeLower(entity.getUsuario() != null ? entity.getUsuario().getCidade() : null);
+            String usuarioBairro = safeLower(entity.getUsuario() != null ? entity.getUsuario().getBairro() : null);
 
             if (titulo.contains(termoLower)
                 || descricao.contains(termoLower)
                 || categoria.contains(termoLower)
-                || usuarioNome.contains(termoLower)) {
+                || usuarioNome.contains(termoLower)
+                || usuarioEndereco.contains(termoLower)
+                || usuarioCidade.contains(termoLower)
+                || usuarioBairro.contains(termoLower)) {
                 filtradas.add(toDTO(entity));
             }
         }
@@ -140,6 +151,7 @@ public class PublicacaoServicoService {
         entity.setStatus("ENCERRADA");
         entity.setAtivo(false);
         publicacaoServicoRepository.save(entity);
+        publicacaoCacheService.evictAll();
     }
 
     private void validarEntrada(PublicacaoServicoDTO dto) {
@@ -182,6 +194,8 @@ public class PublicacaoServicoService {
 
     private PublicacaoServicoDTO toDTO(PublicacaoServico entity) {
         PublicacaoServicoDTO dto = new PublicacaoServicoDTO();
+        String enderecoUsuario = entity.getUsuario() != null ? entity.getUsuario().getEndereco() : null;
+
         dto.setId(entity.getId());
         dto.setTipoPublicacao(entity.getTipoPublicacao().name());
         dto.setTitulo(entity.getTitulo());
@@ -193,6 +207,14 @@ public class PublicacaoServicoService {
         dto.setStatus(entity.getStatus());
         dto.setUsuarioId(entity.getUsuario().getId());
         dto.setUsuarioNome(entity.getUsuario().getNome());
+        dto.setUsuarioEndereco(enderecoUsuario);
+        dto.setUsuarioCidade(entity.getUsuario() != null ? entity.getUsuario().getCidade() : null);
+        dto.setUsuarioBairro(entity.getUsuario() != null ? entity.getUsuario().getBairro() : null);
+        dto.setIsHighlighted(Boolean.TRUE.equals(entity.getIsHighlighted()) && (entity.getHighlightExpiresAt() == null || entity.getHighlightExpiresAt().isAfter(java.time.LocalDateTime.now())));
+        dto.setHighlightExpiresAt(entity.getHighlightExpiresAt());
+        dto.setHighlightPlanId(entity.getHighlightPlan() != null ? entity.getHighlightPlan().getId() : null);
+        dto.setHighlightPlanName(entity.getHighlightPlan() != null ? entity.getHighlightPlan().getName() : null);
+        dto.setHighlightPriority(entity.getHighlightPlan() != null ? entity.getHighlightPlan().getPriority() : null);
         dto.setDataCriacao(entity.getDataCriacao());
         return dto;
     }

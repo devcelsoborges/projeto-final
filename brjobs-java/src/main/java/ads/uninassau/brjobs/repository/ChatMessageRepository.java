@@ -2,6 +2,7 @@ package ads.uninassau.brjobs.repository;
 
 import ads.uninassau.brjobs.model.ChatMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -46,4 +47,11 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
         @Param("user2") Long user2,
         @Param("limit") int limit
     );
+
+    @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.destinatario.id = :destinatarioId AND m.remetente.id = :remetenteId AND m.lido = false")
+    long countUnreadBySender(@Param("destinatarioId") Long destinatarioId, @Param("remetenteId") Long remetenteId);
+
+    @Modifying
+    @Query("UPDATE ChatMessage m SET m.lido = true WHERE m.destinatario.id = :destinatarioId AND m.remetente.id = :remetenteId AND m.lido = false")
+    int markConversationAsRead(@Param("destinatarioId") Long destinatarioId, @Param("remetenteId") Long remetenteId);
 }

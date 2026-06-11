@@ -2,6 +2,7 @@ package ads.uninassau.brjobs.exception;
 
 import ads.uninassau.brjobs.exception.EmailAlreadyInUseException;
 import ads.uninassau.brjobs.exception.CPFAlreadyInUseException;
+import ads.uninassau.brjobs.exception.ChatRateLimitException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,5 +63,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleSecurityException(SecurityException ex) {
         log.warn("GlobalExceptionHandler 403 SecurityException: {}", ex.getMessage());
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(ChatRateLimitException.class)
+    public ResponseEntity<String> handleChatRateLimitException(ChatRateLimitException ex) {
+        log.warn("GlobalExceptionHandler 429 ChatRateLimitException: {}", ex.getMessage());
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
     }
 }

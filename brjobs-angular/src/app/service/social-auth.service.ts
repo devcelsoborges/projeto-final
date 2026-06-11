@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { environment } from '../environments/environment';
 
 interface CsrfResponse {
   headerName: string;
@@ -20,7 +21,9 @@ export interface AuthResponseDTO {
   providedIn: 'root'
 })
 export class SocialAuthService {
-  private apiUrl = '/api/v1/auth/social';
+  private apiUrl = `${environment.apiUrl}/api/v1/auth/social`;
+  private googleClientId = environment.oauth.google.clientId;
+  private facebookAppId = environment.oauth.facebook.appId;
   private googleScriptLoaded = false;
   private facebookScriptLoaded = false;
 
@@ -41,7 +44,7 @@ export class SocialAuthService {
     if (!this.facebookScriptLoaded) {
       (window as any).fbAsyncInit = () => {
         FB.init({
-          appId: 'SEU_FACEBOOK_APP_ID',
+          appId: this.facebookAppId,
           xfbml: true,
           version: 'v18.0'
         });
@@ -59,7 +62,7 @@ export class SocialAuthService {
   async loginComGoogle(): Promise<AuthResponseDTO> {
     return new Promise((resolve, reject) => {
       (window as any).google.accounts.id.initialize({
-        client_id: 'SEU_GOOGLE_CLIENT_ID',
+        client_id: this.googleClientId,
         callback: (response: any) => {
           this.enviarTokenGoogle(response.credential).subscribe({
             next: resolve,
@@ -110,7 +113,7 @@ export class SocialAuthService {
   }
 
   private ensureCsrf(): Observable<CsrfResponse> {
-    return this.http.get<CsrfResponse>('/api/v1/auth/csrf', { withCredentials: true }).pipe(
+    return this.http.get<CsrfResponse>(`${environment.apiUrl}/api/v1/auth/csrf`, { withCredentials: true }).pipe(
       switchMap((csrf) => {
         if (csrf?.token) {
           sessionStorage.setItem('XSRF-TOKEN', csrf.token);
