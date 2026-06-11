@@ -3,15 +3,15 @@ package ads.uninassau.brjobs.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.util.Date;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 
 @Service
@@ -28,9 +28,12 @@ public class JwtTokenService {
     /**
      * Cria uma SecretKey a partir da string secreta.
      */
-    private Key getSigningKey() {
+    private SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        return new SecretKeySpec(keyBytes, 0, keyBytes.length, "HmacSHA512");
+        if (keyBytes.length < 64) {
+            throw new IllegalStateException("BRJOBS_JWT_SECRET deve ter pelo menos 64 bytes para assinar JWT com HS512.");
+        }
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     /**
@@ -44,8 +47,7 @@ public class JwtTokenService {
                 .subject(email)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                // Usando a chave secreta.
-                .signWith(getSigningKey())
+                .signWith(getSigningKey(), Jwts.SIG.HS512)
                 .compact();
     }
 
@@ -57,7 +59,7 @@ public class JwtTokenService {
     public boolean validateToken(String authToken) {
         try {
             Jwts.parser()
-                    .verifyWith((javax.crypto.SecretKey) getSigningKey())
+                    .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(authToken);
             System.out.println("DEBUG JwtTokenService: Token validado com sucesso");
@@ -85,7 +87,7 @@ public class JwtTokenService {
     public String getUsernameFromToken(String token) throws Exception {
         try {
             Claims claims = Jwts.parser()
-                    .verifyWith((javax.crypto.SecretKey) getSigningKey())
+                    .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();

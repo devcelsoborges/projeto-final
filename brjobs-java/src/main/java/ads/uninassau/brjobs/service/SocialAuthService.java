@@ -6,7 +6,6 @@ import ads.uninassau.brjobs.model.SocialLogin;
 import ads.uninassau.brjobs.model.TipoUsuario;
 import ads.uninassau.brjobs.repository.UsuarioRepository;
 import ads.uninassau.brjobs.repository.SocialLoginRepository;
-import ads.uninassau.brjobs.security.JwtTokenService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +37,6 @@ public class SocialAuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final SocialLoginRepository socialLoginRepository;
-    private final JwtTokenService jwtTokenService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
@@ -69,10 +67,7 @@ public class SocialAuthService {
                     return socialLoginRepository.save(novo);
                 });
 
-            String jwtToken = jwtTokenService.generateToken(usuario.getEmail());
-
             return AuthResponseDTO.builder()
-                .token(jwtToken)
                 .usuarioId(usuario.getId())
                 .email(usuario.getEmail())
                 .nome(usuario.getNome())
@@ -117,10 +112,7 @@ public class SocialAuthService {
                     return socialLoginRepository.save(novo);
                 });
 
-            String jwtToken = jwtTokenService.generateToken(usuario.getEmail());
-
             return AuthResponseDTO.builder()
-                .token(jwtToken)
                 .usuarioId(usuario.getId())
                 .email(usuario.getEmail())
                 .nome(usuario.getNome())
@@ -157,10 +149,7 @@ public class SocialAuthService {
                     return socialLoginRepository.save(novo);
                 });
 
-            String jwtToken = jwtTokenService.generateToken(usuario.getEmail());
-
             return AuthResponseDTO.builder()
-                .token(jwtToken)
                 .usuarioId(usuario.getId())
                 .email(usuario.getEmail())
                 .nome(usuario.getNome())
