@@ -1,5 +1,6 @@
 package ads.uninassau.brjobs.controller;
 
+import ads.uninassau.brjobs.dto.CadastroContratanteDTO;
 import ads.uninassau.brjobs.dto.LoginRequestDTO;
 import ads.uninassau.brjobs.dto.UsuarioDTO;
 import ads.uninassau.brjobs.dto.AuthResponseDTO;
@@ -8,6 +9,7 @@ import ads.uninassau.brjobs.repository.UsuarioRepository;
 import ads.uninassau.brjobs.service.AuthService;
 import ads.uninassau.brjobs.service.AuthSessionService;
 import ads.uninassau.brjobs.service.SocialAuthService;
+import ads.uninassau.brjobs.service.UsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -32,6 +34,7 @@ public class AuthV1Controller {
     private final AuthService authService;
     private final SocialAuthService socialAuthService;
     private final UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
 
     @GetMapping("/csrf")
     public ResponseEntity<Map<String, String>> csrf(CsrfToken csrfToken) {
@@ -53,6 +56,19 @@ public class AuthV1Controller {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "E-mail ou senha invalidos."));
         }
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody CadastroContratanteDTO cadastroRequest,
+                                      HttpServletRequest request,
+                                      HttpServletResponse response) {
+        UsuarioDTO criado = usuarioService.criarContratante(cadastroRequest);
+        Usuario usuario = usuarioRepository.findById(criado.getId())
+                .orElseThrow(() -> new IllegalStateException("Usuario recem-criado nao encontrado"));
+        AuthSessionService.SessionResult session = authSessionService.issueSocialSession(usuario, request, "local-register");
+        authSessionService.writeSessionCookies(response, session);
+        log.info("auth_register_success userId={} provider=local", usuario.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(session.usuario());
     }
 
     @PostMapping("/refresh")

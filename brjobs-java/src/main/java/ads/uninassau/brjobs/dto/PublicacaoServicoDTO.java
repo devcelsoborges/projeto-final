@@ -11,6 +11,15 @@ public class PublicacaoServicoDTO {
     private String titulo;
     private String descricao;
     private String categoria;
+    private String enderecoPublicacao;
+    private String cepPublicacao;
+    private String cidadePublicacao;
+    private String estadoPublicacao;
+    private Double latitude;
+    private Double longitude;
+    private String geocodeProvider;
+    private String geocodePrecision;
+    private Double distanceKm;
     private Double preco;
     private Double orcamentoMin;
     private Double orcamentoMax;

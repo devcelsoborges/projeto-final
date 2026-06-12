@@ -11,6 +11,15 @@ export interface PublicacaoServico {
   titulo: string;
   descricao: string;
   categoria?: string;
+  enderecoPublicacao?: string;
+  cepPublicacao?: string;
+  cidadePublicacao?: string;
+  estadoPublicacao?: string;
+  latitude?: number;
+  longitude?: number;
+  geocodeProvider?: string;
+  geocodePrecision?: string;
+  distanceKm?: number;
   usuarioBairro?: string;
   usuarioCidade?: string;
   usuarioEndereco?: string;
@@ -40,6 +49,14 @@ export interface CriarPublicacaoServicoDTO {
   titulo: string;
   descricao: string;
   categoria?: string;
+  enderecoPublicacao: string;
+  cepPublicacao?: string;
+  cidadePublicacao?: string;
+  estadoPublicacao?: string;
+  latitude?: number;
+  longitude?: number;
+  geocodeProvider?: string;
+  geocodePrecision?: string;
   preco?: number;
   orcamentoMin?: number;
   orcamentoMax?: number;
@@ -77,6 +94,8 @@ export class PublicacaoServicoService {
     termo?: string;
     page?: number;
     size?: number;
+    lat?: number;
+    lng?: number;
   }): Observable<PublicacaoPage> {
     const query: string[] = [];
     if (params.tipo) {
@@ -86,7 +105,11 @@ export class PublicacaoServicoService {
       query.push(`termo=${encodeURIComponent(params.termo)}`);
     }
     query.push(`page=${params.page ?? 0}`);
-    query.push(`size=${params.size ?? 12}`);
+    query.push(`size=${params.size ?? 20}`);
+    if (params.lat != null && params.lng != null) {
+      query.push(`lat=${encodeURIComponent(params.lat)}`);
+      query.push(`lng=${encodeURIComponent(params.lng)}`);
+    }
 
     return this.http.get<PublicacaoPage>(`${this.apiUrl}/paginado?${query.join("&")}`);
   }

@@ -1,5 +1,7 @@
 package ads.uninassau.brjobs.service;
 
+import ads.uninassau.brjobs.dto.GeocodeRequestDTO;
+import ads.uninassau.brjobs.dto.GeocodeResponseDTO;
 import ads.uninassau.brjobs.dto.PublicacaoServicoDTO;
 import ads.uninassau.brjobs.model.PublicacaoServico;
 import ads.uninassau.brjobs.model.TipoPublicacaoServico;
@@ -8,7 +10,6 @@ import ads.uninassau.brjobs.repository.PublicacaoServicoRepository;
 import ads.uninassau.brjobs.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,7 @@ public class PublicacaoServicoService {
     private final PublicacaoServicoRepository publicacaoServicoRepository;
     private final UsuarioRepository usuarioRepository;
     private final PublicacaoCacheService publicacaoCacheService;
+    private final GeocodeService geocodeService;
 
     public PublicacaoServicoDTO criarComTenant(Long tenantId, PublicacaoServicoDTO dto) {
         validarEntrada(dto);
@@ -35,6 +37,7 @@ public class PublicacaoServicoService {
             .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
 
         TipoPublicacaoServico tipo = parseTipo(dto.getTipoPublicacao());
+        GeocodeResponseDTO geocode = resolveGeocode(dto);
 
         // Neste módulo, qualquer usuário autenticado pode publicar PRESTACAO ou CONTRATACAO.
         // O tipo da publicação é validado por payload (parseTipo) e pelos campos obrigatórios.
@@ -45,6 +48,14 @@ public class PublicacaoServicoService {
             .titulo(dto.getTitulo().trim())
             .descricao(dto.getDescricao().trim())
             .categoria(dto.getCategoria() == null ? null : dto.getCategoria().trim())
+            .enderecoPublicacao(dto.getEnderecoPublicacao().trim())
+            .cepPublicacao(blankToNull(dto.getCepPublicacao()))
+            .cidadePublicacao(blankToNull(dto.getCidadePublicacao()))
+            .estadoPublicacao(normalizeUf(dto.getEstadoPublicacao()))
+            .latitude(geocode.getLat())
+            .longitude(geocode.getLng())
+            .geocodeProvider(geocode.getSource())
+            .geocodePrecision(geocode.getPrecision())
             .preco(dto.getPreco())
             .orcamentoMin(dto.getOrcamentoMin())
             .orcamentoMax(dto.getOrcamentoMax())
@@ -60,15 +71,17 @@ public class PublicacaoServicoService {
         return toDTO(entity);
     }
 
-    @Cacheable(cacheNames = "publicacoes-lista", key = "'listar:' + (#tipo == null ? 'all' : #tipo)")
     public List<PublicacaoServicoDTO> listar(String tipo) {
-        return buscarPaginado(tipo, null, 0, 20).getContent();
+        return buscarPaginado(tipo, null, 0, 20, null, null).getContent();
     }
 
-    @Cacheable(cacheNames = "publicacoes-paginadas", key = "'p:' + (#tipo == null ? 'all' : #tipo) + ':t:' + (#termo == null ? '' : #termo) + ':page:' + #page + ':size:' + #size")
     public Page<PublicacaoServicoDTO> buscarPaginado(String tipo, String termo, int page, int size) {
+        return buscarPaginado(tipo, termo, page, size, null, null);
+    }
+
+    public Page<PublicacaoServicoDTO> buscarPaginado(String tipo, String termo, int page, int size, Double lat, Double lng) {
         int pageSeguro = Math.max(page, 0);
-        int sizeSeguro = Math.min(Math.max(size, 1), 50);
+        int sizeSeguro = Math.min(Math.max(size, 1), 20);
         Pageable pageable = PageRequest.of(pageSeguro, sizeSeguro);
 
         TipoPublicacaoServico tipoFiltro = null;
@@ -84,7 +97,7 @@ public class PublicacaoServicoService {
         if (termoFiltro == null) {
             return publicacaoServicoRepository
                 .buscarAtivasPaginado(tipoFiltro, pageable)
-                .map(this::toDTO);
+                .map(entity -> toDTO(entity, lat, lng));
         }
 
         List<PublicacaoServico> base = (tipoFiltro == null)
@@ -109,7 +122,7 @@ public class PublicacaoServicoService {
                 || usuarioEndereco.contains(termoLower)
                 || usuarioCidade.contains(termoLower)
                 || usuarioBairro.contains(termoLower)) {
-                filtradas.add(toDTO(entity));
+                filtradas.add(toDTO(entity, lat, lng));
             }
         }
 
@@ -164,6 +177,10 @@ public class PublicacaoServicoService {
         if (dto.getDescricao() == null || dto.getDescricao().isBlank()) {
             throw new IllegalArgumentException("descricao e obrigatoria");
         }
+        if (dto.getEnderecoPublicacao() == null || dto.getEnderecoPublicacao().isBlank()) {
+            throw new IllegalArgumentException("enderecoPublicacao e obrigatorio");
+        }
+        validarCoordenadas(dto.getLatitude(), dto.getLongitude());
 
         TipoPublicacaoServico tipo = parseTipo(dto.getTipoPublicacao());
         if (tipo == TipoPublicacaoServico.PRESTACAO) {
@@ -193,6 +210,10 @@ public class PublicacaoServicoService {
     }
 
     private PublicacaoServicoDTO toDTO(PublicacaoServico entity) {
+        return toDTO(entity, null, null);
+    }
+
+    private PublicacaoServicoDTO toDTO(PublicacaoServico entity, Double userLat, Double userLng) {
         PublicacaoServicoDTO dto = new PublicacaoServicoDTO();
         String enderecoUsuario = entity.getUsuario() != null ? entity.getUsuario().getEndereco() : null;
 
@@ -201,6 +222,15 @@ public class PublicacaoServicoService {
         dto.setTitulo(entity.getTitulo());
         dto.setDescricao(entity.getDescricao());
         dto.setCategoria(entity.getCategoria());
+        dto.setEnderecoPublicacao(entity.getEnderecoPublicacao());
+        dto.setCepPublicacao(entity.getCepPublicacao());
+        dto.setCidadePublicacao(entity.getCidadePublicacao());
+        dto.setEstadoPublicacao(entity.getEstadoPublicacao());
+        dto.setLatitude(entity.getLatitude());
+        dto.setLongitude(entity.getLongitude());
+        dto.setGeocodeProvider(entity.getGeocodeProvider());
+        dto.setGeocodePrecision(entity.getGeocodePrecision());
+        dto.setDistanceKm(calcularDistanciaKm(userLat, userLng, entity.getLatitude(), entity.getLongitude()));
         dto.setPreco(entity.getPreco());
         dto.setOrcamentoMin(entity.getOrcamentoMin());
         dto.setOrcamentoMax(entity.getOrcamentoMax());
@@ -217,5 +247,62 @@ public class PublicacaoServicoService {
         dto.setHighlightPriority(entity.getHighlightPlan() != null ? entity.getHighlightPlan().getPriority() : null);
         dto.setDataCriacao(entity.getDataCriacao());
         return dto;
+    }
+
+    private GeocodeResponseDTO resolveGeocode(PublicacaoServicoDTO dto) {
+        if (dto.getLatitude() != null && dto.getLongitude() != null) {
+            return GeocodeResponseDTO.builder()
+                    .lat(dto.getLatitude())
+                    .lng(dto.getLongitude())
+                    .source(blankToNull(dto.getGeocodeProvider()) != null ? dto.getGeocodeProvider() : "browser")
+                    .precision(blankToNull(dto.getGeocodePrecision()) != null ? dto.getGeocodePrecision() : "exact")
+                    .build();
+        }
+
+        GeocodeRequestDTO request = new GeocodeRequestDTO();
+        request.setEndereco(dto.getEnderecoPublicacao());
+        request.setCep(dto.getCepPublicacao());
+        request.setCidade(dto.getCidadePublicacao());
+        request.setEstado(dto.getEstadoPublicacao());
+        return geocodeService.geocode(request);
+    }
+
+    private void validarCoordenadas(Double lat, Double lng) {
+        if ((lat == null && lng != null) || (lat != null && lng == null)) {
+            throw new IllegalArgumentException("latitude e longitude devem ser enviadas juntas");
+        }
+        if (lat != null && (lat < -90 || lat > 90)) {
+            throw new IllegalArgumentException("latitude invalida");
+        }
+        if (lng != null && (lng < -180 || lng > 180)) {
+            throw new IllegalArgumentException("longitude invalida");
+        }
+    }
+
+    private Double calcularDistanciaKm(Double lat1, Double lng1, Double lat2, Double lng2) {
+        if (lat1 == null || lng1 == null || lat2 == null || lng2 == null) {
+            return null;
+        }
+
+        double earthKm = 6371.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return Math.round(earthKm * c * 10.0) / 10.0;
+    }
+
+    private String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private String normalizeUf(String value) {
+        String uf = blankToNull(value);
+        return uf == null ? null : uf.toUpperCase(Locale.ROOT);
     }
 }

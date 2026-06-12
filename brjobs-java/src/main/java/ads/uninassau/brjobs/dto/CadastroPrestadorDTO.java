@@ -26,19 +26,16 @@ public class CadastroPrestadorDTO {
     @NotBlank(message = "A senha é obrigatória.")
     private String senha; // Validação de complexidade será feita no service
 
-    @NotBlank(message = "O telefone é obrigatório.")
+    private String confirmacaoSenha;
+
     private String telefone; // Validação de formato será feita no service
 
-    @NotNull(message = "A data de nascimento é obrigatória.")
     private LocalDate dataNascimento; // Validação de idade será feita no service
 
-    @NotBlank(message = "O CPF é obrigatório.")
     private String cpf; // Validação de formato será feita no service
 
-    @NotBlank(message = "O gênero é obrigatório.")
     private String genero;
 
-    @NotBlank(message = "O endereço é obrigatório.")
     @Size(min = 5, max = 255, message = "O endereço deve ter entre 5 e 255 caracteres.")
     private String endereco;
 
@@ -54,7 +51,6 @@ public class CadastroPrestadorDTO {
     private String bio;
 
     // Campos específicos de Prestador
-    @NotBlank(message = "A função/profissão é obrigatória.")
     @Size(min = 3, max = 100, message = "A função deve ter entre 3 e 100 caracteres.")
     private String funcao;
 

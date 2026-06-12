@@ -1,18 +1,19 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
-import { catchError, tap, map } from 'rxjs/operators';
+import { catchError, tap, map, switchMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 
 interface CadastroContratanteDTO {
   nome: string;
   email: string;
   senha: string;
-  telefone: string;
-  dataNascimento: string;
-  cpf: string;
-  genero: string;
-  endereco: string;
+  confirmacaoSenha?: string;
+  telefone?: string;
+  dataNascimento?: string;
+  cpf?: string;
+  genero?: string;
+  endereco?: string;
   cep?: string;
   rua?: string;
   bairro?: string;
@@ -27,11 +28,12 @@ interface CadastroPrestadorDTO {
   nome: string;
   email: string;
   senha: string;
-  telefone: string;
-  dataNascimento: string;
-  cpf: string;
-  genero: string;
-  endereco: string;
+  confirmacaoSenha?: string;
+  telefone?: string;
+  dataNascimento?: string;
+  cpf?: string;
+  genero?: string;
+  endereco?: string;
   cep?: string;
   rua?: string;
   bairro?: string;
@@ -40,7 +42,7 @@ interface CadastroPrestadorDTO {
   numero?: string;
   complemento?: string;
   bio?: string;
-  funcao: string;
+  funcao?: string;
   experienciaProfissional?: string;
   especialidades?: string;
 }
@@ -73,11 +75,17 @@ interface ApiResponse {
   data?: UsuarioDTO;
 }
 
+interface CsrfResponse {
+  headerName: string;
+  token: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class RegisterService {
   private apiUrl = `${environment.apiUrl}/api/usuarios`;
+  private authApiUrl = `${environment.apiUrl}/api/v1/auth`;
 
   constructor(private http: HttpClient) { }
 
@@ -85,7 +93,12 @@ export class RegisterService {
    * Registra um novo usuário contratante
    */
   registrarContratante(dados: CadastroContratanteDTO): Observable<UsuarioDTO> {
-    return this.http.post<UsuarioDTO>(`${this.apiUrl}/contratante`, dados)
+    return this.ensureCsrf().pipe(
+      switchMap((csrf) => this.http.post<UsuarioDTO>(`${this.authApiUrl}/register`, dados, {
+        withCredentials: true,
+        headers: this.csrfHeaders(csrf)
+      }))
+    )
       .pipe(
         tap(response => {
 }),
@@ -124,6 +137,20 @@ return throwError(() => this.handleError(error));
           return throwError(() => error);
         })
       );
+  }
+
+  private ensureCsrf(): Observable<CsrfResponse> {
+    return this.http.get<CsrfResponse>(`${this.authApiUrl}/csrf`, { withCredentials: true }).pipe(
+      tap((csrf) => {
+        if (csrf?.token) {
+          sessionStorage.setItem('XSRF-TOKEN', csrf.token);
+        }
+      })
+    );
+  }
+
+  private csrfHeaders(csrf: CsrfResponse): HttpHeaders {
+    return new HttpHeaders({ [csrf.headerName || 'X-XSRF-TOKEN']: csrf.token });
   }
 
   /**

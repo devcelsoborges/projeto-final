@@ -3,9 +3,14 @@ export const environment = {
   production: false,
   apiUrl: 'http://localhost:8080',
   chat: {
-    pollIntervalMs: 5000,
+    pollIntervalMs: 15000,
     maxMessageLength: 500,
     headerBadgeMax: 99
+  },
+  features: {
+    structuralAuth: true,
+    publicationGeo: true,
+    dynamicNotifications: true
   },
   defaultTheme: 'system' as 'system' | 'light' | 'dark',
   uxTelemetryEnabled: true,

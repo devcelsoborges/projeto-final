@@ -47,6 +47,10 @@ public class SocialLogin {
     @Column(nullable = false)
     private String nome;
 
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private Boolean emailVerified = false;
+
     // Foto de perfil (URL)
     @Column(length = 500)
     private String fotoUrl;

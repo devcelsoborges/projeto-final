@@ -6,7 +6,6 @@ import { ProfileStateService } from '../../service/profile-state.service';
 import { ThemeMode, ThemeService } from '../../service/theme.service';
 import { UxTelemetryService } from '../../service/ux-telemetry.service';
 import { AuthService } from '../../service/auth.service';
-import { ChatUnreadService } from '../../service/chat-unread.service';
 import { NotificationItem, NotificationService } from '../../service/notification.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -39,7 +38,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private themeService: ThemeService,
     private telemetry: UxTelemetryService,
     private authService: AuthService,
-    private chatUnreadService: ChatUnreadService,
     private notificationService: NotificationService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -67,10 +65,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    this.chatUnreadService.unreadCount$
+    this.notificationService.unreadCount$
       .pipe(takeUntil(this.destroy$))
       .subscribe((count) => {
         this.unreadChatCount = count;
+        this.cdr.markForCheck();
+      });
+
+    this.notificationService.notifications$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((notificacoes) => {
+        this.notificacoes = (notificacoes ?? []).slice(0, 5);
+        this.cdr.markForCheck();
+      });
+
+    this.notificationService.loading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((loading) => {
+        this.carregandoNotificacoes = loading;
         this.cdr.markForCheck();
       });
     
@@ -159,7 +171,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.fecharUsuarioMenu();
 
     if (this.notificacoesAberto) {
-      this.carregarNotificacoes();
+      this.notificationService.refreshNow();
     }
     this.cdr.markForCheck();
   }
@@ -246,25 +258,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       fromTheme: previousMode,
       toTheme: nextMode,
       userState: this.isLoggedIn ? 'auth' : 'anon'
-    });
-  }
-
-  private carregarNotificacoes(): void {
-    this.carregandoNotificacoes = true;
-    this.cdr.markForCheck();
-
-    this.notificationService.listRecent(5).subscribe({
-      next: (notificacoes) => {
-        this.notificacoes = notificacoes;
-        this.unreadChatCount = notificacoes.filter((item) => item.unread).length;
-        this.carregandoNotificacoes = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.notificacoes = [];
-        this.carregandoNotificacoes = false;
-        this.cdr.detectChanges();
-      }
     });
   }
 }

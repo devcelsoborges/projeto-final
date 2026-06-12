@@ -10,6 +10,7 @@ import {
   TipoPublicacao
 } from "../../service/publicacao-servico.service";
 import { AuthService } from "../../service/auth.service";
+import { LocationService } from "../../service/location.service";
 
 interface CategoriaServico {
   nome: string;
@@ -30,7 +31,7 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
   erroCarregamento = "";
   sucesso = "";
   paginaAtual = 0;
-  readonly tamanhoPagina = 10;
+  readonly tamanhoPagina = 20;
   ultimaPagina = true;
 
   publicacoes: PublicacaoServico[] = [];
@@ -101,6 +102,14 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
     titulo: "",
     descricao: "",
     categoria: "",
+    enderecoPublicacao: "",
+    cepPublicacao: "",
+    cidadePublicacao: "",
+    estadoPublicacao: "",
+    latitude: undefined,
+    longitude: undefined,
+    geocodeProvider: undefined,
+    geocodePrecision: undefined,
     preco: undefined,
     orcamentoMin: undefined,
     orcamentoMax: undefined
@@ -109,6 +118,7 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
   constructor(
     private readonly publicacaoService: PublicacaoServicoService,
     private readonly authService: AuthService,
+    private readonly locationService: LocationService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -140,7 +150,9 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
     this.publicacaoService.buscarPaginado({
       tipo,
       page: this.paginaAtual,
-      size: this.tamanhoPagina
+      size: this.tamanhoPagina,
+      lat: this.locationService.currentLocation?.lat,
+      lng: this.locationService.currentLocation?.lng
     }).subscribe({
       next: (resp) => {
         const payload = resp as unknown as { content?: PublicacaoServico[]; last?: boolean } | PublicacaoServico[];
@@ -254,11 +266,21 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.form.enderecoPublicacao?.trim()) {
+      this.erro = "Informe o endereço da publicação.";
+      this.cdr.markForCheck();
+      return;
+    }
+
     const payload: CriarPublicacaoServicoDTO = {
       ...this.form,
       categoria: (this.subcategoriaSelecionada || this.form.categoria || "").trim() || undefined,
       titulo: this.form.titulo.trim(),
-      descricao: this.form.descricao.trim()
+      descricao: this.form.descricao.trim(),
+      enderecoPublicacao: this.form.enderecoPublicacao.trim(),
+      cepPublicacao: this.form.cepPublicacao?.trim() || undefined,
+      cidadePublicacao: this.form.cidadePublicacao?.trim() || undefined,
+      estadoPublicacao: this.form.estadoPublicacao?.trim().toUpperCase() || undefined
     };
 
     if (payload.tipoPublicacao === "PRESTACAO") {
@@ -294,6 +316,14 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
           titulo: "",
           descricao: "",
           categoria: "",
+          enderecoPublicacao: "",
+          cepPublicacao: "",
+          cidadePublicacao: "",
+          estadoPublicacao: "",
+          latitude: undefined,
+          longitude: undefined,
+          geocodeProvider: undefined,
+          geocodePrecision: undefined,
           preco: undefined,
           orcamentoMin: undefined,
           orcamentoMax: undefined
@@ -317,6 +347,35 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
     const min = publicacao.orcamentoMin?.toFixed(2) ?? "0,00";
     const max = publicacao.orcamentoMax?.toFixed(2) ?? "0,00";
     return `R$ ${min} - R$ ${max}`;
+  }
+
+  formatarDistancia(publicacao: PublicacaoServico): string {
+    if (publicacao.distanceKm == null) {
+      return "";
+    }
+
+    return `a ${publicacao.distanceKm.toLocaleString("pt-BR", {
+      minimumFractionDigits: publicacao.distanceKm < 10 ? 1 : 0,
+      maximumFractionDigits: 1
+    })} km de você`;
+  }
+
+  usarLocalizacaoAtual(): void {
+    this.erro = "";
+    this.locationService.requestBrowserLocation()
+      .then((location) => {
+        this.form.latitude = location.lat;
+        this.form.longitude = location.lng;
+        this.form.geocodeProvider = "browser";
+        this.form.geocodePrecision = "exact";
+        this.sucesso = "Localização atual adicionada à publicação.";
+        this.carregarPublicacoes(true);
+        this.cdr.markForCheck();
+      })
+      .catch((error) => {
+        this.erro = error?.message || "Não foi possível obter sua localização. Preencha o endereço manualmente.";
+        this.cdr.markForCheck();
+      });
   }
 
   podeRemoverPublicacao(publicacao: PublicacaoServico): boolean {

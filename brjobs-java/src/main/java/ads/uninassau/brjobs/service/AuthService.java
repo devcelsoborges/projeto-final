@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -62,12 +61,10 @@ public class AuthService {
     @Transactional(readOnly = true)
     public String authenticateAndGetToken(LoginRequestDTO loginRequest) throws AuthenticationException {
         // Validar que o usuário existe
-        System.out.println("DEBUG: Tentando autenticar usuário com email: " + loginRequest.getEmail());
         
         usuarioRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado com o email: " + loginRequest.getEmail()));
 
-        System.out.println("DEBUG: Usuário encontrado no banco de dados");
         
         // Criar token de autenticação com email e senha
         UsernamePasswordAuthenticationToken authToken =
@@ -76,19 +73,12 @@ public class AuthService {
                         loginRequest.getSenha()
                 );
 
-        System.out.println("DEBUG: Tentando autenticar com AuthenticationManager...");
         
         // Autenticar - lança AuthenticationException se as credenciais forem inválidas
         try {
             Authentication authentication = authenticationManager.authenticate(authToken);
-            System.out.println("DEBUG: Autenticação bem-sucedida! Gerando token JWT...");
-            
-            // Gerar e retornar o token JWT
-            String token = jwtTokenService.generateToken(authentication.getName());
-            System.out.println("DEBUG: Token JWT gerado com sucesso para: " + authentication.getName());
-            return token;
+            return jwtTokenService.generateToken(authentication.getName());
         } catch (AuthenticationException ex) {
-            System.out.println("DEBUG: FALHA NA AUTENTICAÇÃO: " + ex.getMessage());
             throw ex;
         }
     }
@@ -165,27 +155,10 @@ public class AuthService {
                     novo.setNome((nome == null || nome.isBlank()) ? email.split("@")[0] : nome);
                     novo.setEmail(email);
                     novo.setSenha("SOCIAL_LOGIN");
-                    novo.setTelefone("11900000000");
-                    novo.setCpf(generateUniqueCpf());
-                    novo.setGenero("Nao informado");
-                    novo.setDataNascimento(LocalDate.of(2000, 1, 1));
-                    novo.setEndereco("Nao informado");
                     novo.setTipoUsuario(TipoUsuario.CONTRATANTE);
                     novo.setAtivo(true);
                     return usuarioRepository.save(novo);
                 });
-    }
-
-    private String generateUniqueCpf() {
-        long seed = Math.abs(System.currentTimeMillis()) % 100000000000L;
-        String cpf = String.format("%011d", seed);
-
-        while (usuarioRepository.findByCpf(cpf).isPresent()) {
-            seed = (seed + 1) % 100000000000L;
-            cpf = String.format("%011d", seed);
-        }
-
-        return cpf;
     }
 
     @Transactional

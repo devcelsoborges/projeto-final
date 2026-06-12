@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ChangeDetectorRef } from '@angular/core';
 import { PublicacaoServico, PublicacaoServicoService, TipoPublicacao } from '../../service/publicacao-servico.service';
+import { LocationService } from '../../service/location.service';
 
 type DisponibilidadeFiltro = 'TODOS' | 'URGENTE' | 'HOJE';
 type AtendimentoFiltro = 'TODOS' | 'DOMICILIO' | 'ONLINE' | 'PRESENCIAL';
@@ -99,7 +100,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   carregando = false;
   erro = '';
   paginaAtual = 0;
-  readonly tamanhoPagina = 12;
+  readonly tamanhoPagina = 20;
   totalElementos = 0;
   ultimaPagina = true;
 
@@ -112,6 +113,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly publicacaoService: PublicacaoServicoService,
+    private readonly locationService: LocationService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -151,7 +153,9 @@ export class HomeComponent implements OnInit, OnDestroy {
       tipo,
       termo: termo || undefined,
       page: this.paginaAtual,
-      size: this.tamanhoPagina
+      size: this.tamanhoPagina,
+      lat: this.locationService.currentLocation?.lat,
+      lng: this.locationService.currentLocation?.lng
     }).subscribe({
       next: (resp) => {
         const lista = this.extrairListaResposta(resp);
@@ -216,7 +220,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const precoMax = this.normalizarNumero(this.precoMax);
 
     return lista.filter((pub) => {
-      const cidadeCard = this.getCidadeCard(pub);
+    const cidadeCard = this.getCidadeCard(pub);
 
       const textoBase = this.normalizar([
         pub.titulo,
@@ -224,11 +228,15 @@ export class HomeComponent implements OnInit, OnDestroy {
         pub.categoria,
         pub.usuarioNome,
         pub.usuarioBairro,
+        pub.cidadePublicacao,
+        pub.enderecoPublicacao,
         cidadeCard
       ].filter(Boolean).join(' '));
 
       const localizacaoPublicacao = this.normalizar([
         pub.usuarioBairro,
+        pub.cidadePublicacao,
+        pub.enderecoPublicacao,
         cidadeCard
       ].filter(Boolean).join(' '));
       const possuiLocalizacaoEstruturada = localizacaoPublicacao.length > 0;
@@ -382,6 +390,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.buscarPublicacoes(true);
   }
 
+  usarMinhaLocalizacao(): void {
+    this.locationService.requestBrowserLocation()
+      .then(() => {
+        this.erro = '';
+        this.buscarPublicacoes(true);
+      })
+      .catch((error) => {
+        this.erro = error?.message || 'Não foi possível obter sua localização. Informe bairro ou cidade no filtro.';
+        this.cdr.markForCheck();
+      });
+  }
+
   onFiltroChange(): void {
     this.buscarPublicacoes(true);
   }
@@ -503,12 +523,28 @@ export class HomeComponent implements OnInit, OnDestroy {
     return `R$ ${min} - R$ ${max}`;
   }
 
+  formatarDistancia(pub: PublicacaoServico): string {
+    if (pub.distanceKm == null) {
+      return '';
+    }
+
+    return `a ${pub.distanceKm.toLocaleString('pt-BR', {
+      minimumFractionDigits: pub.distanceKm < 10 ? 1 : 0,
+      maximumFractionDigits: 1
+    })} km de você`;
+  }
+
   getEstrelas(nota?: number | null): string {
     const estrelas = Math.max(0, Math.min(5, Math.round(nota ?? 0)));
     return `${'★'.repeat(estrelas)}${'☆'.repeat(5 - estrelas)}`;
   }
 
   getCidadeCard(pub: PublicacaoServico): string {
+    const cidadePublicacao = this.normalizarCidadeExibicao(pub.cidadePublicacao);
+    if (cidadePublicacao) {
+      return cidadePublicacao;
+    }
+
     const cidadeNormalizada = this.normalizarCidadeExibicao(pub.usuarioCidade);
     if (cidadeNormalizada) {
       return cidadeNormalizada;

@@ -15,7 +15,7 @@ import { environment } from '../../environments/environment';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="chat-container">
+    <div class="chat-container" [class.has-selection]="!!conversaSelecionada">
       <div class="conversas-list">
         <h3>Conversas</h3>
         <div class="nao-lidas-badge" *ngIf="naoLidas > 0">{{ naoLidas }} novas</div>
@@ -298,6 +298,61 @@ import { environment } from '../../environments/environment';
     }
     .btn-primary:hover {
       background: var(--color-primary-light);
+    }
+    @media (max-width: 760px) {
+      .chat-container {
+        height: calc(100dvh - 96px);
+        min-height: 520px;
+        flex-direction: column;
+        border-radius: 0;
+        overflow: hidden;
+      }
+
+      .conversas-list {
+        flex: 0 0 auto;
+        width: 100%;
+        max-height: 42%;
+        border-right: 0;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .chat-container.has-selection .conversas-list {
+        display: none;
+      }
+
+      .chat-area {
+        min-height: 0;
+      }
+
+      .chat-header h4,
+      .conversa-header h5,
+      .ultima-msg,
+      .msg-content p {
+        overflow-wrap: anywhere;
+      }
+
+      .mensagens {
+        min-height: 0;
+        padding: 12px;
+      }
+
+      .msg-content {
+        max-width: min(86vw, 420px);
+      }
+
+      .msg-input {
+        padding: 10px;
+        flex-wrap: wrap;
+      }
+
+      .form-control {
+        flex-basis: 100%;
+        min-width: 0;
+      }
+
+      .btn {
+        width: 100%;
+      }
     }
   `]
 })

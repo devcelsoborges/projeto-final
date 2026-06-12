@@ -33,7 +33,7 @@
 /* Barra de Busca (Clareza e Simplicidade) */
 .search-bar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px auto;
+    grid-template-columns: minmax(0, 1fr) 220px auto auto;
     align-items: stretch;
     gap: 8px;
     max-width: 960px;
@@ -104,6 +104,15 @@
 
 .search-bar button:hover {
     background-color: #1f7a1f;
+}
+
+.search-bar .btn-location {
+    background-color: #24384f;
+    border-color: #1d2d40;
+}
+
+.search-bar .btn-location:hover {
+    background-color: #1d2d40;
 }
 
 .filtros-avancados {

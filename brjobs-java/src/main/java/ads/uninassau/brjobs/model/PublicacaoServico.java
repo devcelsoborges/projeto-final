@@ -39,6 +39,30 @@ public class PublicacaoServico {
     @Column(length = 50)
     private String categoria;
 
+    @Column(name = "endereco_publicacao", length = 255)
+    private String enderecoPublicacao;
+
+    @Column(name = "cep_publicacao", length = 20)
+    private String cepPublicacao;
+
+    @Column(name = "cidade_publicacao", length = 120)
+    private String cidadePublicacao;
+
+    @Column(name = "estado_publicacao", length = 2)
+    private String estadoPublicacao;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "geocode_provider", length = 40)
+    private String geocodeProvider;
+
+    @Column(name = "geocode_precision", length = 40)
+    private String geocodePrecision;
+
     @Column
     private Double preco;
 

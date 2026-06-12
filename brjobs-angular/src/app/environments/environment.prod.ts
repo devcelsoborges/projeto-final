@@ -3,9 +3,14 @@ export const environment = {
   production: true,
   apiUrl: 'https://api.brjobs.com.br',
   chat: {
-    pollIntervalMs: 5000,
+    pollIntervalMs: 15000,
     maxMessageLength: 500,
     headerBadgeMax: 99
+  },
+  features: {
+    structuralAuth: true,
+    publicationGeo: true,
+    dynamicNotifications: true
   },
   defaultTheme: 'system' as 'system' | 'light' | 'dark',
   uxTelemetryEnabled: true,

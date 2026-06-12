@@ -20,6 +20,7 @@
       </select>
 
       <button (click)="buscarPublicacoes(true)">Buscar</button>
+      <button type="button" class="btn-location" (click)="usarMinhaLocalizacao()">Usar minha localização</button>
     </div>
 
     <section class="filtros-avancados">
@@ -126,6 +127,7 @@
           {{ pub.usuarioNome }} • {{ pub.categoria || 'Sem categoria' }}
         </p>
         <p class="empresa-local" *ngIf="getCidadeCard(pub)">📍 {{ getCidadeCard(pub) }}</p>
+        <p class="empresa-local" *ngIf="formatarDistancia(pub)">{{ formatarDistancia(pub) }}</p>
         <p class="empresa-local">{{ pub.descricao }}</p>
         <p class="empresa-local card-rating" *ngIf="pub.prestador">
           <span class="rating-stars">{{ getEstrelas(pub.prestador.avaliacaoMedia) }}</span>

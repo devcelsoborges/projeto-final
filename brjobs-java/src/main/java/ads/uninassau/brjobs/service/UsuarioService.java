@@ -45,7 +45,7 @@ public class UsuarioService {
      */
     @Transactional
     public UsuarioDTO criarContratante(CadastroContratanteDTO dto) {
-        validarDadosParaCadastro(dto.getEmail(), dto.getCpf(), dto.getTelefone(), dto.getDataNascimento(), dto.getSenha());
+        validarDadosParaCadastro(dto.getEmail(), dto.getCpf(), dto.getTelefone(), dto.getDataNascimento(), dto.getSenha(), dto.getConfirmacaoSenha());
 
         Usuario usuario = new Usuario();
         usuario.setTipoUsuario(TipoUsuario.CONTRATANTE);
@@ -83,7 +83,7 @@ public class UsuarioService {
      */
     @Transactional
     public UsuarioDTO criarPrestador(CadastroPrestadorDTO dto) {
-        validarDadosParaCadastro(dto.getEmail(), dto.getCpf(), dto.getTelefone(), dto.getDataNascimento(), dto.getSenha());
+        validarDadosParaCadastro(dto.getEmail(), dto.getCpf(), dto.getTelefone(), dto.getDataNascimento(), dto.getSenha(), dto.getConfirmacaoSenha());
 
         Usuario usuario = new Usuario();
         usuario.setTipoUsuario(TipoUsuario.PRESTADOR);
@@ -222,7 +222,7 @@ public class UsuarioService {
     /**
      * Valida dados comuns para cadastro
      */
-    private void validarDadosParaCadastro(String email, String cpf, String telefone, LocalDate dataNascimento, String senha) {
+    private void validarDadosParaCadastro(String email, String cpf, String telefone, LocalDate dataNascimento, String senha, String confirmacaoSenha) {
         // Validar email
         if (!UsuarioValidator.validarEmail(email)) {
             throw new IllegalArgumentException("O formato do email é inválido.");
@@ -232,20 +232,26 @@ public class UsuarioService {
         }
 
         // Validar CPF
-        if (!UsuarioValidator.validarCPF(cpf)) {
+        if (cpf != null && !cpf.isBlank() && !UsuarioValidator.validarCPF(cpf)) {
             throw new IllegalArgumentException("O formato do CPF é inválido. Utilize o formato XXX.XXX.XXX-XX");
         }
-        if (usuarioRepository.findByCpf(cpf).isPresent()) {
+        if (cpf != null && !cpf.isBlank() && usuarioRepository.findByCpf(cpf).isPresent()) {
             throw new CPFAlreadyInUseException(cpf);
         }
 
         // Validar telefone
-        if (!UsuarioValidator.validarTelefone(telefone)) {
+        if (telefone != null && !telefone.isBlank() && !UsuarioValidator.validarTelefone(telefone)) {
             throw new IllegalArgumentException("O formato do telefone é inválido. Utilize o formato (XX) XXXXX-XXXX");
         }
 
         // Validar data de nascimento
-        UsuarioValidator.validarDataNascimento(dataNascimento);
+        if (dataNascimento != null) {
+            UsuarioValidator.validarDataNascimento(dataNascimento);
+        }
+
+        if (confirmacaoSenha != null && !confirmacaoSenha.isBlank() && !senha.equals(confirmacaoSenha)) {
+            throw new IllegalArgumentException("As senhas não coincidem.");
+        }
 
         // Validar senha
         UsuarioValidator.validarSenha(senha);

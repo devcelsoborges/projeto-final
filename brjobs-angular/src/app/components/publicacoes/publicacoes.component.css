@@ -66,6 +66,7 @@ label {
 
 .field-control,
 .primary-action,
+.secondary-action,
 .btn-paginacao {
   font: inherit;
 }
@@ -100,6 +101,22 @@ label {
 .primary-action:hover {
   background: var(--color-primary-light);
   transform: translateY(-1px);
+}
+
+.secondary-action {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+}
+
+.secondary-action:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-muted);
 }
 
 .cta-login {

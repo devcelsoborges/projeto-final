@@ -51,6 +51,11 @@ public class SocialAuthService {
             String email = profile.email();
             String providerId = profile.providerId();
             String nome = profile.nome();
+            Boolean emailVerified = profile.emailVerified();
+
+            if (!Boolean.TRUE.equals(emailVerified)) {
+                throw new IllegalArgumentException("Google payload com email nao verificado");
+            }
 
             Usuario usuario = buscarOuCriarUsuario(email, nome, "google");
 
@@ -62,6 +67,7 @@ public class SocialAuthService {
                         .providerId(providerId)
                         .email(email)
                         .nome(nome)
+                        .emailVerified(true)
                         .createdAt(LocalDateTime.now())
                         .build();
                     return socialLoginRepository.save(novo);
@@ -89,13 +95,18 @@ public class SocialAuthService {
     @Transactional
     public AuthResponseDTO loginComFacebook(String accessToken) {
         try {
-            String facebookUserUrl = "https://graph.facebook.com/v18.0/me?fields=id,name,email&access_token=" + accessToken;
+            String facebookUserUrl = "https://graph.facebook.com/v18.0/me?fields=id,name,email,verified&access_token=" + accessToken;
             String response = restTemplate.getForObject(facebookUserUrl, String.class);
             JsonNode userData = objectMapper.readTree(response);
 
             String providerId = userData.get("id").asText();
             String email = userData.get("email").asText();
             String nome = userData.get("name").asText();
+            boolean emailVerified = !userData.has("verified") || userData.get("verified").asBoolean(false);
+
+            if (!emailVerified) {
+                throw new IllegalArgumentException("Facebook payload com email nao verificado");
+            }
 
             Usuario usuario = buscarOuCriarUsuario(email, nome, "facebook");
             
@@ -107,6 +118,7 @@ public class SocialAuthService {
                         .providerId(providerId)
                         .email(email)
                         .nome(nome)
+                        .emailVerified(true)
                         .createdAt(LocalDateTime.now())
                         .build();
                     return socialLoginRepository.save(novo);
@@ -144,6 +156,7 @@ public class SocialAuthService {
                         .providerId(providerId)
                         .email(email)
                         .nome(nome)
+                        .emailVerified(true)
                         .createdAt(LocalDateTime.now())
                         .build();
                     return socialLoginRepository.save(novo);
@@ -262,7 +275,8 @@ public class SocialAuthService {
             throw new IllegalArgumentException("Google payload sem identificador do usuario");
         }
 
-        return new GoogleProfile(providerId, email, nome, tokenType);
+        Boolean emailVerified = booleanText(data, "email_verified");
+        return new GoogleProfile(providerId, email, nome, tokenType, emailVerified);
     }
 
     private String googleTokenType(String token) {
@@ -284,6 +298,18 @@ public class SocialAuthService {
         }
         String value = node.get(fieldName).asText();
         return value == null || value.isBlank() ? null : value;
+    }
+
+    private Boolean booleanText(JsonNode node, String fieldName) {
+        if (node == null || !node.hasNonNull(fieldName)) {
+            return false;
+        }
+
+        JsonNode value = node.get(fieldName);
+        if (value.isBoolean()) {
+            return value.asBoolean();
+        }
+        return "true".equalsIgnoreCase(value.asText());
     }
 
     private String firstNonBlank(String... values) {
@@ -360,6 +386,6 @@ public class SocialAuthService {
             });
     }
 
-    private record GoogleProfile(String providerId, String email, String nome, String tokenType) {
+    private record GoogleProfile(String providerId, String email, String nome, String tokenType, Boolean emailVerified) {
     }
 }

@@ -49,6 +49,38 @@
             </select>
           </label>
 
+          <label>
+            Endereço da publicação *
+            <input
+              class="field-control"
+              type="text"
+              [(ngModel)]="form.enderecoPublicacao"
+              name="enderecoPublicacao"
+              placeholder="Rua, número, bairro"
+              required
+            />
+          </label>
+
+          <div class="orcamento-grid">
+            <label>
+              Cidade
+              <input class="field-control" type="text" [(ngModel)]="form.cidadePublicacao" name="cidadePublicacao" />
+            </label>
+            <label>
+              UF
+              <input class="field-control" type="text" maxlength="2" [(ngModel)]="form.estadoPublicacao" name="estadoPublicacao" />
+            </label>
+          </div>
+
+          <label>
+            CEP
+            <input class="field-control" type="text" [(ngModel)]="form.cepPublicacao" name="cepPublicacao" placeholder="00000-000" />
+          </label>
+
+          <button type="button" class="secondary-action" (click)="usarLocalizacaoAtual()">
+            Usar minha localização atual
+          </button>
+
           <label *ngIf="form.tipoPublicacao === 'PRESTACAO'">
             Preço (R$)
             <input
@@ -134,6 +166,8 @@
             <div class="meta">
               <span>{{ formatarValor(pub) }}</span>
               <span>{{ pub.categoria || "Sem categoria" }}</span>
+              <span *ngIf="formatarDistancia(pub)">{{ formatarDistancia(pub) }}</span>
+              <span *ngIf="pub.cidadePublicacao || pub.estadoPublicacao">{{ pub.cidadePublicacao }}{{ pub.estadoPublicacao ? "/" + pub.estadoPublicacao : "" }}</span>
               <span>por {{ pub.usuarioNome }}</span>
             </div>
             <div class="acoes-publicacao">

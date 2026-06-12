@@ -30,9 +30,11 @@ public class PublicacaoServicoController {
         @RequestParam(required = false) String tipo,
         @RequestParam(required = false) String termo,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "12") int size
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(required = false) Double lat,
+        @RequestParam(required = false) Double lng
     ) {
-        return ResponseEntity.ok(publicacaoServicoService.buscarPaginado(tipo, termo, page, size));
+        return ResponseEntity.ok(publicacaoServicoService.buscarPaginado(tipo, termo, page, size, lat, lng));
     }
 
     @GetMapping("/{id}")

@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NotificationItem, NotificationService } from '../../service/notification.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-notificacoes',
@@ -104,9 +106,10 @@ import { NotificationItem, NotificationService } from '../../service/notificatio
     }
   `]
 })
-export class NotificacoesComponent implements OnInit {
+export class NotificacoesComponent implements OnInit, OnDestroy {
   notifications: NotificationItem[] = [];
   loading = false;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private readonly notificationService: NotificationService,
@@ -114,19 +117,25 @@ export class NotificacoesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loading = true;
-    this.cdr.markForCheck();
-    this.notificationService.listAll().subscribe({
-      next: (notifications) => {
+    this.notificationService.notifications$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((notifications) => {
         this.notifications = notifications;
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.notifications = [];
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
+        this.cdr.markForCheck();
+      });
+
+    this.notificationService.loading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((loading) => {
+        this.loading = loading;
+        this.cdr.markForCheck();
+      });
+
+    this.notificationService.refreshNow();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

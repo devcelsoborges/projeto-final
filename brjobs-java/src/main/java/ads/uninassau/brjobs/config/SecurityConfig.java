@@ -153,6 +153,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/social/google").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/config/public").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/publicacoes/minhas").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/publicacoes/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/highlight/plans").permitAll()

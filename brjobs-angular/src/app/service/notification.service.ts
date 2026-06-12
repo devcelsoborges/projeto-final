@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { BehaviorSubject, interval, map, Observable, of, Subject } from 'rxjs';
+import { catchError, switchMap, takeUntil } from 'rxjs/operators';
 import { ChatService, Conversa } from './chat.service';
+import { AuthService } from './auth.service';
+import { environment } from '../environments/environment';
 
 export interface NotificationItem {
   id: number;
@@ -16,7 +19,41 @@ export interface NotificationItem {
   providedIn: 'root'
 })
 export class NotificationService {
-  constructor(private readonly chatService: ChatService) {}
+  private notificationsSubject = new BehaviorSubject<NotificationItem[]>([]);
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  private unreadCountSubject = new BehaviorSubject<number>(0);
+  private stopPolling$ = new Subject<void>();
+  private destroy$ = new Subject<void>();
+
+  readonly notifications$ = this.notificationsSubject.asObservable();
+  readonly loading$ = this.loadingSubject.asObservable();
+  readonly unreadCount$ = this.unreadCountSubject.asObservable();
+
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly authService: AuthService
+  ) {
+    this.authService.isLoggedIn$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((isLoggedIn) => {
+        if (isLoggedIn) {
+          this.startPolling();
+        } else {
+          this.stopPolling();
+          this.notificationsSubject.next([]);
+          this.unreadCountSubject.next(0);
+          this.loadingSubject.next(false);
+        }
+      });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.stopPolling(false);
+      } else if (this.authService.isLoggedIn()) {
+        this.startPolling();
+      }
+    });
+  }
 
   listRecent(limit = 5): Observable<NotificationItem[]> {
     return this.chatService.obterConversas().pipe(
@@ -28,6 +65,52 @@ export class NotificationService {
     return this.chatService.obterConversas().pipe(
       map((conversas) => this.toNotifications(conversas))
     );
+  }
+
+  refreshNow(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.notificationsSubject.next([]);
+      this.unreadCountSubject.next(0);
+      this.loadingSubject.next(false);
+      return;
+    }
+
+    this.loadingSubject.next(true);
+    this.listAll()
+      .pipe(catchError(() => of([])))
+      .subscribe((notifications) => {
+        this.applyNotifications(notifications);
+        this.loadingSubject.next(false);
+      });
+  }
+
+  private startPolling(): void {
+    this.stopPolling(false);
+    this.refreshNow();
+
+    interval(environment.chat.pollIntervalMs)
+      .pipe(
+        takeUntil(this.stopPolling$),
+        switchMap(() => {
+          if (document.hidden || !this.authService.isLoggedIn()) {
+            return of(this.notificationsSubject.value);
+          }
+          return this.listAll().pipe(catchError(() => of(this.notificationsSubject.value)));
+        })
+      )
+      .subscribe((notifications) => this.applyNotifications(notifications));
+  }
+
+  private stopPolling(clearLoading = true): void {
+    this.stopPolling$.next();
+    if (clearLoading) {
+      this.loadingSubject.next(false);
+    }
+  }
+
+  private applyNotifications(notifications: NotificationItem[]): void {
+    this.notificationsSubject.next(notifications ?? []);
+    this.unreadCountSubject.next((notifications ?? []).filter((item) => item.unread).length);
   }
 
   private toNotifications(conversas: Conversa[]): NotificationItem[] {
