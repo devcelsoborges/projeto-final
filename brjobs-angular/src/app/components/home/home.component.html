@@ -1,33 +1,126 @@
 <div class="home-container">
-  
-  <header class="hero-section">
-    <h1>{{ titulo }}</h1>
-    <p>Milhares de oportunidades de trabalho esperando por você. Comece sua busca agora!</p>
-    
-    <div class="search-bar">
-      <input type="text" placeholder="Buscar por título, empresa ou local..." />
-      <button>Buscar Vagas</button>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>{{ titulo }}</h1>
+      <p class="subtitle">O próximo passo da sua carreira começa agora.</p>
+
+      <!-- Barra de busca: dois campos (cargo + localização) -->
+      <div class="search-shell" (click)="$event.stopPropagation()">
+        <div class="search-bar">
+          <div class="search-field">
+            <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              [value]="termo()"
+              (input)="atualizarTermo($event)"
+              placeholder="Buscar por serviço, categoria ou autor..."
+              aria-label="Buscar por serviço, categoria ou autor"
+            />
+          </div>
+
+          <span class="search-divider" aria-hidden="true"></span>
+
+          <div class="search-field">
+            <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"></path>
+              <circle cx="12" cy="10" r="2.5"></circle>
+            </svg>
+            <input
+              type="text"
+              [value]="localizacao()"
+              (input)="atualizarLocalizacao($event)"
+              placeholder="Localização (cidade, estado ou país)"
+              aria-label="Localização"
+            />
+          </div>
+        </div>
+
+        <!-- Filtros dinâmicos em formato de pills -->
+        <div class="filtros" role="group" aria-label="Filtros de vagas">
+          @for (filtro of filtros; track filtro.key) {
+            <div class="filtro">
+              <button
+                type="button"
+                class="filtro-pill"
+                [class.ativa]="contagem(filtro.key) > 0"
+                [class.aberta]="dropdownAberto() === filtro.key"
+                [attr.aria-expanded]="dropdownAberto() === filtro.key"
+                aria-haspopup="true"
+                (click)="alternarDropdown(filtro.key, $event)"
+              >
+                <span>{{ filtro.label }}</span>
+                @if (contagem(filtro.key) > 0) {
+                  <span class="filtro-badge">{{ contagem(filtro.key) }}</span>
+                }
+                <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+
+              @if (dropdownAberto() === filtro.key) {
+                <div class="dropdown" role="group" [attr.aria-label]="filtro.label">
+                  @for (opcao of filtro.opcoes; track opcao.valor) {
+                    <label class="opcao">
+                      <input
+                        type="checkbox"
+                        [checked]="estaSelecionado(filtro.key, opcao.valor)"
+                        (change)="alternarOpcao(filtro.key, opcao.valor, filtro.multi)"
+                      />
+                      <span>{{ opcao.label }}</span>
+                    </label>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          @if (totalFiltrosAtivos() > 0) {
+            <button type="button" class="limpar" (click)="limparFiltros()">
+              Limpar filtros
+            </button>
+          }
+        </div>
+      </div>
     </div>
   </header>
 
   <section class="vagas-section">
-    <h2>Vagas em Destaque</h2>
-    
-    <div class="lista-vagas">
-      
-      <div *ngFor="let vaga of vagas" class="card-vaga">
-        <h3>{{ vaga.titulo }}</h3>
-        <p class="empresa-local">
-          {{ vaga.empresa }} • {{ vaga.local }}
-        </p>
-        <span class="tag-nivel">{{ vaga.nivel }}</span>
-        <button class="btn-detalhes">Ver Detalhes</button>
-      </div>
+    <div class="vagas-header">
+      <h2>Vagas em Destaque</h2>
+      <span class="resultado-contagem">
+        {{ vagasFiltradas().length }}
+        {{ vagasFiltradas().length === 1 ? 'vaga encontrada' : 'vagas encontradas' }}
+      </span>
+    </div>
 
-      <div *ngIf="vagas.length === 0" class="sem-vagas">
-        <p>Nenhuma vaga encontrada no momento.</p>
-      </div>
-      
+    <div class="lista-vagas">
+      @for (vaga of vagasFiltradas(); track vaga.id) {
+        <article class="card-vaga">
+          <div class="card-topo">
+            <span class="tag-tipo">{{ vaga.tipo }}</span>
+            <span class="tag-categoria">{{ vaga.categoria }}</span>
+          </div>
+
+          <h3>{{ vaga.titulo }}</h3>
+          <p class="empresa-local">{{ vaga.autor }} • {{ vaga.local }}</p>
+
+          <p class="salario">{{ formatarValor(vaga.valor) }}</p>
+          <p class="publicacao">{{ formatarPublicacao(vaga.publicadoEmDias) }}</p>
+
+          <button type="button" class="btn-detalhes">Ver Detalhes</button>
+        </article>
+      } @empty {
+        <div class="sem-vagas">
+          <p>Nenhuma vaga corresponde aos filtros selecionados.</p>
+          <button type="button" class="limpar" (click)="limparFiltros()">
+            Limpar filtros
+          </button>
+        </div>
+      }
     </div>
   </section>
 
