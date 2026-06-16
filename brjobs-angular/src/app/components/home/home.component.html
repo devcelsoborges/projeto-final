@@ -1,158 +1,303 @@
 <div class="home-container">
-  
-  <header class="hero-section">
-    <h1>{{ titulo }}</h1>
-    <p>Pesquise serviços oferecidos e oportunidades de contratação publicadas na plataforma.</p>
-    
-    <div class="search-bar">
-      <input
-        type="text"
-        placeholder="Buscar por título, descrição, categoria ou autor..."
-        [(ngModel)]="termoBusca"
-        (input)="onTermoBuscaInput()"
-        (keyup.enter)="buscarPublicacoes(true)"
-      />
 
-      <select class="tipo-select" [(ngModel)]="filtroTipo" (change)="onFiltroChange()" aria-label="Filtro de tipo de publicação">
-        <option value="TODAS">Todos os tipos</option>
-        <option value="PRESTACAO">Prestação</option>
-        <option value="CONTRATACAO">Contratação</option>
-      </select>
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>{{ titulo }}</h1>
+      <p class="subtitle">Pesquise serviços oferecidos e oportunidades de contratação publicadas na plataforma.</p>
 
-      <button (click)="buscarPublicacoes(true)">Buscar</button>
-      <button type="button" class="btn-location" (click)="usarMinhaLocalizacao()">Usar minha localização</button>
+      <!-- Barra de busca: dois campos (termo + localização) -->
+      <div class="search-shell">
+        <div class="search-bar">
+          <div class="search-field">
+            <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="termoBusca"
+              (input)="onTermoBuscaInput()"
+              (keyup.enter)="buscarPublicacoes(true)"
+              placeholder="Buscar por título, descrição, categoria ou autor..."
+              aria-label="Buscar por título, descrição, categoria ou autor"
+            />
+          </div>
+
+          <span class="search-divider" aria-hidden="true"></span>
+
+          <div class="search-field">
+            <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"></path>
+              <circle cx="12" cy="10" r="2.5"></circle>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="localizacaoBusca"
+              (input)="onLocalizacaoInput()"
+              placeholder="Localização (bairro ou cidade)"
+              aria-label="Localização"
+            />
+            <button
+              type="button"
+              class="btn-geo"
+              (click)="usarMinhaLocalizacao()"
+              title="Usar minha localização"
+              aria-label="Usar minha localização"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="3.5"></circle>
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>
+              </svg>
+            </button>
+          </div>
+
+          <button type="button" class="btn-buscar" (click)="buscarPublicacoes(true)">Buscar</button>
+        </div>
+
+        <!-- Filtros dinâmicos em pills -->
+        <div class="filtros" role="group" aria-label="Filtros de busca">
+
+          <!-- Tipo -->
+          <div class="filtro">
+            <button
+              type="button"
+              class="filtro-pill"
+              [class.ativa]="filtroTipo !== 'TODAS'"
+              [class.aberta]="dropdownAberto === 'tipo'"
+              [attr.aria-expanded]="dropdownAberto === 'tipo'"
+              aria-haspopup="true"
+              (click)="alternarDropdown('tipo', $event)"
+            >
+              <span>Tipo</span>
+              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            @if (dropdownAberto === 'tipo') {
+              <div class="dropdown" (click)="$event.stopPropagation()" role="group" aria-label="Tipo">
+                <label class="opcao">
+                  <input type="radio" name="f-tipo" [value]="'TODAS'" [(ngModel)]="filtroTipo" (change)="onFiltroChange()" />
+                  <span>Todos os tipos</span>
+                </label>
+                <label class="opcao">
+                  <input type="radio" name="f-tipo" [value]="'PRESTACAO'" [(ngModel)]="filtroTipo" (change)="onFiltroChange()" />
+                  <span>Prestação</span>
+                </label>
+                <label class="opcao">
+                  <input type="radio" name="f-tipo" [value]="'CONTRATACAO'" [(ngModel)]="filtroTipo" (change)="onFiltroChange()" />
+                  <span>Contratação</span>
+                </label>
+              </div>
+            }
+          </div>
+
+          <!-- Categoria -->
+          <div class="filtro">
+            <button
+              type="button"
+              class="filtro-pill"
+              [class.ativa]="!!categoriaSelecionada"
+              [class.aberta]="dropdownAberto === 'categoria'"
+              [attr.aria-expanded]="dropdownAberto === 'categoria'"
+              aria-haspopup="true"
+              (click)="alternarDropdown('categoria', $event)"
+            >
+              <span>Categoria</span>
+              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            @if (dropdownAberto === 'categoria') {
+              <div class="dropdown dropdown-scroll" (click)="$event.stopPropagation()" role="group" aria-label="Categoria">
+                <label class="opcao">
+                  <input type="radio" name="f-cat" [value]="''" [(ngModel)]="categoriaSelecionada" (change)="onCategoriaChange()" />
+                  <span>Todas</span>
+                </label>
+                @for (cat of categoriasServico; track cat.nome) {
+                  <label class="opcao">
+                    <input type="radio" name="f-cat" [value]="cat.nome" [(ngModel)]="categoriaSelecionada" (change)="onCategoriaChange()" />
+                    <span>{{ cat.nome }}</span>
+                  </label>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Valor -->
+          <div class="filtro">
+            <button
+              type="button"
+              class="filtro-pill"
+              [class.ativa]="precoMin != null || precoMax != null"
+              [class.aberta]="dropdownAberto === 'valor'"
+              [attr.aria-expanded]="dropdownAberto === 'valor'"
+              aria-haspopup="true"
+              (click)="alternarDropdown('valor', $event)"
+            >
+              <span>Valor</span>
+              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            @if (dropdownAberto === 'valor') {
+              <div class="dropdown dropdown-valor" (click)="$event.stopPropagation()" role="group" aria-label="Faixa de valor">
+                <label class="campo-num">
+                  Mínimo (R$)
+                  <input type="number" min="0" step="1" [(ngModel)]="precoMin" (change)="onFiltroAvancadoChange()" />
+                </label>
+                <label class="campo-num">
+                  Máximo (R$)
+                  <input type="number" min="0" step="1" [(ngModel)]="precoMax" (change)="onFiltroAvancadoChange()" />
+                </label>
+              </div>
+            }
+          </div>
+
+          <!-- Avaliação -->
+          <div class="filtro">
+            <button
+              type="button"
+              class="filtro-pill"
+              [class.ativa]="avaliacaoMinima > 0"
+              [class.aberta]="dropdownAberto === 'avaliacao'"
+              [attr.aria-expanded]="dropdownAberto === 'avaliacao'"
+              aria-haspopup="true"
+              (click)="alternarDropdown('avaliacao', $event)"
+            >
+              <span>Avaliação</span>
+              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            @if (dropdownAberto === 'avaliacao') {
+              <div class="dropdown" (click)="$event.stopPropagation()" role="group" aria-label="Avaliação mínima">
+                <label class="opcao">
+                  <input type="radio" name="f-aval" [value]="0" [(ngModel)]="avaliacaoMinima" (change)="onFiltroAvancadoChange()" />
+                  <span>Qualquer</span>
+                </label>
+                <label class="opcao">
+                  <input type="radio" name="f-aval" [value]="3" [(ngModel)]="avaliacaoMinima" (change)="onFiltroAvancadoChange()" />
+                  <span>3+ estrelas</span>
+                </label>
+                <label class="opcao">
+                  <input type="radio" name="f-aval" [value]="4" [(ngModel)]="avaliacaoMinima" (change)="onFiltroAvancadoChange()" />
+                  <span>4+ estrelas</span>
+                </label>
+                <label class="opcao">
+                  <input type="radio" name="f-aval" [value]="4.5" [(ngModel)]="avaliacaoMinima" (change)="onFiltroAvancadoChange()" />
+                  <span>4.5+ estrelas</span>
+                </label>
+              </div>
+            }
+          </div>
+
+          <!-- Data de publicação -->
+          <div class="filtro">
+            <button
+              type="button"
+              class="filtro-pill"
+              [class.ativa]="!!dataPublicacaoFiltro"
+              [class.aberta]="dropdownAberto === 'data'"
+              [attr.aria-expanded]="dropdownAberto === 'data'"
+              aria-haspopup="true"
+              (click)="alternarDropdown('data', $event)"
+            >
+              <span>Data de publicação</span>
+              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            @if (dropdownAberto === 'data') {
+              <div class="dropdown" (click)="$event.stopPropagation()" role="group" aria-label="Data de publicação">
+                <label class="opcao">
+                  <input type="radio" name="f-data" [value]="''" [(ngModel)]="dataPublicacaoFiltro" (change)="onFiltroAvancadoChange()" />
+                  <span>Qualquer</span>
+                </label>
+                <label class="opcao">
+                  <input type="radio" name="f-data" [value]="'1'" [(ngModel)]="dataPublicacaoFiltro" (change)="onFiltroAvancadoChange()" />
+                  <span>Últimas 24 horas</span>
+                </label>
+                <label class="opcao">
+                  <input type="radio" name="f-data" [value]="'7'" [(ngModel)]="dataPublicacaoFiltro" (change)="onFiltroAvancadoChange()" />
+                  <span>Últimos 7 dias</span>
+                </label>
+                <label class="opcao">
+                  <input type="radio" name="f-data" [value]="'30'" [(ngModel)]="dataPublicacaoFiltro" (change)="onFiltroAvancadoChange()" />
+                  <span>Últimos 30 dias</span>
+                </label>
+              </div>
+            }
+          </div>
+
+          @if (temAlgumFiltro) {
+            <button type="button" class="limpar" (click)="limparTudo()">Limpar filtros</button>
+          }
+        </div>
+      </div>
     </div>
-
-    <section class="filtros-avancados">
-      <div class="filtro-grid">
-        <label>
-          Categoria
-          <select [(ngModel)]="categoriaSelecionada" (change)="onCategoriaChange()">
-            <option value="">Todas</option>
-            <option *ngFor="let cat of categoriasServico" [value]="cat.nome">{{ cat.nome }}</option>
-          </select>
-        </label>
-
-        <label>
-          Subcategoria
-          <select [(ngModel)]="subcategoriaSelecionada" (change)="onSubcategoriaChange()" [disabled]="!categoriaSelecionada">
-            <option value="">Todas</option>
-            <option *ngFor="let sub of subcategoriasDisponiveis" [value]="sub">{{ sub }}</option>
-          </select>
-        </label>
-
-        <label>
-          Localização
-          <input
-            type="text"
-            placeholder="Bairro ou cidade"
-            [(ngModel)]="localizacaoBusca"
-            (input)="onLocalizacaoInput()"
-          />
-        </label>
-
-        <label>
-          Avaliação mínima
-          <select [(ngModel)]="avaliacaoMinima" (change)="onFiltroAvancadoChange()">
-            <option [ngValue]="0">Qualquer</option>
-            <option [ngValue]="3">3+ estrelas</option>
-            <option [ngValue]="4">4+ estrelas</option>
-            <option [ngValue]="4.5">4.5+ estrelas</option>
-          </select>
-        </label>
-
-        <label>
-          Preço mínimo (R$)
-          <input type="number" min="0" step="1" [(ngModel)]="precoMin" (change)="onFiltroAvancadoChange()" />
-        </label>
-
-        <label>
-          Preço máximo (R$)
-          <input type="number" min="0" step="1" [(ngModel)]="precoMax" (change)="onFiltroAvancadoChange()" />
-        </label>
-
-        <label>
-          Disponibilidade
-          <select [(ngModel)]="disponibilidadeFiltro" (change)="onFiltroAvancadoChange()">
-            <option value="TODOS">Todos</option>
-            <option value="URGENTE">Urgente</option>
-            <option value="HOJE">Hoje</option>
-          </select>
-        </label>
-
-        <label>
-          Atendimento
-          <select [(ngModel)]="atendimentoFiltro" (change)="onFiltroAvancadoChange()">
-            <option value="TODOS">Todos</option>
-            <option value="DOMICILIO">Em domicílio</option>
-            <option value="ONLINE">Online</option>
-            <option value="PRESENCIAL">Presencial</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="tags-bloco">
-        <span class="tags-label">Tags:</span>
-        <button
-          type="button"
-          class="tag-chip"
-          *ngFor="let tag of tagsDisponiveis"
-          [class.ativa]="tagsSelecionadas.includes(tag)"
-          (click)="alternarTag(tag)"
-        >
-          {{ tag }}
-        </button>
-      </div>
-
-      <div class="filtros-acoes">
-        <button type="button" class="btn-limpar" (click)="limparFiltrosAvancados()">Limpar filtros</button>
-      </div>
-    </section>
   </header>
 
   <section class="vagas-section">
-    <h2>Publicações em Destaque</h2>
+    <div class="vagas-header">
+      <h2>Publicações em Destaque</h2>
+    </div>
 
-    <p *ngIf="carregando" class="sem-vagas">Carregando publicações...</p>
-    <p *ngIf="erro" class="sem-vagas">{{ erro }}</p>
-    
+    @if (carregando) {
+      <p class="estado-msg">Carregando publicações...</p>
+    }
+    @if (erro) {
+      <p class="estado-msg estado-erro">{{ erro }}</p>
+    }
+
     <div class="lista-vagas">
-      
-      <div *ngFor="let pub of publicacoesFiltradas; trackBy: trackByPublicacao" class="card-vaga">
-        <span *ngIf="pub.isHighlighted" class="highlight-chip">
-          Destaque {{ pub.highlightPlanName || '' }}
-        </span>
-        <h3>{{ pub.titulo }}</h3>
-        <p class="empresa-local">
-          {{ pub.usuarioNome }} • {{ pub.categoria || 'Sem categoria' }}
-        </p>
-        <p class="empresa-local" *ngIf="getCidadeCard(pub)">📍 {{ getCidadeCard(pub) }}</p>
-        <p class="empresa-local" *ngIf="formatarDistancia(pub)">{{ formatarDistancia(pub) }}</p>
-        <p class="empresa-local">{{ pub.descricao }}</p>
-        <p class="empresa-local card-rating" *ngIf="pub.prestador">
-          <span class="rating-stars">{{ getEstrelas(pub.prestador.avaliacaoMedia) }}</span>
-          <span>{{ pub.prestador.avaliacaoMedia | number:'1.1-2' }} / 5</span>
-          <small>({{ pub.prestador.numAvaliacoes }} avaliações)</small>
-        </p>
-        <span class="tag-nivel">{{ formatarTipo(pub.tipoPublicacao) }}</span>
-        <p class="empresa-local">{{ formatarValor(pub) }}</p>
-        <button class="btn-detalhes" [routerLink]="['/publicacoes', pub.id]">Ver Publicação</button>
-      </div>
+      @for (pub of publicacoesFiltradas; track pub.id) {
+        <article class="card-vaga">
+          @if (pub.isHighlighted) {
+            <span class="highlight-chip">★ Destaque {{ pub.highlightPlanName || '' }}</span>
+          }
 
-      <div *ngIf="!carregando && !erro && publicacoesFiltradas.length === 0" class="sem-vagas">
-        <p>Nenhuma publicação encontrada com os filtros atuais.</p>
-      </div>
+          <div class="card-topo">
+            <span class="tag-tipo">{{ formatarTipo(pub.tipoPublicacao) }}</span>
+            @if (pub.categoria) {
+              <span class="tag-categoria">{{ pub.categoria }}</span>
+            }
+          </div>
 
-      <div *ngIf="!carregando && !erro && publicacoesFiltradas.length > 0" class="paginacao-publicacoes">
-        <button type="button" class="btn-paginacao" (click)="paginaAnterior()" [disabled]="paginaAtual === 0">
-          Anterior
-        </button>
-        <span>Página {{ paginaAtual + 1 }}</span>
-        <button type="button" class="btn-paginacao" (click)="proximaPagina()" [disabled]="ultimaPagina">
-          Próxima
-        </button>
-      </div>
-      
+          <h3>{{ pub.titulo }}</h3>
+          <p class="card-autor">{{ pub.usuarioNome }}</p>
+
+          @if (getCidadeCard(pub)) {
+            <p class="card-meta">📍 {{ getCidadeCard(pub) }}</p>
+          }
+          @if (formatarDistancia(pub)) {
+            <p class="card-meta">{{ formatarDistancia(pub) }}</p>
+          }
+
+          <p class="card-descricao">{{ pub.descricao }}</p>
+
+          @if (pub.prestador) {
+            <p class="card-rating">
+              <span class="rating-stars">{{ getEstrelas(pub.prestador.avaliacaoMedia) }}</span>
+              <span>{{ pub.prestador.avaliacaoMedia | number:'1.1-2' }} / 5</span>
+              <small>({{ pub.prestador.numAvaliacoes }} avaliações)</small>
+            </p>
+          }
+
+          <p class="card-valor">{{ formatarValor(pub) }}</p>
+          <button class="btn-detalhes" [routerLink]="['/publicacoes', pub.id]">Ver Publicação</button>
+        </article>
+      }
+
+      @if (!carregando && !erro && publicacoesFiltradas.length === 0) {
+        <div class="sem-vagas">
+          <p>Nenhuma publicação encontrada com os filtros atuais.</p>
+          @if (temAlgumFiltro) {
+            <button type="button" class="limpar" (click)="limparTudo()">Limpar filtros</button>
+          }
+        </div>
+      }
+
+      @if (!carregando && !erro && publicacoesFiltradas.length > 0) {
+        <div class="paginacao-publicacoes">
+          <button type="button" class="btn-paginacao" (click)="paginaAnterior()" [disabled]="paginaAtual === 0">
+            Anterior
+          </button>
+          <span>Página {{ paginaAtual + 1 }}</span>
+          <button type="button" class="btn-paginacao" (click)="proximaPagina()" [disabled]="ultimaPagina">
+            Próxima
+          </button>
+        </div>
+      }
     </div>
   </section>
 

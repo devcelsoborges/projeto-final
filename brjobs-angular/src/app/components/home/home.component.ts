@@ -21,7 +21,8 @@ interface CategoriaServico {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
+  styleUrls: ['./home.component.css'],
+  host: { '(document:click)': 'fecharDropdowns()' }
 })
 export class HomeComponent implements OnInit, OnDestroy {
   titulo = 'Encontre prestação e contratação de serviços no BR-Jobs';
@@ -38,6 +39,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   avaliacaoMinima = 0;
   disponibilidadeFiltro: DisponibilidadeFiltro = 'TODOS';
   atendimentoFiltro: AtendimentoFiltro = 'TODOS';
+
+  // Filtro de data de publicação (client-side): '' | '1' | '7' | '30' (dias).
+  dataPublicacaoFiltro = '';
+
+  // Estado de UI dos dropdowns de filtro (pills) — qual está aberto (null = todos fechados).
+  dropdownAberto: string | null = null;
 
   readonly categoriasServico: CategoriaServico[] = [
     {
@@ -218,6 +225,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     const atendimento = this.atendimentoFiltro === 'TODOS' ? '' : this.normalizar(this.atendimentoFiltro);
     const precoMin = this.normalizarNumero(this.precoMin);
     const precoMax = this.normalizarNumero(this.precoMax);
+    const diasPublicacao = this.dataPublicacaoFiltro ? Number(this.dataPublicacaoFiltro) : null;
+    const dataLimite = diasPublicacao != null ? Date.now() - diasPublicacao * 24 * 60 * 60 * 1000 : null;
 
     return lista.filter((pub) => {
     const cidadeCard = this.getCidadeCard(pub);
@@ -262,6 +271,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         || typeof notaMedia !== 'number'
         || notaMedia >= this.avaliacaoMinima;
 
+      const dataMatch = dataLimite == null || this.dataCriacaoTimestamp(pub) >= dataLimite;
+
       return (
         termoMatch &&
         categoriaMatch &&
@@ -272,9 +283,16 @@ export class HomeComponent implements OnInit, OnDestroy {
         atendimentoMatch &&
         precoMinMatch &&
         precoMaxMatch &&
-        avaliacaoMatch
+        avaliacaoMatch &&
+        dataMatch
       );
     });
+  }
+
+  /** Timestamp de criação; sem data válida retorna Infinity (não filtra por data). */
+  private dataCriacaoTimestamp(pub: PublicacaoServico): number {
+    const t = pub.dataCriacao ? new Date(pub.dataCriacao).getTime() : NaN;
+    return Number.isNaN(t) ? Infinity : t;
   }
 
   private carregarComFallback(tipo?: TipoPublicacao, termo?: string): void {
@@ -406,6 +424,53 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.buscarPublicacoes(true);
   }
 
+  // --- UI dos filtros em pills -------------------------------------------
+
+  alternarDropdown(key: string, evento: Event): void {
+    evento.stopPropagation();
+    this.dropdownAberto = this.dropdownAberto === key ? null : key;
+  }
+
+  fecharDropdowns(): void {
+    this.dropdownAberto = null;
+  }
+
+  /** Reseta todos os filtros (busca livre + tipo + avançados) e recarrega. */
+  limparTudo(): void {
+    this.termoBusca = '';
+    this.filtroTipo = 'TODAS';
+    this.categoriaSelecionada = '';
+    this.subcategoriaSelecionada = '';
+    this.tagsSelecionadas = [];
+    this.localizacaoBusca = '';
+    this.precoMin = null;
+    this.precoMax = null;
+    this.avaliacaoMinima = 0;
+    this.disponibilidadeFiltro = 'TODOS';
+    this.atendimentoFiltro = 'TODOS';
+    this.dataPublicacaoFiltro = '';
+    this.dropdownAberto = null;
+    this.buscarPublicacoes(true);
+  }
+
+  /** Indica se há qualquer filtro ativo (para exibir "Limpar filtros"). */
+  get temAlgumFiltro(): boolean {
+    return Boolean(
+      this.termoBusca.trim() ||
+      this.filtroTipo !== 'TODAS' ||
+      this.localizacaoBusca.trim() ||
+      this.categoriaSelecionada ||
+      this.subcategoriaSelecionada ||
+      this.tagsSelecionadas.length > 0 ||
+      this.precoMin != null ||
+      this.precoMax != null ||
+      this.avaliacaoMinima > 0 ||
+      this.disponibilidadeFiltro !== 'TODOS' ||
+      this.atendimentoFiltro !== 'TODOS' ||
+      Boolean(this.dataPublicacaoFiltro)
+    );
+  }
+
   paginaAnterior(): void {
     if (this.paginaAtual === 0 || this.carregando) {
       return;
@@ -454,7 +519,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       precoMax != null ||
       this.avaliacaoMinima > 0 ||
       this.disponibilidadeFiltro !== 'TODOS' ||
-      this.atendimentoFiltro !== 'TODOS'
+      this.atendimentoFiltro !== 'TODOS' ||
+      Boolean(this.dataPublicacaoFiltro)
     );
   }
 

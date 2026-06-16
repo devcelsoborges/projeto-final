@@ -12,7 +12,10 @@ describe('HomeComponent', () => {
 
   beforeEach(async () => {
     const publicacaoServiceMock = {
-      listar: jasmine.createSpy('listar').and.returnValue(of([]))
+      listar: jasmine.createSpy('listar').and.returnValue(of([])),
+      buscarPaginado: jasmine
+        .createSpy('buscarPaginado')
+        .and.returnValue(of({ content: [], totalElements: 0, last: true }))
     };
 
     await TestBed.configureTestingModule({
@@ -37,11 +40,12 @@ describe('HomeComponent', () => {
     expect(compiled.querySelector('h1')?.textContent).toContain('Encontre prestação e contratação de serviços no BR-Jobs');
   });
 
-  it('should render search controls including filter and buscar button', () => {
+  it('should render search controls including filter pills and buscar button', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.search-bar input')).toBeTruthy();
-    expect(compiled.querySelector('.search-bar select')).toBeTruthy();
     expect(compiled.querySelector('.search-bar button')?.textContent).toContain('Buscar');
+    // Filtros agora são pills: Tipo, Categoria, Valor, Avaliação, Data de publicação
+    expect(compiled.querySelectorAll('.filtro-pill').length).toBe(5);
   });
 });
