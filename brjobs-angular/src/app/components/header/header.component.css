@@ -1,207 +1,282 @@
-/* ============================================================
-   1. CONTAINER PRINCIPAL (NAVBAR)
-   ============================================================ */
 .navbar {
-  display: flex;
-  justify-content: center; /* centraliza o conteúdo */
-  align-items: center;
-  background-color: #002b5b; /* Azul escuro institucional */
-  color: #fff;
-  padding: 18px 40px;
-  width: 100%;
   position: sticky;
   top: 0;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  position: relative; /* necessário para o posicionamento do componente de acessibilidade */
-}
-
-/* ============================================================
-   2. LOGO
-   ============================================================ */
-.logo {
-  position: absolute;
-  left: 40px; /* logo fixa à esquerda */
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 4rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  backdrop-filter: blur(10px);
 }
 
 .logo a {
-  font-size: 1.8rem;
-  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-primary-600);
   text-decoration: none;
-  font-weight: 700;
-  letter-spacing: 1px;
-  transition: color 0.3s ease;
-}
-
-.logo a:hover {
-  color: #ffd700; /* Dourado sutil */
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 0.5rem;
+  flex: 1;
 }
 
 .nav-links a {
-  color: #f5f5f5;
+  color: var(--color-text-muted);
   text-decoration: none;
-  font-weight: 500;
-  font-size: 1.3rem;
-  padding: 8px 5px;
-  position: relative;
-  transition: color 0.3s ease;
-}
-
-.nav-links a::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 0%;
-  height: 2px;
-  background-color: #ffd700;
-  transition: width 0.3s ease-in-out;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
 }
 
 .nav-links a:hover,
 .nav-links a.active {
-  color: #ffd700;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
 }
 
-.nav-links a:hover::after,
-.nav-links a.active::after {
-  width: 100%;
-}
-
-/* ============================================================
-   4. COMPONENTE DE ACESSIBILIDADE FLUTUANTE
-   ============================================================ */
-.nav-links app-acessibilidade {
-  position: absolute;
-  right: 40px; /* canto direito da navbar */
-  display: flex;
+.theme-switcher {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  top: 50%;
-  transform: translateY(-50%);
 }
 
-.nav-links app-acessibilidade .acessibilidade-container {
+.theme-select {
+  min-width: 6.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.chat-bell {
+  position: relative;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.bell-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.bell-badge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.2rem;
+}
+
+.notification-menu {
+  position: absolute;
+  right: 10.5rem;
+  top: calc(100% + 0.45rem);
+  width: min(22rem, calc(100vw - 2rem));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  z-index: 120;
+}
+
+.notification-title {
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.notification-item {
+  display: block;
+  padding: 0.75rem 0.85rem;
+  color: var(--color-text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notification-item:hover {
+  background: var(--color-surface-muted);
+}
+
+.notification-item.unread strong {
+  color: var(--color-primary);
+}
+
+.notification-item strong,
+.notification-item span {
+  display: block;
+}
+
+.notification-item span {
+  margin-top: 0.2rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-empty {
+  padding: 0.85rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.notification-all {
+  width: 100%;
+  border: 0;
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  font-weight: 700;
+  text-align: center;
+}
+
+.notification-all:hover {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-muted) 90%);
+}
+
+.usuario-dropdown {
+  position: relative;
+}
+
+.usuario-btn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.usuario-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  width: 12rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+
+.menu-item {
   display: flex;
-  gap: 4px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  color: var(--color-text);
+  text-decoration: none;
 }
 
-.nav-links app-acessibilidade .btn-acessibilidade {
-  font-size: 0.75rem;
-  padding: 2px 6px;
-  border-radius: 4px;
+.menu-item:hover {
+  background: var(--color-surface-muted);
 }
 
-/* ============================================================
-   5. BOTÃO DE MENU (MOBILE)
-   ============================================================ */
+.menu-divider {
+  height: 1px;
+  background: var(--color-border);
+}
+
+.logout-item {
+  color: var(--color-danger);
+}
+
 .menu-toggle {
   display: none;
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 2rem;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  width: 2.3rem;
+  height: 2.3rem;
 }
 
-.menu-toggle:hover {
-  transform: scale(1.1);
-}
-
-/* ============================================================
-   6. MENU MOBILE
-   ============================================================ */
 .mobile-menu {
-  display: flex;
-  flex-direction: column;
-  background-color: #01346b;
-  width: 100%;
-  text-align: center;
-  padding: 10px 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  animation: slideDown 0.3s ease forwards;
+  display: none;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 0.5rem 0;
 }
 
-.mobile-menu a {
-  padding: 14px;
-  color: #fff;
+.mobile-menu a,
+.mobile-menu .btn-logout {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
   text-decoration: none;
-  font-weight: 500;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  transition: background-color 0.2s, color 0.2s;
+  padding: 0.75rem 1.25rem;
+  font: inherit;
+}
+
+.chat-mobile-link {
+  display: flex !important;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.mobile-chat-badge {
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 0.7rem;
+  border-radius: 999px;
+  padding: 0.1rem 0.4rem;
+  font-weight: 700;
 }
 
 .mobile-menu a:hover,
-.mobile-menu a.active {
-  background-color: #004080;
-  color: #ffd700;
+.mobile-menu .btn-logout:hover {
+  background: var(--color-surface-muted);
 }
 
-/* Animação suave de abertura */
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ============================================================
-   7. RESPONSIVIDADE
-   ============================================================ */
-@media (max-width: 900px) {
-  .nav-links {
+@media (max-width: 980px) {
+  .nav-links,
+  .theme-switcher,
+  .usuario-dropdown {
     display: none;
   }
 
-  .menu-toggle {
+  .menu-toggle,
+  .mobile-menu {
     display: block;
   }
-
-  .navbar {
-    padding: 18px 25px;
-  }
-
-  .logo {
-    left: 25px;
-  }
-
-  .nav-links app-acessibilidade {
-    right: 25px;
-  }
-}
-
-@media (max-width: 480px) {
-  .logo a {
-    font-size: 1.5rem;
-  }
-}
-
-/* ============================================================
-   8. BOTÃO DE MODO ESCURO
-   ============================================================ */
-.theme-toggle {
-  padding: 6px 12px;
-  background: var(--color-accent);
-  color: var(--color-text-dark);
-  border: none;
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  font-weight: 600;
-  transition: var(--transition-base);
-}
-
-.theme-toggle:hover {
-  background: var(--color-primary);
-  color: var(--color-surface);
 }

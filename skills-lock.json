@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "lf-discovery": {
+      "source": "twinfo-io/lifters-skills",
+      "sourceType": "github",
+      "computedHash": "5677e697891a97535ccae6dc98818f4bf34abb151fa414593e09f6ffd33fb3dd"
+    },
+    "lf-exec": {
+      "source": "twinfo-io/lifters-skills",
+      "sourceType": "github",
+      "computedHash": "d07299a40565cf0bfa2a8ac89b014dacf59a6d6a26c2a1d044119ab0a10fdee9"
+    },
+    "lf-new-feature": {
+      "source": "twinfo-io/lifters-skills",
+      "sourceType": "github",
+      "computedHash": "09e46eb3d5d1c8ed917c0dbf53cd9996cfae3820b020845e2ba7b7d46abbc742"
+    },
+    "lf-specs": {
+      "source": "twinfo-io/lifters-skills",
+      "sourceType": "github",
+      "computedHash": "1cfbd4f233e3a807dd72afc31bbae9331c4a0716c564ad02717bfeae1e3c3e6f"
+    }
+  }
+}

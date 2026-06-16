@@ -1,102 +1,230 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from "@angular/forms";
+import { Router, RouterModule } from "@angular/router";
+import { Subject } from "rxjs";
+import { takeUntil } from "rxjs/operators";
+import { AuthService } from "../../service/auth.service";
+import { RegisterService } from "../../service/register.service";
+import { SocialLoginService } from "../../service/social-login.service";
 
 @Component({
-  selector: 'app-register',
+  selector: "app-register",
   standalone: true,
-  // Importa ReactiveFormsModule para o tratamento de formulários
-  imports: [CommonModule, ReactiveFormsModule], 
-  templateUrl: './register.component.html',
-  styleUrls: ['./register.component.css']
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  templateUrl: "./register.component.html",
+  styleUrls: ["./register.component.css"]
 })
-export class RegisterComponent implements OnInit {
-  // Define o grupo de formulário
+export class RegisterComponent implements OnInit, OnDestroy {
   registerForm!: FormGroup;
-  
-  // Lista de tipos de usuário e gêneros para os <select> no HTML
-  userTypes = ['Candidato', 'Empresa'];
-  genders = ['Feminino', 'Masculino', 'Outro', 'Prefiro não informar'];
+  loading = false;
+  socialLoading = false;
+  errorMessage: string | null = null;
+  successMessage: string | null = null;
 
-  // Injeta o FormBuilder para construir o formulário
-  constructor(private fb: FormBuilder) {}
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private registerService: RegisterService,
+    private authService: AuthService,
+    private socialLoginService: SocialLoginService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-    // Inicializa o formulário com todos os campos e validadores especificados
     this.registerForm = this.fb.group({
-      // CAMPOS DE AUTENTICAÇÃO (MANTIDOS)
-      email: ['', [Validators.required, Validators.email]],
-      senha: ['', [Validators.required, Validators.minLength(6)]],
-      confirmarSenha: ['', Validators.required],
-      
-      // CAMPOS OBRIGATÓRIOS DO USUÁRIO
-      tipoUsuario: ['', Validators.required],
-      nome: ['', Validators.required],
-      telefone: ['', Validators.required],
-      endereco: ['', Validators.required],
-      cpf: ['', [Validators.required, Validators.minLength(11), Validators.maxLength(11)]],
-      dataNascimento: ['', Validators.required],
-      genero: ['', Validators.required],
-      
-      // CAMPOS OPCIONAIS / DE CONTEÚDO
-      funcao: [''],
-      experienciaProfissional: [''],
-      especialidades: [''],
-      
-      // CAMPOS DE ARQUIVO (Iniciam como null, tratados separadamente)
-      fotoPerfil: [null], 
-      curriculo: [null]
-    }, { 
-      // Adiciona um validador personalizado a nível de grupo para verificar se as senhas coincidem
-      validators: this.passwordMatchValidator 
+      nome: ["", [Validators.required, Validators.minLength(3)]],
+      email: ["", [Validators.required, Validators.email]],
+      senha: ["", [Validators.required, Validators.minLength(8), this.passwordStrengthValidator]],
+      confirmarSenha: ["", Validators.required]
+    }, {
+      validators: this.passwordMatchValidator
     });
   }
 
-  // Validador personalizado para checar se a senha e a confirmação coincidem
-  passwordMatchValidator(form: FormGroup) {
-    const senha = form.get('senha')?.value;
-    const confirmarSenha = form.get('confirmarSenha')?.value;
-    
-    return senha && confirmarSenha && senha !== confirmarSenha ? { mismatch: true } : null;
-  }
-
-  // Método auxiliar para lidar com a seleção de arquivos
-  onFileChange(event: any, fieldName: 'fotoPerfil' | 'curriculo'): void {
-    if (event.target.files.length > 0) {
-      const file = event.target.files[0];
-      // Define o objeto File no controle do formulário.
-      this.registerForm.get(fieldName)?.setValue(file);
-      this.registerForm.get(fieldName)?.updateValueAndValidity();
-    }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onSubmit(): void {
-    if (this.registerForm.valid) {
-      console.log('Dados do Cadastro Válidos:', this.registerForm.value);
-      // TODO: Em uma aplicação real, você enviaria os dados do formulário e os arquivos (separadamente) para o servidor
-      
-      // Exemplo de como você acessaria os arquivos:
-      const foto = this.registerForm.get('fotoPerfil')?.value;
-      const curriculo = this.registerForm.get('curriculo')?.value;
-      console.log('Arquivo de Foto:', foto);
-      console.log('Arquivo de Currículo:', curriculo);
+    this.errorMessage = null;
+    this.successMessage = null;
 
-      // Substitua alert() por um modal em produção
-      alert('Cadastro completo e válido! (Simulação de envio)'); 
-      this.registerForm.reset();
-    } else {
-      console.error('Formulário Inválido. Verifique todos os campos obrigatórios.');
-      this.markAllAsTouched(this.registerForm);
+    if (this.registerForm.invalid) {
+      this.markAllAsTouched();
+      this.errorMessage = "Corrija os campos destacados para criar sua conta.";
+      return;
     }
+
+    const formValue = this.registerForm.value;
+    this.loading = true;
+    this.cdr.markForCheck();
+
+    this.registerService.registrarContratante({
+      nome: formValue.nome.trim(),
+      email: formValue.email.trim(),
+      senha: formValue.senha,
+      confirmacaoSenha: formValue.confirmarSenha
+    }).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (usuario) => {
+          this.authService.setUsuarioAtual(usuario);
+          this.successMessage = `Bem-vindo, ${usuario.nome}!`;
+          this.loading = false;
+          this.cdr.markForCheck();
+          setTimeout(() => this.router.navigate(["/home"]), 800);
+        },
+        error: (error) => this.handleRegistroErro(error)
+      });
   }
 
-  // Função auxiliar para marcar todos os campos como 'touched' e exibir erros
-  private markAllAsTouched(formGroup: FormGroup) {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-      if (control instanceof FormGroup) {
-        this.markAllAsTouched(control);
+  signUpWithGoogle(): void {
+    this.errorMessage = null;
+    this.socialLoading = true;
+    this.cdr.markForCheck();
+
+    this.socialLoginService.initiateGoogleSignIn(
+      (credential: string) => {
+        this.socialLoginService.loginWithGoogle(credential)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (response) => {
+              this.socialLoginService.storeSocialAuthTokens(response);
+              this.authService.syncAuthStateFromStorage(true);
+              this.successMessage = `Bem-vindo, ${response.nome}!`;
+              this.socialLoading = false;
+              this.cdr.markForCheck();
+              setTimeout(() => this.router.navigate(["/home"]), 800);
+            },
+            error: (error) => {
+              const backendMessage =
+                error?.error?.error ||
+                error?.error?.message ||
+                (typeof error?.error === "string" ? error.error : null) ||
+                error?.message;
+              this.errorMessage = backendMessage || "Erro ao registrar com Google. Tente novamente.";
+              this.socialLoading = false;
+              this.cdr.markForCheck();
+            }
+          });
+      },
+      (message: string) => {
+        this.errorMessage = message;
+        this.socialLoading = false;
+        this.cdr.markForCheck();
+      },
+      () => {
+        this.socialLoading = false;
+        this.cdr.markForCheck();
       }
+    );
+  }
+
+  signUpWithFacebook(): void {
+    this.errorMessage = null;
+    this.socialLoading = true;
+    this.cdr.markForCheck();
+
+    this.socialLoginService.initiateFacebookSignIn((token: string) => {
+      this.socialLoginService.loginWithFacebook(token)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            this.socialLoginService.storeSocialAuthTokens(response);
+            this.authService.syncAuthStateFromStorage(true);
+            this.successMessage = `Bem-vindo, ${response.nome}!`;
+            this.socialLoading = false;
+            this.cdr.markForCheck();
+            setTimeout(() => this.router.navigate(["/home"]), 800);
+          },
+          error: (error) => {
+            const backendMessage = error?.error?.message || error?.message;
+            this.errorMessage = backendMessage || "Erro ao registrar com Facebook. Tente novamente.";
+            this.socialLoading = false;
+            this.cdr.markForCheck();
+          }
+        });
     });
+  }
+
+  getNomeError(): string | null {
+    const control = this.registerForm.get("nome");
+    if (!control || !control.touched) return null;
+    if (control.errors?.["required"]) return "Nome é obrigatório.";
+    if (control.errors?.["minlength"]) return "Informe seu nome completo.";
+    return null;
+  }
+
+  getEmailError(): string | null {
+    const control = this.registerForm.get("email");
+    if (!control || !control.touched) return null;
+    if (control.errors?.["required"]) return "E-mail é obrigatório.";
+    if (control.errors?.["email"]) return "Informe um e-mail válido.";
+    return null;
+  }
+
+  getSenhaError(): string | null {
+    const control = this.registerForm.get("senha");
+    if (!control || !control.touched) return null;
+    if (control.errors?.["required"]) return "Senha é obrigatória.";
+    if (control.errors?.["minlength"] || control.errors?.["weakPassword"]) {
+      return "A senha ainda não atende aos requisitos.";
+    }
+    return null;
+  }
+
+  getConfirmarSenhaError(): string | null {
+    const control = this.registerForm.get("confirmarSenha");
+    if (!control || !control.touched) return null;
+    if (control.errors?.["required"]) return "Confirmação é obrigatória.";
+    if (this.registerForm.errors?.["passwordMismatch"]) return "As senhas não coincidem.";
+    return null;
+  }
+
+  private passwordStrengthValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) return null;
+
+    const isStrong =
+      value.length >= 8 &&
+      /[A-Z]/.test(value) &&
+      /[a-z]/.test(value) &&
+      /[0-9]/.test(value) &&
+      /[@$!%*?&]/.test(value);
+
+    return isStrong ? null : { weakPassword: true };
+  }
+
+  private passwordMatchValidator(form: FormGroup): ValidationErrors | null {
+    const senha = form.get("senha")?.value;
+    const confirmarSenha = form.get("confirmarSenha")?.value;
+    return senha && confirmarSenha && senha !== confirmarSenha ? { passwordMismatch: true } : null;
+  }
+
+  private markAllAsTouched(): void {
+    Object.values(this.registerForm.controls).forEach((control) => control.markAsTouched());
+  }
+
+  private handleRegistroErro(error: any): void {
+    const backendMessage =
+      error?.error?.message ||
+      error?.message ||
+      (typeof error?.error === "string" ? error.error : null);
+
+    if (error?.status === 409) {
+      this.errorMessage = backendMessage || "Este e-mail já está cadastrado. Entre na sua conta.";
+    } else if (error?.status === 400) {
+      this.errorMessage = backendMessage || "Dados inválidos. Verifique os campos.";
+    } else if (error?.status === 0) {
+      this.errorMessage = "Não foi possível conectar ao servidor.";
+    } else {
+      this.errorMessage = backendMessage || "Erro ao realizar cadastro. Tente novamente.";
+    }
+
+    this.loading = false;
+    this.cdr.markForCheck();
   }
 }

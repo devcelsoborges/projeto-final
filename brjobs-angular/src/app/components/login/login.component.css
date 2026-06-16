@@ -1,150 +1,436 @@
 /* =================================================================
  * 1. CONTAINER E BACKGROUND (Foco na Ação)
  * ================================================================= */
+:root {
+  --color-primary: #002b5b;
+  --color-accent: #ffd700;
+  --color-background: #f4f7f6;
+  --color-surface: #ffffff;
+  --color-text-dark: #333333;
+  --color-text-secondary: #666666;
+  --color-danger: #e53e3e;
+  --color-success: #38a169;
+  --border-radius-md: 8px;
+}
+
 .login-container {
-    /* Centraliza o card na tela */
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 85vh; /* Ocupa a maior parte da altura da tela */
+    min-height: 85vh;
     padding: 20px;
-    background-color: var(--color-background); /* Usa o fundo global sutil */
+    background-color: var(--color-background);
     transition: background-color 0.3s ease;
 }
 
-/* Card de Login (UX: Clara Delimitação) */
 .login-card {
     width: 100%;
-    max-width: 400px; /* Limita a largura para foco */
-    padding: 30px;
-    background: var(--color-surface); /* Fundo branco puro */
+    max-width: 400px;
+    padding: 40px 30px;
+    background: var(--color-surface);
     border-radius: var(--border-radius-md);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* Sombra mais destacada */
-    border: 1px solid var(--color-border);
-    transition: transform 0.3s ease-in-out, background-color 0.3s ease, color 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    transition: transform 0.3s ease-in-out, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-card:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
 .login-card h2 {
     text-align: center;
-    color: var(--color-primary); /* Título na cor da marca */
-    margin-top: 0;
-    margin-bottom: 30px;
+    color: var(--color-primary);
+    margin: 0 0 8px 0;
     font-size: 1.8rem;
     font-weight: 700;
 }
 
+.login-subtitle {
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    margin: 0 0 25px 0;
+}
+
 /* =================================================================
- * 2. FORMULÁRIO E INPUTS (UX: Feedback e Acessibilidade)
+ * 2. ALERTAS DE ERRO
+ * ================================================================= */
+
+.error-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    background-color: #fed7d7;
+    border: 1px solid #fc8181;
+    border-radius: var(--border-radius-md);
+    color: #c53030;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    animation: slideDown 0.3s ease;
+}
+
+.alert-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =================================================================
+ * 3. FORMULÁRIO E INPUTS
  * ================================================================= */
 
 .form-group {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
-    display: block; 
+    display: block;
     font-weight: 600;
     color: var(--color-text-dark);
     margin-bottom: 8px;
     font-size: 0.95rem;
 }
 
-/* Estilo do Input */
 .form-group input {
     width: 100%;
-    padding: 12px;
+    padding: 12px 14px;
     font-size: 1rem;
-    border: 1px solid var(--color-border);
+    border: 1px solid #cbd5e0;
     border-radius: var(--border-radius-md);
     transition: all 0.2s ease-in-out;
     color: var(--color-text-dark);
-    background-color: var(--color-background); /* Leve cinza para indicar campo */
-    caret-color: var(--color-text-dark);
+    background-color: var(--color-background);
+    caret-color: var(--color-primary);
+    box-sizing: border-box;
 }
 
-/* Foco Visível (Acessibilidade + Dinamismo) */
 .form-group input:focus {
-    border-color: var(--color-primary); /* Borda na cor da marca ao focar */
-    box-shadow: 0 0 0 3px rgba(28, 93, 153, 0.2); /* Efeito de anel suave */
-    background-color: var(--color-surface); /* Fundo branco ao focar */
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 43, 91, 0.1);
+    background-color: var(--color-surface);
     outline: none;
 }
 
-/* Feedback de Validação (Acessibilidade) */
-small {
+.form-group input:disabled {
+    background-color: #edf2f7;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.form-group input.input-error {
+    border-color: var(--color-danger);
+    background-color: #fff5f5;
+}
+
+.form-group input.input-error:focus {
+    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.error-text {
     display: block;
     margin-top: 5px;
     font-size: 0.85rem;
-    color: var(--color-warning); /* Vermelho para erro */
+    color: var(--color-danger);
     font-weight: 500;
 }
 
-/* Borda de Erro */
-.form-group input.ng-touched.ng-invalid {
-    border-color: var(--color-warning);
-}
-
 /* =================================================================
- * 3. LINK DE RECUPERAÇÃO DE SENHA (UX: Acessibilidade Secundária)
+ * 4. OPÇÕES DE FORMULÁRIO (Remember Me & Forgot Password)
  * ================================================================= */
 
-.forgot-password {
-    text-align: right; /* Alinha o link para a direita */
-    margin-top: -10px; 
-    margin-bottom: 25px; /* Espaço antes do botão de login */
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    gap: 10px;
 }
 
-.forgot-password a {
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+.remember-me label {
+    margin: 0;
     font-size: 0.9rem;
-    color: var(--color-text-secondary); /* Cor secundária para não competir com o botão */
-    text-decoration: none;
-    transition: color 0.2s ease-in-out;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    user-select: none;
 }
 
-.forgot-password a:hover {
-    color: var(--color-primary); /* Destaque na cor da marca no hover */
+.forgot-link {
+    font-size: 0.9rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease-in-out;
+    white-space: nowrap;
+}
+
+.forgot-link:hover {
+    color: var(--color-accent);
     text-decoration: underline;
 }
 
-/* Garante que o foco para acessibilidade por teclado seja visível */
-.forgot-password a:focus-visible {
+.forgot-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* =================================================================
+ * 5. BOTÃO PRIMÁRIO
+ * ================================================================= */
+
+.btn-primary {
+    width: 100%;
+    padding: 12px 20px;
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #003e7c;
+    box-shadow: 0 4px 12px rgba(0, 43, 91, 0.3);
+    transform: translateY(-2px);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled {
+    background-color: #cbd5e0;
+    cursor: not-allowed;
+    color: #334155;
+    opacity: 0.95;
+}
+
+.btn-primary:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
 }
 
-/* =================================================================
- * 4. BOTÃO DE SUBMISSÃO (CTA Primário)
- * ================================================================= */
-
-.btn-primary {
-    /* Herda o estilo primário do CSS global */
-    width: 100%;
-    margin-top: 15px;
-    font-size: 1.1rem;
-    padding: 12px 20px;
-    font-weight: 700;
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Estado Desabilitado (Acessibilidade e UX) */
-.btn-primary:disabled {
-    background-color: var(--color-primary-light);
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* =================================================================
- * 5. RESPONSIVIDADE (Ajuste para Mobile)
+ * 6. FOOTER DE AUTENTICAÇÃO
  * ================================================================= */
+
+.auth-footer {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+}
+
+.auth-footer p {
+    margin: 0;
+}
+
+.link-primary {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease-in-out;
+}
+
+.link-primary:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+}
+
+/* =================================================================
+ * 7. RESPONSIVIDADE
+ * ================================================================= */
+
 @media (max-width: 500px) {
     .login-card {
-        padding: 20px;
-        margin: 0 10px; 
-        box-shadow: none; /* Remove a sombra em mobile */
-        border: none;
+        padding: 30px 20px;
+        margin: 0 10px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     }
+
+    .login-card h2 {
+        font-size: 1.5rem;
+    }
+
+    .form-options {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .forgot-link {
+        align-self: flex-end;
+    }
+
     .login-container {
-        min-height: 90vh;
+        min-height: 100vh;
+    }
+}
+
+/* =================================================================
+ * 8. LOGIN SOCIAL
+ * ================================================================= */
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 30px 0 20px;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    position: relative;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: #cbd5e0;
+}
+
+.divider span {
+    padding: 0 12px;
+    background: var(--color-surface);
+}
+
+.social-login {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-social {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: var(--border-radius-md);
+    background-color: var(--color-surface);
+    color: var(--color-text-dark);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.btn-social:hover:not(:disabled) {
+    border-color: #a0aec0;
+    background-color: #f7fafc;
+}
+
+.btn-social:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn-social:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-google {
+    color: #5b6573;
+    background-color: #f5f5f5;
+    border-color: #dce4f0;
+}
+
+.btn-google:hover:not(:disabled) {
+    border-color: #4285f4;
+    background-color: #ffffff;
+}
+
+.btn-google svg {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-facebook {
+    color: #ffffff;
+    background-color: #1877f2;
+    border-color: #1877f2;
+}
+
+.btn-facebook:hover:not(:disabled) {
+    background-color: #0a66c2;
+    border-color: #0a66c2;
+}
+
+.btn-facebook svg {
+    width: 20px;
+    height: 20px;
+}
+
+@media (max-width: 500px) {
+    .social-login {
+        flex-wrap: wrap;
+    }
+
+    .btn-social {
+        flex: 0 1 calc(33.333% - 8px);
+        font-size: 0.8rem;
+        padding: 10px;
+    }
+
+    .divider {
+        margin: 20px 0 15px;
     }
 }

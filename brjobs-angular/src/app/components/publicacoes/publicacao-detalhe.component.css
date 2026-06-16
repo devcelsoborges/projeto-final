@@ -1,0 +1,213 @@
+.detalhe-publicacao {
+  max-width: 980px;
+  margin: 24px auto;
+  padding: 20px;
+  display: grid;
+  gap: 20px;
+}
+
+.detalhe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detalhe-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--color-text);
+}
+
+.tipo-badge {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.descricao {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.meta-card,
+.perfil-card,
+.avaliacoes-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.destaque-card {
+  border-color: color-mix(in srgb, var(--color-accent-500) 35%, var(--color-border) 65%);
+  background: color-mix(in srgb, var(--color-accent-500) 7%, var(--color-surface) 93%);
+}
+
+.meta-card h3,
+.perfil-card h2,
+.avaliacoes-card h2 {
+  margin: 0 0 8px;
+  color: var(--color-text);
+}
+
+.meta-card p,
+.perfil-card p {
+  margin: 6px 0;
+  color: var(--color-text-muted);
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--color-accent-500) 8%, var(--color-surface) 92%);
+  border: 1px solid color-mix(in srgb, var(--color-accent-500) 28%, var(--color-border) 72%);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  padding: 10px 12px;
+}
+
+.avaliacoes-lista {
+  display: grid;
+  gap: 10px;
+}
+
+.avaliacao-item {
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-accent-500) 22%, var(--color-border) 78%);
+  border-left: 4px solid var(--color-accent-500);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.nota {
+  margin: 0 0 6px;
+  font-weight: 600;
+  color: #8a4f04;
+}
+
+.comentario,
+.data,
+.vazio {
+  margin: 4px 0;
+  color: var(--color-text-muted);
+}
+
+.voltar-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.voltar-link:hover {
+  color: var(--color-primary-light);
+}
+
+.rating-stars {
+  color: #b86a05;
+  letter-spacing: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.perfil-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.perfil-link:hover {
+  background: var(--color-primary-light);
+}
+
+.perfil-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.chat-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-success);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.chat-link:hover {
+  background: var(--color-success-dark, color-mix(in srgb, var(--color-success) 90%, #000 10%));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+}
+
+.avaliacao-form {
+  border: 1px solid color-mix(in srgb, var(--color-accent-500) 24%, var(--color-border) 76%);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: color-mix(in srgb, var(--color-accent-500) 5%, var(--color-surface) 95%);
+}
+
+.avaliacao-form app-rating {
+  display: block;
+}
+
+.estado {
+  max-width: 980px;
+  margin: 40px auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.estado.erro p {
+  color: var(--color-danger);
+}
+
+@media (max-width: 768px) {
+  .detalhe-publicacao {
+    margin: 12px auto;
+    padding: 14px;
+  }
+
+  .detalhe-header h1 {
+    font-size: 1.4rem;
+  }
+}

@@ -1,7 +1,15 @@
-import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
 import { AccessibilityComponent } from '../accessibility/accessibility.component';
 import { CommonModule } from '@angular/common';
+import { ProfileStateService } from '../../service/profile-state.service';
+import { ThemeMode, ThemeService } from '../../service/theme.service';
+import { UxTelemetryService } from '../../service/ux-telemetry.service';
+import { AuthService } from '../../service/auth.service';
+import { NotificationItem, NotificationService } from '../../service/notification.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-header',
@@ -10,27 +18,247 @@ import { CommonModule } from '@angular/common';
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy {
   isDarkTheme = false;
+  themeMode: ThemeMode = 'system';
+  menuAberto = false;
+  isLoggedIn = false;
+  usuarioNome: string | null = null;
+  usuarioMenuAberto = false;
+  notificacoesAberto = false;
+  carregandoNotificacoes = false;
+  notificacoes: NotificationItem[] = [];
+  unreadChatCount = 0;
+  readonly maxChatBadge = environment.chat.headerBadgeMax;
+  private destroy$ = new Subject<void>();
 
-  toggleTheme(): void {
-    this.isDarkTheme = !this.isDarkTheme;
+  constructor(
+    private router: Router,
+    private profileStateService: ProfileStateService,
+    private themeService: ThemeService,
+    private telemetry: UxTelemetryService,
+    private authService: AuthService,
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-    const body = document.body;
-    if (this.isDarkTheme) {
-      body.classList.add('dark-theme');
-    } else {
-      body.classList.remove('dark-theme');
+  ngOnInit(): void {
+    this.verificarLogin();
+
+    this.authService.isLoggedIn$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((logged) => {
+        this.isLoggedIn = logged;
+        if (!logged) {
+          this.usuarioNome = null;
+          this.unreadChatCount = 0;
+        }
+        this.cdr.markForCheck();
+      });
+
+    this.authService.usuario$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((usuario) => {
+        if (usuario?.nome) {
+          this.usuarioNome = usuario.nome;
+        }
+        this.cdr.markForCheck();
+      });
+
+    this.notificationService.unreadCount$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((count) => {
+        this.unreadChatCount = count;
+        this.cdr.markForCheck();
+      });
+
+    this.notificationService.notifications$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((notificacoes) => {
+        this.notificacoes = (notificacoes ?? []).slice(0, 5);
+        this.cdr.markForCheck();
+      });
+
+    this.notificationService.loading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((loading) => {
+        this.carregandoNotificacoes = loading;
+        this.cdr.markForCheck();
+      });
+    
+    // Observar mudanças de tema
+    this.themeService.darkMode$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(isDark => {
+        this.isDarkTheme = isDark;
+        this.cdr.markForCheck();
+      });
+
+    this.themeService.themeMode$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(mode => {
+        this.themeMode = mode;
+        this.cdr.markForCheck();
+      });
+    
+    // Inicializar com o tema atual
+    this.isDarkTheme = this.themeService.isDarkModeActive();
+    this.themeMode = this.themeService.getThemeMode();
+  }
+
+  irParaChat(): void {
+    this.router.navigate(['/chat']);
+    this.fecharMenu();
+    this.fecharUsuarioMenu();
+    this.fecharNotificacoes();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  get themeSelectValue(): 'light' | 'dark' {
+    return this.isDarkTheme ? 'dark' : 'light';
+  }
+
+  /**
+   * Verifica se o usuário está logado analisando o localStorage
+   */
+  verificarLogin(): void {
+    this.isLoggedIn = this.authService.isLoggedIn();
+    this.usuarioNome = localStorage.getItem('usuario_nome');
+  }
+
+  toggleMenu(): void {
+    this.menuAberto = !this.menuAberto;
+    this.cdr.markForCheck();
+  }
+
+  fecharMenu(): void {
+    this.menuAberto = false;
+    this.cdr.markForCheck();
+  }
+
+  navegar(rota: string, label: string): void {
+    this.telemetry.logEvent('cta_primary_click', {
+      ctaName: label,
+      route: rota,
+      userState: this.isLoggedIn ? 'auth' : 'anon'
+    });
+    this.router.navigate([rota]);
+    this.fecharMenu();
+  }
+
+  /**
+   * Alterna o dropdown de usuário
+   */
+  toggleUsuarioMenu(): void {
+    this.usuarioMenuAberto = !this.usuarioMenuAberto;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Fecha o dropdown de usuário
+   */
+  fecharUsuarioMenu(): void {
+    this.usuarioMenuAberto = false;
+    this.cdr.markForCheck();
+  }
+
+  toggleNotificacoes(): void {
+    this.notificacoesAberto = !this.notificacoesAberto;
+    this.fecharUsuarioMenu();
+
+    if (this.notificacoesAberto) {
+      this.notificationService.refreshNow();
+    }
+    this.cdr.markForCheck();
+  }
+
+  fecharNotificacoes(): void {
+    this.notificacoesAberto = false;
+    this.cdr.markForCheck();
+  }
+
+  abrirTodasNotificacoes(): void {
+    this.router.navigate(['/notificacoes']);
+    this.fecharNotificacoes();
+    this.fecharMenu();
+  }
+
+  navegarNotificacao(): void {
+    this.fecharNotificacoes();
+  }
+
+  /**
+   * Navega para a página de perfil e fecha o dropdown
+   */
+  irParaPerfil(): void {
+    this.profileStateService.resetToView();
+    this.router.navigate(['/profile']);
+    this.fecharUsuarioMenu();
+  }
+
+  /**
+   * Navega para perfil e ativa modo de edição
+   */
+  editarPerfil(): void {
+    this.profileStateService.startEditing();
+    this.router.navigate(['/profile']);
+    this.fecharUsuarioMenu();
+  }
+
+  /**
+   * Detecta cliques fora do dropdown para fechá-lo
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const usuarioDropdown = (event.target as HTMLElement)?.closest('.usuario-dropdown');
+    if (!usuarioDropdown && this.usuarioMenuAberto) {
+      this.fecharUsuarioMenu();
+    }
+
+    const notificationDropdown = (event.target as HTMLElement)?.closest('.chat-bell, .notification-menu');
+    if (!notificationDropdown && this.notificacoesAberto) {
+      this.fecharNotificacoes();
     }
   }
 
-  menuAberto = false;
-
-  toggleMenu() {
-    this.menuAberto = !this.menuAberto;
+  /**
+   * Faz logout do usuário
+   */
+  logout(): void {
+    // Fechar todos os menus imediatamente
+    this.fecharUsuarioMenu();
+    this.menuAberto = false;
+    
+    this.authService.logout();
+    
+    // Atualizar estado
+    this.isLoggedIn = false;
+    this.usuarioNome = null;
+    this.usuarioMenuAberto = false;
+    this.notificacoesAberto = false;
+    this.notificacoes = [];
+    this.cdr.markForCheck();
+    
+    this.router.navigate(['/login']);
   }
 
-  fecharMenu() {
-    this.menuAberto = false;
+  /**
+   * Alterna entre modo claro e escuro
+   */
+  definirTema(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const nextMode = target.value as 'light' | 'dark';
+    const previousMode = this.themeMode;
+    this.themeService.setThemeMode(nextMode);
+    this.telemetry.logEvent('theme_changed', {
+      fromTheme: previousMode,
+      toTheme: nextMode,
+      userState: this.isLoggedIn ? 'auth' : 'anon'
+    });
   }
 }
+// Header component finalizado

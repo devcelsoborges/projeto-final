@@ -18,7 +18,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/prestadores")
-@CrossOrigin(origins = "http://localhost:4200")
 public class PrestadorController {
 
     @Autowired
@@ -66,8 +65,9 @@ public class PrestadorController {
      */
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<PrestadorResponseDTO> buscarPorUsuarioId(@PathVariable Long usuarioId) {
-        PrestadorResponseDTO prestador = prestadorService.buscarPorUsuarioId(usuarioId);
-        return ResponseEntity.ok(prestador);
+        return prestadorService.buscarPorUsuarioId(usuarioId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**

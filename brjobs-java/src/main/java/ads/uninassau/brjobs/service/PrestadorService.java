@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -127,10 +128,8 @@ public class PrestadorService {
      * Busca prestador por usuário ID
      */
     @Transactional(readOnly = true)
-    public PrestadorResponseDTO buscarPorUsuarioId(Long usuarioId) {
-        Prestador prestador = prestadorRepository.findByUsuarioId(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Prestador não encontrado para o usuário ID: " + usuarioId));
-        return toDTO(prestador);
+    public Optional<PrestadorResponseDTO> buscarPorUsuarioId(Long usuarioId) {
+        return prestadorRepository.findByUsuarioId(usuarioId).map(this::toDTO);
     }
 
     /**

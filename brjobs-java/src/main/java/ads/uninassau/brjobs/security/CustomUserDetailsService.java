@@ -26,12 +26,18 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
+        System.out.println("DEBUG CustomUserDetailsService: Carregando usuário com email: " + email);
+        
         // Busca a entidade Usuario pelo e-mail
         Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("Usuário não encontrado com o e-mail: " + email)
-                );
+                .orElseThrow(() -> {
+                    System.out.println("DEBUG CustomUserDetailsService: ERRO - Usuário não encontrado com email: " + email);
+                    return new UsernameNotFoundException("Usuário não encontrado com o e-mail: " + email);
+                });
 
+        System.out.println("DEBUG CustomUserDetailsService: Usuário encontrado. Email: " + usuario.getEmail());
+        System.out.println("DEBUG CustomUserDetailsService: Senha no banco (hash): " + usuario.getSenha().substring(0, Math.min(20, usuario.getSenha().length())) + "...");
+        
         // Cria e retorna o objeto UserDetails que o Spring Security espera.
         // Se você tiver roles/autoridades, elas deverão ser mapeadas aqui.
         return new org.springframework.security.core.userdetails.User(

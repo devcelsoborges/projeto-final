@@ -1,260 +1,662 @@
 // src/app/components/home/home.component.ts
 
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { ChangeDetectorRef } from '@angular/core';
+import { PublicacaoServico, PublicacaoServicoService, TipoPublicacao } from '../../service/publicacao-servico.service';
+import { LocationService } from '../../service/location.service';
 
-type TipoPublicacao = 'Prestação' | 'Contratação';
+type DisponibilidadeFiltro = 'TODOS' | 'URGENTE' | 'HOJE';
+type AtendimentoFiltro = 'TODOS' | 'DOMICILIO' | 'ONLINE' | 'PRESENCIAL';
 
-interface Publicacao {
-  id: number;
-  titulo: string;
-  autor: string;
-  local: string;
-  tipo: TipoPublicacao;
-  categoria: string;
-  valor: number; // valor do serviço em BRL
-  publicadoEmDias: number;
-}
-
-interface OpcaoFiltro {
-  valor: string;
-  label: string;
-}
-
-interface Filtro {
-  key: string;
-  label: string;
-  multi: boolean;
-  opcoes: OpcaoFiltro[];
+interface CategoriaServico {
+  nome: string;
+  subcategorias: string[];
 }
 
 @Component({
   selector: 'app-home',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '(document:click)': 'fecharDropdowns()' },
+  host: { '(document:click)': 'fecharDropdowns()' }
 })
-export class HomeComponent {
-  titulo = 'Encontre a Vaga Perfeita no BR-Jobs';
+export class HomeComponent implements OnInit, OnDestroy {
+  titulo = 'Encontre prestação e contratação de serviços no BR-Jobs';
 
-  // Dados simulados de publicações (Mock Data)
-  vagas: Publicacao[] = [
+  termoBusca = '';
+  filtroTipo: 'TODAS' | TipoPublicacao = 'TODAS';
+
+  categoriaSelecionada = '';
+  subcategoriaSelecionada = '';
+  tagsSelecionadas: string[] = [];
+  localizacaoBusca = '';
+  precoMin: number | null = null;
+  precoMax: number | null = null;
+  avaliacaoMinima = 0;
+  disponibilidadeFiltro: DisponibilidadeFiltro = 'TODOS';
+  atendimentoFiltro: AtendimentoFiltro = 'TODOS';
+
+  // Filtro de data de publicação (client-side): '' | '1' | '7' | '30' (dias).
+  dataPublicacaoFiltro = '';
+
+  // Estado de UI dos dropdowns de filtro (pills) — qual está aberto (null = todos fechados).
+  dropdownAberto: string | null = null;
+
+  readonly categoriasServico: CategoriaServico[] = [
     {
-      id: 1,
-      titulo: 'Diarista para limpeza residencial',
-      autor: 'Maria Oliveira',
-      local: 'São Paulo, SP',
-      tipo: 'Contratação',
-      categoria: 'Limpeza e Serviços Domésticos',
-      valor: 150,
-      publicadoEmDias: 2,
+      nome: 'Reformas e Construção',
+      subcategorias: ['Pedreiro', 'Reforma em geral', 'Assentamento de piso/porcelanato', 'Gesso / Drywall', 'Impermeabilização']
     },
     {
-      id: 2,
-      titulo: 'Eletricista para instalação elétrica',
-      autor: 'João Pereira',
-      local: 'Rio de Janeiro, RJ',
-      tipo: 'Prestação',
-      categoria: 'Elétrica',
-      valor: 300,
-      publicadoEmDias: 6,
+      nome: 'Elétrica',
+      subcategorias: ['Instalação elétrica', 'Manutenção', 'Curto / emergência', 'Instalação de chuveiro', 'Iluminação']
     },
     {
-      id: 3,
-      titulo: 'Pedreiro para reforma de muro',
-      autor: 'Construções Aliança',
-      local: 'Belo Horizonte, MG',
-      tipo: 'Contratação',
-      categoria: 'Reformas e Construção',
-      valor: 850,
-      publicadoEmDias: 15,
+      nome: 'Hidráulica',
+      subcategorias: ['Encanador', 'Vazamentos', 'Instalação de torneiras', 'Desentupimento', "Caixa d'água"]
     },
     {
-      id: 4,
-      titulo: 'Pintor profissional disponível',
-      autor: 'Carlos Mendes',
-      local: 'Curitiba, PR',
-      tipo: 'Prestação',
-      categoria: 'Pintura e Acabamento',
-      valor: 500,
-      publicadoEmDias: 25,
+      nome: 'Marcenaria e Móveis',
+      subcategorias: ['Móveis planejados', 'Montagem de móveis', 'Reparos', 'Carpintaria']
     },
+    {
+      nome: 'Pintura e Acabamento',
+      subcategorias: ['Pintura residencial', 'Pintura comercial', 'Textura / grafiato', 'Retoques']
+    },
+    {
+      nome: 'Limpeza e Serviços Domésticos',
+      subcategorias: ['Faxina', 'Diarista', 'Limpeza pós-obra', 'Limpeza pesada', 'Passadeira']
+    },
+    {
+      nome: 'Marido de Aluguel',
+      subcategorias: ['Pequenos reparos', 'Instalações', 'Serviços rápidos']
+    },
+    {
+      nome: 'Climatização',
+      subcategorias: ['Ar-condicionado (instalação)', 'Manutenção', 'Higienização']
+    },
+    {
+      nome: 'Assistência Técnica',
+      subcategorias: ['Geladeira', 'Máquina de lavar', 'TV', 'Micro-ondas', 'Computadores']
+    },
+    {
+      nome: 'Automotivo',
+      subcategorias: ['Mecânico', 'Elétrica automotiva', 'Socorro / emergência']
+    },
+    {
+      nome: 'Eventos',
+      subcategorias: ['Organização de eventos', 'Garçom', 'Buffet', 'Decoração', 'Som e iluminação']
+    },
+    {
+      nome: 'Jardim e Exterior',
+      subcategorias: ['Jardinagem', 'Limpeza de terreno', 'Corte de grama', 'Paisagismo']
+    },
+    {
+      nome: 'Segurança e Instalações',
+      subcategorias: ['Câmeras (CFTV)', 'Alarmes', 'Cerca elétrica', 'Interfone']
+    }
   ];
 
-  // Configuração declarativa dos filtros dinâmicos exibidos como "pills".
-  filtros: Filtro[] = [
-    {
-      key: 'tipo',
-      label: 'Tipo',
-      multi: true,
-      opcoes: [
-        { valor: 'Prestação', label: 'Prestação' },
-        { valor: 'Contratação', label: 'Contratação' },
-      ],
-    },
-    {
-      key: 'categoria',
-      label: 'Categoria',
-      multi: true,
-      opcoes: [
-        { valor: 'Reformas e Construção', label: 'Reformas e Construção' },
-        { valor: 'Elétrica', label: 'Elétrica' },
-        { valor: 'Hidráulica', label: 'Hidráulica' },
-        { valor: 'Marcenaria e Móveis', label: 'Marcenaria e Móveis' },
-        { valor: 'Pintura e Acabamento', label: 'Pintura e Acabamento' },
-        { valor: 'Limpeza e Serviços Domésticos', label: 'Limpeza e Serviços Domésticos' },
-        { valor: 'Marido de Aluguel', label: 'Marido de Aluguel' },
-        { valor: 'Climatização', label: 'Climatização' },
-        { valor: 'Assistência Técnica', label: 'Assistência Técnica' },
-        { valor: 'Automotivo', label: 'Automotivo' },
-        { valor: 'Eventos', label: 'Eventos' },
-        { valor: 'Jardim e Exterior', label: 'Jardim e Exterior' },
-        { valor: 'Segurança e Instalações', label: 'Segurança e Instalações' },
-      ],
-    },
-    {
-      key: 'valor',
-      label: 'Valor',
-      multi: false,
-      opcoes: [
-        { valor: '0-100', label: 'Até R$ 100' },
-        { valor: '100-300', label: 'R$ 100 a R$ 300' },
-        { valor: '300-600', label: 'R$ 300 a R$ 600' },
-        { valor: '600-', label: 'Acima de R$ 600' },
-      ],
-    },
-    {
-      key: 'data',
-      label: 'Data de publicação',
-      multi: false,
-      opcoes: [
-        { valor: '1', label: 'Últimas 24 horas' },
-        { valor: '7', label: 'Últimos 7 dias' },
-        { valor: '30', label: 'Últimos 30 dias' },
-      ],
-    },
-  ];
+  readonly tagsDisponiveis = ['urgente', '24h', 'barato', 'residencial', 'comercial'];
 
-  // Estado dos campos de busca livre.
-  termo = signal('');
-  localizacao = signal('');
+  publicacoesFiltradas: PublicacaoServico[] = [];
+  carregando = false;
+  erro = '';
+  paginaAtual = 0;
+  readonly tamanhoPagina = 20;
+  totalElementos = 0;
+  ultimaPagina = true;
 
-  // Seleções de cada filtro, indexadas pela key do filtro.
-  selecoes = signal<Record<string, string[]>>({
-    tipo: [],
-    categoria: [],
-    valor: [],
-    data: [],
-  });
+  private resultadosLocais: PublicacaoServico[] = [];
+  private usandoFiltroLocal = false;
+  private cachePublicacoes: PublicacaoServico[] = [];
 
-  // Filtro cujo dropdown está aberto (null = todos fechados).
-  dropdownAberto = signal<string | null>(null);
+  private debounceHandle: ReturnType<typeof setTimeout> | null = null;
+  private localizacaoDebounceHandle: ReturnType<typeof setTimeout> | null = null;
 
-  // Lista filtrada de publicações, recalculada de forma reativa.
-  vagasFiltradas = computed<Publicacao[]>(() => {
-    const termo = this.termo().trim().toLowerCase();
-    const local = this.localizacao().trim().toLowerCase();
-    const sel = this.selecoes();
+  constructor(
+    private readonly publicacaoService: PublicacaoServicoService,
+    private readonly locationService: LocationService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
-    return this.vagas.filter((pub) => {
-      if (termo && !`${pub.titulo} ${pub.autor}`.toLowerCase().includes(termo)) {
-        return false;
+  ngOnInit(): void {
+    this.buscarPublicacoes(true);
+  }
+
+  ngOnDestroy(): void {
+    if (this.debounceHandle) {
+      clearTimeout(this.debounceHandle);
+    }
+    if (this.localizacaoDebounceHandle) {
+      clearTimeout(this.localizacaoDebounceHandle);
+    }
+  }
+
+  buscarPublicacoes(resetPage = false): void {
+    if (resetPage) {
+      this.paginaAtual = 0;
+    }
+
+    this.carregando = true;
+    this.erro = '';
+
+    const tipo = this.filtroTipo === 'TODAS' ? undefined : this.filtroTipo;
+    const termo = this.buildTermoBusca();
+
+    if (this.temFiltrosAvancadosAtivos()) {
+      this.usandoFiltroLocal = true;
+      this.carregarComFiltrosLocais(tipo);
+      return;
+    }
+
+    this.usandoFiltroLocal = false;
+
+    this.publicacaoService.buscarPaginado({
+      tipo,
+      termo: termo || undefined,
+      page: this.paginaAtual,
+      size: this.tamanhoPagina,
+      lat: this.locationService.currentLocation?.lat,
+      lng: this.locationService.currentLocation?.lng
+    }).subscribe({
+      next: (resp) => {
+        const lista = this.extrairListaResposta(resp);
+        if (lista.length === 0 && this.paginaAtual === 0) {
+          this.carregarComFallback(tipo, termo);
+          return;
+        }
+
+        this.publicacoesFiltradas = lista;
+        if (this.paginaAtual === 0 && lista.length > 0) {
+          this.cachePublicacoes = [...lista];
+        }
+        this.resultadosLocais = [];
+        this.totalElementos = typeof resp?.totalElements === 'number' ? resp.totalElements : lista.length;
+        this.ultimaPagina = typeof resp?.last === 'boolean' ? resp.last : true;
+        this.carregando = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.carregarComFallback(tipo, termo);
       }
-      if (local && !pub.local.toLowerCase().includes(local)) {
-        return false;
-      }
-      if (sel['tipo'].length && !sel['tipo'].includes(pub.tipo)) {
-        return false;
-      }
-      if (sel['categoria'].length && !sel['categoria'].includes(pub.categoria)) {
-        return false;
-      }
-      if (sel['valor'].length && !this.dentroDaFaixaValor(pub.valor, sel['valor'][0])) {
-        return false;
-      }
-      if (sel['data'].length && pub.publicadoEmDias > Number(sel['data'][0])) {
-        return false;
-      }
-      return true;
     });
-  });
-
-  // Quantidade total de filtros ativos (busca + seleções), usado no botão "Limpar".
-  totalFiltrosAtivos = computed(() => {
-    const selecionados = Object.values(this.selecoes()).reduce((soma, arr) => soma + arr.length, 0);
-    const busca = (this.termo().trim() ? 1 : 0) + (this.localizacao().trim() ? 1 : 0);
-    return selecionados + busca;
-  });
-
-  atualizarTermo(evento: Event): void {
-    this.termo.set((evento.target as HTMLInputElement).value);
   }
 
-  atualizarLocalizacao(evento: Event): void {
-    this.localizacao.set((evento.target as HTMLInputElement).value);
+  private carregarComFiltrosLocais(tipo?: TipoPublicacao): void {
+    this.publicacaoService.listar(tipo).subscribe({
+      next: (lista) => {
+        this.resultadosLocais = this.aplicarFiltrosLocais(lista);
+        this.totalElementos = this.resultadosLocais.length;
+        this.aplicarPaginacaoLocal();
+        this.erro = '';
+        this.carregando = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.publicacoesFiltradas = [];
+        this.resultadosLocais = [];
+        this.totalElementos = 0;
+        this.ultimaPagina = true;
+        this.erro = 'Não foi possível carregar as publicações agora.';
+        this.carregando = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
+
+  private aplicarPaginacaoLocal(): void {
+    const inicio = this.paginaAtual * this.tamanhoPagina;
+    const fim = inicio + this.tamanhoPagina;
+    this.publicacoesFiltradas = this.resultadosLocais.slice(inicio, fim);
+    this.ultimaPagina = fim >= this.resultadosLocais.length;
+  }
+
+  private aplicarFiltrosLocais(lista: PublicacaoServico[]): PublicacaoServico[] {
+    const termo = this.normalizar(this.termoBusca);
+    const categoria = this.normalizar(this.categoriaSelecionada);
+    const subcategoria = this.normalizar(this.subcategoriaSelecionada);
+    const localizacao = this.normalizar(this.localizacaoBusca);
+    const disponibilidade = this.disponibilidadeFiltro === 'TODOS' ? '' : this.normalizar(this.disponibilidadeFiltro);
+    const atendimento = this.atendimentoFiltro === 'TODOS' ? '' : this.normalizar(this.atendimentoFiltro);
+    const precoMin = this.normalizarNumero(this.precoMin);
+    const precoMax = this.normalizarNumero(this.precoMax);
+    const diasPublicacao = this.dataPublicacaoFiltro ? Number(this.dataPublicacaoFiltro) : null;
+    const dataLimite = diasPublicacao != null ? Date.now() - diasPublicacao * 24 * 60 * 60 * 1000 : null;
+
+    return lista.filter((pub) => {
+    const cidadeCard = this.getCidadeCard(pub);
+
+      const textoBase = this.normalizar([
+        pub.titulo,
+        pub.descricao,
+        pub.categoria,
+        pub.usuarioNome,
+        pub.usuarioBairro,
+        pub.cidadePublicacao,
+        pub.enderecoPublicacao,
+        cidadeCard
+      ].filter(Boolean).join(' '));
+
+      const localizacaoPublicacao = this.normalizar([
+        pub.usuarioBairro,
+        pub.cidadePublicacao,
+        pub.enderecoPublicacao,
+        cidadeCard
+      ].filter(Boolean).join(' '));
+      const possuiLocalizacaoEstruturada = localizacaoPublicacao.length > 0;
+
+      const tagMatch = this.tagsSelecionadas.length === 0 || this.tagsSelecionadas.some((tag) => textoBase.includes(this.normalizar(tag)));
+      const termoMatch = !termo || textoBase.includes(termo);
+      const categoriaMatch = !categoria || textoBase.includes(categoria);
+      const subcategoriaMatch = !subcategoria || textoBase.includes(subcategoria);
+      const localizacaoMatch = !localizacao
+        || !possuiLocalizacaoEstruturada
+        || localizacaoPublicacao.includes(localizacao)
+        || textoBase.includes(localizacao);
+      const disponibilidadeMatch = !disponibilidade || textoBase.includes(disponibilidade);
+      const atendimentoMatch = !atendimento || textoBase.includes(atendimento);
+
+      const valor = this.extrairValorReferencia(pub);
+      const precoMinMatch = precoMin == null || valor >= precoMin;
+      const precoMaxMatch = precoMax == null || valor <= precoMax;
+
+      const notaMedia = (pub as PublicacaoServico & { notaMedia?: number; avaliacaoMedia?: number }).notaMedia
+        ?? (pub as PublicacaoServico & { notaMedia?: number; avaliacaoMedia?: number }).avaliacaoMedia;
+      const avaliacaoMatch = this.avaliacaoMinima <= 0
+        || typeof notaMedia !== 'number'
+        || notaMedia >= this.avaliacaoMinima;
+
+      const dataMatch = dataLimite == null || this.dataCriacaoTimestamp(pub) >= dataLimite;
+
+      return (
+        termoMatch &&
+        categoriaMatch &&
+        subcategoriaMatch &&
+        tagMatch &&
+        localizacaoMatch &&
+        disponibilidadeMatch &&
+        atendimentoMatch &&
+        precoMinMatch &&
+        precoMaxMatch &&
+        avaliacaoMatch &&
+        dataMatch
+      );
+    });
+  }
+
+  /** Timestamp de criação; sem data válida retorna Infinity (não filtra por data). */
+  private dataCriacaoTimestamp(pub: PublicacaoServico): number {
+    const t = pub.dataCriacao ? new Date(pub.dataCriacao).getTime() : NaN;
+    return Number.isNaN(t) ? Infinity : t;
+  }
+
+  private carregarComFallback(tipo?: TipoPublicacao, termo?: string): void {
+    this.publicacaoService.listar(tipo).subscribe({
+      next: (lista) => {
+        this.cachePublicacoes = [...lista];
+        const termoNormalizado = (termo ?? '').trim().toLowerCase();
+
+        if (!termoNormalizado) {
+          this.publicacoesFiltradas = lista;
+        } else {
+          this.publicacoesFiltradas = lista.filter((pub) => {
+            const titulo = (pub.titulo ?? '').toLowerCase();
+            const descricao = (pub.descricao ?? '').toLowerCase();
+            const categoria = (pub.categoria ?? '').toLowerCase();
+            const usuarioNome = (pub.usuarioNome ?? '').toLowerCase();
+            return (
+              titulo.includes(termoNormalizado) ||
+              descricao.includes(termoNormalizado) ||
+              categoria.includes(termoNormalizado) ||
+              usuarioNome.includes(termoNormalizado)
+            );
+          });
+        }
+
+        this.totalElementos = this.publicacoesFiltradas.length;
+        this.ultimaPagina = true;
+        this.erro = '';
+        this.carregando = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        if (this.cachePublicacoes.length > 0) {
+          this.publicacoesFiltradas = [...this.cachePublicacoes];
+          this.totalElementos = this.publicacoesFiltradas.length;
+          this.ultimaPagina = true;
+          this.erro = 'Exibindo publicações salvas localmente.';
+        } else {
+          this.publicacoesFiltradas = [];
+          this.totalElementos = 0;
+          this.ultimaPagina = true;
+          this.erro = 'Não foi possível carregar as publicações agora.';
+        }
+        this.carregando = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private extrairListaResposta(resp: unknown): PublicacaoServico[] {
+    if (Array.isArray(resp)) {
+      return resp as PublicacaoServico[];
+    }
+
+    const valor = resp as { content?: PublicacaoServico[]; items?: PublicacaoServico[] } | null;
+    if (Array.isArray(valor?.content)) {
+      return valor.content;
+    }
+
+    if (Array.isArray(valor?.items)) {
+      return valor.items;
+    }
+
+    return [];
+  }
+
+  onTermoBuscaInput(): void {
+    if (this.debounceHandle) {
+      clearTimeout(this.debounceHandle);
+    }
+    this.debounceHandle = setTimeout(() => this.buscarPublicacoes(true), 350);
+  }
+
+  onCategoriaChange(): void {
+    this.subcategoriaSelecionada = '';
+    this.buscarPublicacoes(true);
+  }
+
+  onSubcategoriaChange(): void {
+    this.buscarPublicacoes(true);
+  }
+
+  onFiltroAvancadoChange(): void {
+    this.buscarPublicacoes(true);
+  }
+
+  onLocalizacaoInput(): void {
+    if (this.localizacaoDebounceHandle) {
+      clearTimeout(this.localizacaoDebounceHandle);
+    }
+    this.localizacaoDebounceHandle = setTimeout(() => this.buscarPublicacoes(true), 300);
+  }
+
+  alternarTag(tag: string): void {
+    if (this.tagsSelecionadas.includes(tag)) {
+      this.tagsSelecionadas = this.tagsSelecionadas.filter((item) => item !== tag);
+    } else {
+      this.tagsSelecionadas = [...this.tagsSelecionadas, tag];
+    }
+    this.buscarPublicacoes(true);
+  }
+
+  limparFiltrosAvancados(): void {
+    this.categoriaSelecionada = '';
+    this.subcategoriaSelecionada = '';
+    this.tagsSelecionadas = [];
+    this.localizacaoBusca = '';
+    this.precoMin = null;
+    this.precoMax = null;
+    this.avaliacaoMinima = 0;
+    this.disponibilidadeFiltro = 'TODOS';
+    this.atendimentoFiltro = 'TODOS';
+    this.buscarPublicacoes(true);
+  }
+
+  usarMinhaLocalizacao(): void {
+    this.locationService.requestBrowserLocation()
+      .then(() => {
+        this.erro = '';
+        this.buscarPublicacoes(true);
+      })
+      .catch((error) => {
+        this.erro = error?.message || 'Não foi possível obter sua localização. Informe bairro ou cidade no filtro.';
+        this.cdr.markForCheck();
+      });
+  }
+
+  onFiltroChange(): void {
+    this.buscarPublicacoes(true);
+  }
+
+  // --- UI dos filtros em pills -------------------------------------------
 
   alternarDropdown(key: string, evento: Event): void {
     evento.stopPropagation();
-    this.dropdownAberto.update((atual) => (atual === key ? null : key));
+    this.dropdownAberto = this.dropdownAberto === key ? null : key;
   }
 
   fecharDropdowns(): void {
-    this.dropdownAberto.set(null);
+    this.dropdownAberto = null;
   }
 
-  alternarOpcao(filtroKey: string, valor: string, multi: boolean): void {
-    this.selecoes.update((estado) => {
-      const atual = estado[filtroKey] ?? [];
-      let novo: string[];
-      if (multi) {
-        novo = atual.includes(valor) ? atual.filter((v) => v !== valor) : [...atual, valor];
-      } else {
-        // Seleção única: clicar de novo na mesma opção desmarca.
-        novo = atual.includes(valor) ? [] : [valor];
-      }
-      return { ...estado, [filtroKey]: novo };
-    });
+  /** Reseta todos os filtros (busca livre + tipo + avançados) e recarrega. */
+  limparTudo(): void {
+    this.termoBusca = '';
+    this.filtroTipo = 'TODAS';
+    this.categoriaSelecionada = '';
+    this.subcategoriaSelecionada = '';
+    this.tagsSelecionadas = [];
+    this.localizacaoBusca = '';
+    this.precoMin = null;
+    this.precoMax = null;
+    this.avaliacaoMinima = 0;
+    this.disponibilidadeFiltro = 'TODOS';
+    this.atendimentoFiltro = 'TODOS';
+    this.dataPublicacaoFiltro = '';
+    this.dropdownAberto = null;
+    this.buscarPublicacoes(true);
   }
 
-  estaSelecionado(filtroKey: string, valor: string): boolean {
-    return (this.selecoes()[filtroKey] ?? []).includes(valor);
+  /** Indica se há qualquer filtro ativo (para exibir "Limpar filtros"). */
+  get temAlgumFiltro(): boolean {
+    return Boolean(
+      this.termoBusca.trim() ||
+      this.filtroTipo !== 'TODAS' ||
+      this.localizacaoBusca.trim() ||
+      this.categoriaSelecionada ||
+      this.subcategoriaSelecionada ||
+      this.tagsSelecionadas.length > 0 ||
+      this.precoMin != null ||
+      this.precoMax != null ||
+      this.avaliacaoMinima > 0 ||
+      this.disponibilidadeFiltro !== 'TODOS' ||
+      this.atendimentoFiltro !== 'TODOS' ||
+      Boolean(this.dataPublicacaoFiltro)
+    );
   }
 
-  contagem(filtroKey: string): number {
-    return (this.selecoes()[filtroKey] ?? []).length;
-  }
-
-  limparFiltros(): void {
-    this.termo.set('');
-    this.localizacao.set('');
-    this.selecoes.set({ tipo: [], categoria: [], valor: [], data: [] });
-    this.dropdownAberto.set(null);
-  }
-
-  formatarValor(valor: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      maximumFractionDigits: 0,
-    }).format(valor);
-  }
-
-  formatarPublicacao(dias: number): string {
-    if (dias <= 0) {
-      return 'Publicada hoje';
+  paginaAnterior(): void {
+    if (this.paginaAtual === 0 || this.carregando) {
+      return;
     }
-    if (dias === 1) {
-      return 'Publicada há 1 dia';
+    this.paginaAtual -= 1;
+    if (this.usandoFiltroLocal) {
+      this.aplicarPaginacaoLocal();
+      this.cdr.markForCheck();
+      return;
     }
-    return `Publicada há ${dias} dias`;
+    this.buscarPublicacoes(false);
   }
 
-  private dentroDaFaixaValor(valor: number, faixa: string): boolean {
-    const [minStr, maxStr] = faixa.split('-');
-    const min = Number(minStr) || 0;
-    const max = maxStr ? Number(maxStr) : Infinity;
-    return valor >= min && valor <= max;
+  proximaPagina(): void {
+    if (this.ultimaPagina || this.carregando) {
+      return;
+    }
+    this.paginaAtual += 1;
+    if (this.usandoFiltroLocal) {
+      this.aplicarPaginacaoLocal();
+      this.cdr.markForCheck();
+      return;
+    }
+    this.buscarPublicacoes(false);
+  }
+
+  get subcategoriasDisponiveis(): string[] {
+    if (!this.categoriaSelecionada) {
+      return [];
+    }
+
+    const categoria = this.categoriasServico.find((item) => item.nome === this.categoriaSelecionada);
+    return categoria?.subcategorias ?? [];
+  }
+
+  private temFiltrosAvancadosAtivos(): boolean {
+    const precoMin = this.normalizarNumero(this.precoMin);
+    const precoMax = this.normalizarNumero(this.precoMax);
+
+    return Boolean(
+      this.categoriaSelecionada ||
+      this.subcategoriaSelecionada ||
+      this.tagsSelecionadas.length > 0 ||
+      this.localizacaoBusca.trim() ||
+      precoMin != null ||
+      precoMax != null ||
+      this.avaliacaoMinima > 0 ||
+      this.disponibilidadeFiltro !== 'TODOS' ||
+      this.atendimentoFiltro !== 'TODOS' ||
+      Boolean(this.dataPublicacaoFiltro)
+    );
+  }
+
+  private buildTermoBusca(): string {
+    const partes = [
+      this.termoBusca,
+      this.categoriaSelecionada,
+      this.subcategoriaSelecionada,
+      ...this.tagsSelecionadas,
+      this.localizacaoBusca,
+      this.disponibilidadeFiltro !== 'TODOS' ? this.disponibilidadeFiltro : '',
+      this.atendimentoFiltro !== 'TODOS' ? this.atendimentoFiltro : ''
+    ];
+
+    return partes
+      .map((parte) => (parte ?? '').trim())
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  private extrairValorReferencia(pub: PublicacaoServico): number {
+    if (pub.tipoPublicacao === 'PRESTACAO') {
+      return pub.preco ?? 0;
+    }
+
+    if (pub.orcamentoMin != null && pub.orcamentoMax != null) {
+      return (pub.orcamentoMin + pub.orcamentoMax) / 2;
+    }
+
+    return pub.orcamentoMax ?? pub.orcamentoMin ?? 0;
+  }
+
+  private normalizar(valor: string): string {
+    return valor
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  private normalizarNumero(valor: unknown): number | null {
+    if (valor == null || valor === '') {
+      return null;
+    }
+
+    const numero = typeof valor === 'number' ? valor : Number(String(valor).replace(',', '.'));
+    return Number.isFinite(numero) ? numero : null;
+  }
+
+  trackByPublicacao(_: number, pub: PublicacaoServico): number {
+    return pub.id;
+  }
+
+  formatarTipo(tipo: TipoPublicacao): string {
+    return tipo === 'PRESTACAO' ? 'Prestação de serviço' : 'Contratação de serviço';
+  }
+
+  formatarValor(pub: PublicacaoServico): string {
+    if (pub.tipoPublicacao === 'PRESTACAO') {
+      const preco = pub.preco ?? 0;
+      return `R$ ${preco.toFixed(2)}`;
+    }
+
+    const min = (pub.orcamentoMin ?? 0).toFixed(2);
+    const max = (pub.orcamentoMax ?? 0).toFixed(2);
+    return `R$ ${min} - R$ ${max}`;
+  }
+
+  formatarDistancia(pub: PublicacaoServico): string {
+    if (pub.distanceKm == null) {
+      return '';
+    }
+
+    return `a ${pub.distanceKm.toLocaleString('pt-BR', {
+      minimumFractionDigits: pub.distanceKm < 10 ? 1 : 0,
+      maximumFractionDigits: 1
+    })} km de você`;
+  }
+
+  getEstrelas(nota?: number | null): string {
+    const estrelas = Math.max(0, Math.min(5, Math.round(nota ?? 0)));
+    return `${'★'.repeat(estrelas)}${'☆'.repeat(5 - estrelas)}`;
+  }
+
+  getCidadeCard(pub: PublicacaoServico): string {
+    const cidadePublicacao = this.normalizarCidadeExibicao(pub.cidadePublicacao);
+    if (cidadePublicacao) {
+      return cidadePublicacao;
+    }
+
+    const cidadeNormalizada = this.normalizarCidadeExibicao(pub.usuarioCidade);
+    if (cidadeNormalizada) {
+      return cidadeNormalizada;
+    }
+
+    return this.normalizarCidadeExibicao(this.extrairCidadeDoEndereco(pub.usuarioEndereco));
+  }
+
+  private normalizarCidadeExibicao(valor?: string): string {
+    const cidade = (valor ?? '').trim();
+    if (!cidade) {
+      return '';
+    }
+
+    if (/\d/.test(cidade)) {
+      return '';
+    }
+
+    if (/^(rua|r\.|avenida|av\.|travessa|tv\.|estrada|rodovia|alameda|ladeira)\b/i.test(cidade)) {
+      return '';
+    }
+
+    return cidade;
+  }
+
+  private extrairCidadeDoEndereco(endereco?: string): string {
+    const texto = (endereco ?? '').trim();
+    if (!texto) {
+      return '';
+    }
+
+    const partes = texto
+      .split(',')
+      .map((parte) => parte.trim())
+      .filter(Boolean);
+
+    const parteCidadeUf = partes.find((parte) => /\s-\s[A-Za-z]{2}$/.test(parte));
+    if (parteCidadeUf) {
+      return parteCidadeUf.replace(/\s-\s[A-Za-z]{2}$/, '').trim();
+    }
+
+    const parteCidadeLabel = partes.find((parte) => /^cidade\s*:/i.test(parte));
+    if (parteCidadeLabel) {
+      return parteCidadeLabel.replace(/^cidade\s*:/i, '').trim();
+    }
+
+    return '';
   }
 }

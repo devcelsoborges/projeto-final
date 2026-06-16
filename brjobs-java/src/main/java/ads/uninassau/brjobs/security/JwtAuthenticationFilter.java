@@ -2,6 +2,7 @@ package ads.uninassau.brjobs.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private CustomUserDetailsService userDetailsService;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return "OPTIONS".equalsIgnoreCase(request.getMethod())
+                || path.startsWith("/api/v1/auth/")
+                || path.startsWith("/api/auth/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
@@ -32,25 +41,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 1. Valida se o token existe e é válido
             if (jwt != null && tokenService.validateToken(jwt)) {
+                try {
+                    String username = tokenService.getUsernameFromToken(jwt);
 
-                String username = tokenService.getUsernameFromToken(jwt);
+                    // 2. Carrega os detalhes do usuário
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                // 2. Carrega os detalhes do usuário
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    // 3. Cria o objeto de autenticação para o Spring Security
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
 
-                // 3. Cria o objeto de autenticação para o Spring Security
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+                    // Adiciona detalhes da requisição para auditoria
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // Adiciona detalhes da requisição para auditoria
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // 4. Define a autenticação no contexto de segurança (usuário autenticado!)
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    // 4. Define a autenticação no contexto de segurança (usuário autenticado!)
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    logger.debug("Autenticação JWT definida com sucesso para usuário: " + username);
+                } catch (Exception ex) {
+                    logger.error("Erro ao extrair informações do token JWT ou carregar usuário.", ex);
+                }
+            } else if (jwt != null) {
+                logger.warn("Token JWT inválido ou expirado: " + jwt.substring(0, Math.min(20, jwt.length())) + "...");
             }
         } catch (Exception ex) {
             // Logs de falha de autenticação (ex: token inválido)
-            logger.error("Não foi possível definir a autenticação do usuário no contexto de segurança.", ex);
+            logger.error("Erro geral no filtro JWT de autenticação.", ex);
         }
 
         // Permite que a requisição siga para o próximo filtro/controller
@@ -64,6 +79,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Verifica se o cabeçalho existe e começa com "Bearer "
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7); // Retorna a string do token, excluindo "Bearer "
+        }
+
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("ACCESS_TOKEN".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
         }
         return null;
     }

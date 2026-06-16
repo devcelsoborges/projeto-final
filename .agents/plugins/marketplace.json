@@ -1,0 +1,20 @@
+{
+  "name": "brjobs-local-plugins",
+  "interface": {
+    "displayName": "BRJobs Local Plugins"
+  },
+  "plugins": [
+    {
+      "name": "caveman",
+      "source": {
+        "source": "local",
+        "path": "./plugins/caveman"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -51,12 +51,14 @@ public class Prestador {
     private String descricao;
 
     @Column(name = "ativo", nullable = false)
+    @Builder.Default
     private boolean ativo = true;
 
     @Column(name = "nota_media")
     private Double notaMedia;
 
     @Column(name = "quantidade_avaliacoes")
+    @Builder.Default
     private Integer quantidadeAvaliacoes = 0;
 
     @CreationTimestamp
@@ -69,6 +71,7 @@ public class Prestador {
     // Relacionamento com avaliações recebidas
     @OneToMany(mappedBy = "prestador", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude
+    @Builder.Default
     private List<Avaliacao> avaliacoes = new ArrayList<>();
 
     @PreUpdate

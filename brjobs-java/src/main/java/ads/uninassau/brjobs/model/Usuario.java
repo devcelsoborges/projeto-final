@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -32,20 +33,44 @@ public class Usuario {
     @Column(nullable = false)
     private String senha;
 
-    @Column(nullable = false)
+    @Column
     private String telefone;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true)
     private String cpf;
 
-    @Column(nullable = false)
+    @Column
     private String genero;
 
-    @Column(name = "data_nascimento", nullable = false)
+    @Column(name = "data_nascimento")
     private LocalDate dataNascimento;
 
-    @Column(nullable = false)
+    @Column
     private String endereco;
+
+    @Column(name = "cep", length = 20)
+    private String cep;
+
+    @Column(name = "rua")
+    private String rua;
+
+    @Column(name = "bairro")
+    private String bairro;
+
+    @Column(name = "cidade")
+    private String cidade;
+
+    @Column(name = "estado", length = 2)
+    private String estado;
+
+    @Column(name = "numero")
+    private String numero;
+
+    @Column(name = "complemento")
+    private String complemento;
+
+    @Column(name = "bio", length = 600)
+    private String bio;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -60,6 +85,12 @@ public class Usuario {
 
     @Column(name = "data_atualizacao")
     private LocalDateTime dataAtualizacao;
+
+    @Column(name = "password_reset_code", length = 6)
+    private String passwordResetCode;
+
+    @Column(name = "password_reset_expires_at")
+    private LocalDateTime passwordResetExpiresAt;
 
     @PreUpdate
     protected void onUpdate() {

@@ -1,0 +1,14 @@
+services:
+  api:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+    env_file:
+      - .env.prod
+    ports:
+      - "8080:8080"
+    networks:
+      - brjobs-net
+    restart: unless-stopped
+
+networks:
+  brjobs-net:
+    external: true

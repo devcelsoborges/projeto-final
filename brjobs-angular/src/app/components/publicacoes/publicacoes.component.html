@@ -1,0 +1,202 @@
+<section class="publicacoes-page">
+  <div class="container">
+    <h1 class="page-title">Publicar ou Contratar Serviço</h1>
+    <p class="subtitulo page-subtitle">
+      Publique sua oferta de prestação de serviço ou sua necessidade de contratação em um único fluxo.
+    </p>
+
+    <div class="layout">
+      <ng-container *ngIf="usuarioLogado; else loginNecessario">
+        <form class="card form-card" (ngSubmit)="criarPublicacao()">
+          <h2 class="section-title">Nova publicação</h2>
+
+          <label>
+            Tipo de publicação
+            <select class="field-control" [(ngModel)]="form.tipoPublicacao" name="tipoPublicacao">
+              <option value="PRESTACAO">Prestação de serviço</option>
+              <option value="CONTRATACAO">Contratação de serviço</option>
+            </select>
+          </label>
+
+          <label>
+            Título
+            <input class="field-control" type="text" [(ngModel)]="form.titulo" name="titulo" maxlength="120" required />
+          </label>
+
+          <label>
+            Descrição
+            <textarea class="field-control" [(ngModel)]="form.descricao" name="descricao" rows="4" required></textarea>
+          </label>
+
+          <label>
+            Categoria
+            <select class="field-control" [(ngModel)]="form.categoria" (ngModelChange)="onCategoriaChange()" name="categoria">
+              <option value="">Selecione uma categoria</option>
+              <option *ngFor="let cat of categoriasServico" [value]="cat.nome">{{ cat.nome }}</option>
+            </select>
+          </label>
+
+          <label>
+            Subcategoria
+            <select
+              class="field-control"
+              [(ngModel)]="subcategoriaSelecionada"
+              name="subcategoria"
+              [disabled]="!form.categoria"
+            >
+              <option value="">Selecione uma subcategoria</option>
+              <option *ngFor="let sub of subcategoriasDisponiveis" [value]="sub">{{ sub }}</option>
+            </select>
+          </label>
+
+          <label>
+            Endereço da publicação *
+            <input
+              class="field-control"
+              type="text"
+              [(ngModel)]="form.enderecoPublicacao"
+              name="enderecoPublicacao"
+              placeholder="Rua, número, bairro"
+              required
+            />
+          </label>
+
+          <div class="orcamento-grid">
+            <label>
+              Cidade
+              <input class="field-control" type="text" [(ngModel)]="form.cidadePublicacao" name="cidadePublicacao" />
+            </label>
+            <label>
+              UF
+              <input class="field-control" type="text" maxlength="2" [(ngModel)]="form.estadoPublicacao" name="estadoPublicacao" />
+            </label>
+          </div>
+
+          <label>
+            CEP
+            <input class="field-control" type="text" [(ngModel)]="form.cepPublicacao" name="cepPublicacao" placeholder="00000-000" />
+          </label>
+
+          <button type="button" class="secondary-action" (click)="usarLocalizacaoAtual()">
+            Usar minha localização atual
+          </button>
+
+          <label *ngIf="form.tipoPublicacao === 'PRESTACAO'">
+            Preço (R$)
+            <input
+              class="field-control"
+              type="number"
+              min="0.01"
+              step="0.01"
+              inputmode="decimal"
+              (keydown)="restringirCampoMonetario($event)"
+              [(ngModel)]="form.preco"
+              name="preco"
+              required
+            />
+          </label>
+
+          <div *ngIf="form.tipoPublicacao === 'CONTRATACAO'" class="orcamento-grid">
+            <label>
+              Orçamento mínimo (R$)
+              <input
+                class="field-control"
+                type="number"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+                (keydown)="restringirCampoMonetario($event)"
+                [(ngModel)]="form.orcamentoMin"
+                name="orcamentoMin"
+                required
+              />
+            </label>
+            <label>
+              Orçamento máximo (R$)
+              <input
+                class="field-control"
+                type="number"
+                min="0.01"
+                step="0.01"
+                inputmode="decimal"
+                (keydown)="restringirCampoMonetario($event)"
+                [(ngModel)]="form.orcamentoMax"
+                name="orcamentoMax"
+                required
+              />
+            </label>
+          </div>
+
+          <button type="submit" class="primary-action">Publicar agora</button>
+
+          <p class="mensagem erro" *ngIf="erro">{{ erro }}</p>
+          <p class="mensagem sucesso" *ngIf="sucesso">{{ sucesso }}</p>
+        </form>
+      </ng-container>
+
+      <ng-template #loginNecessario>
+        <article class="card form-card bloqueio-publicacao">
+          <h2 class="section-title">Nova publicação</h2>
+          <p class="estado-info">Você pode visualizar publicações sem login.</p>
+          <p class="estado-info">Para publicar um serviço, faça login na plataforma.</p>
+          <a class="primary-action cta-login" routerLink="/login">Fazer login para publicar</a>
+        </article>
+      </ng-template>
+
+      <div class="card lista-card">
+        <div class="lista-header">
+          <h2 class="section-title">Publicações recentes</h2>
+          <select class="field-control filter-control" [ngModel]="tipoFiltro" (ngModelChange)="trocarTipoFiltro($event)">
+            <option value="TODAS">Todas</option>
+            <option value="PRESTACAO">Prestação</option>
+            <option value="CONTRATACAO">Contratação</option>
+          </select>
+        </div>
+
+        <p *ngIf="carregando" class="estado-info">Carregando publicações...</p>
+        <p *ngIf="!carregando && erroCarregamento" class="mensagem erro">{{ erroCarregamento }}</p>
+
+        <ul *ngIf="!carregando && publicacoes.length > 0" class="lista-publicacoes">
+          <li *ngFor="let pub of publicacoes" class="item-publicacao">
+            <div class="chip" [class.contratacao]="pub.tipoPublicacao === 'CONTRATACAO'">
+              {{ pub.tipoPublicacao === "PRESTACAO" ? "Prestação" : "Contratação" }}
+            </div>
+            <h3>{{ pub.titulo }}</h3>
+            <p>{{ pub.descricao }}</p>
+            <div class="meta">
+              <span>{{ formatarValor(pub) }}</span>
+              <span>{{ pub.categoria || "Sem categoria" }}</span>
+              <span *ngIf="formatarDistancia(pub)">{{ formatarDistancia(pub) }}</span>
+              <span *ngIf="pub.cidadePublicacao || pub.estadoPublicacao">{{ pub.cidadePublicacao }}{{ pub.estadoPublicacao ? "/" + pub.estadoPublicacao : "" }}</span>
+              <span>por {{ pub.usuarioNome }}</span>
+            </div>
+            <div class="acoes-publicacao">
+              <a class="btn-ver-publicacao" [routerLink]="['/publicacoes', pub.id]">Ver publicação</a>
+              <button
+                type="button"
+                class="btn-remover-publicacao"
+                *ngIf="podeRemoverPublicacao(pub)"
+                [disabled]="removendoPublicacaoId === pub.id"
+                (click)="removerPublicacao(pub)"
+              >
+                {{ removendoPublicacaoId === pub.id ? "Removendo..." : "Remover" }}
+              </button>
+            </div>
+          </li>
+        </ul>
+
+        <div *ngIf="!carregando && publicacoes.length > 0" class="paginacao-lista">
+          <button type="button" class="btn-paginacao" (click)="paginaAnterior()" [disabled]="paginaAtual === 0">
+            Anterior
+          </button>
+          <span class="page-status">Página {{ paginaAtual + 1 }}</span>
+          <button type="button" class="btn-paginacao" (click)="proximaPagina()" [disabled]="ultimaPagina">
+            Próxima
+          </button>
+        </div>
+
+        <p *ngIf="!carregando && publicacoes.length === 0" class="estado-info">Nenhuma publicação encontrada.</p>
+      </div>
+    </div>
+  </div>
+</section>

@@ -7,7 +7,7 @@
 
 .hero-sobre {
   background-color: var(--color-primary);
-  color: var(--color-surface);
+  color: var(--color-on-primary);
   padding: 80px 20px;
   text-align: center;
   margin-bottom: 40px;
@@ -15,15 +15,23 @@
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Dark theme hero section */
+.dark-theme .hero-sobre {
+  background: linear-gradient(135deg, #0a1929 0%, #132f4c 100%);
+  color: #d4d4d4;
+}
+
 .hero-sobre h1 {
   font-size: 2.8rem;
   font-weight: 800;
   margin-bottom: 10px;
+  color: inherit;
 }
 
 .hero-sobre p {
   font-size: 1.25rem;
-  opacity: 0.9;
+  opacity: 0.98;
+  color: inherit;
   max-width: 800px;
   margin: 0 auto;
 }
@@ -119,19 +127,21 @@
 
 .btn-chamada {
   display: inline-block;
-  background-color: var(--color-accent);
-  color: var(--color-primary); 
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
   padding: 12px 30px;
   text-decoration: none;
   font-weight: 700;
   border-radius: var(--border-radius-md);
   margin-top: 20px;
   transition: background-color 0.3s ease, transform 0.2s ease;
+  font-size: 1rem;
 }
 
 .btn-chamada:hover {
-  background-color: #e0b700;
-  transform: scale(1.05);
+  background-color: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(28, 93, 153, 0.3);
 }
 
 /* Responsividade */

@@ -54,6 +54,7 @@ public class AvaliacaoService {
         if (avaliacaoDTO.getNota() == null || avaliacaoDTO.getNota() < 1 || avaliacaoDTO.getNota() > 5) {
             throw new IllegalArgumentException("A nota deve estar entre 1 e 5.");
         }
+        validarComentario(avaliacaoDTO.getComentario());
 
         // Buscar relacionamentos necessários
         Usuario usuario = usuarioRepository.findById(avaliacaoDTO.getUsuarioId())
@@ -87,6 +88,7 @@ public class AvaliacaoService {
         avaliacao.setNota(avaliacaoDTO.getNota());
         avaliacao.setComentario(avaliacaoDTO.getComentario());
         avaliacao.setUsuario(usuario);
+        avaliacao.setUsuarioAvaliado(prestador.getUsuario());
         avaliacao.setPrestador(prestador);
         avaliacao.setSolicitacao(solicitacao);
 
@@ -118,6 +120,7 @@ public class AvaliacaoService {
             avaliacao.setNota(avaliacaoDTO.getNota());
         }
         if (avaliacaoDTO.getComentario() != null) {
+            validarComentario(avaliacaoDTO.getComentario());
             avaliacao.setComentario(avaliacaoDTO.getComentario());
         }
 
@@ -185,10 +188,10 @@ public class AvaliacaoService {
      */
     @Transactional(readOnly = true)
     public List<AvaliacaoDTO> listarAvaliacoesPorUsuario(Long usuarioId) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
+        usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
 
-        return avaliacaoRepository.findByUsuario(usuario)
+        return avaliacaoRepository.findByUsuarioId(usuarioId)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
@@ -221,6 +224,10 @@ public class AvaliacaoService {
             dto.setUsuarioId(entity.getUsuario().getId());
         }
 
+        if (entity.getUsuarioAvaliado() != null) {
+            dto.setUsuarioAvaliadoId(entity.getUsuarioAvaliado().getId());
+        }
+
         if (entity.getPrestador() != null) {
             dto.setPrestadorId(entity.getPrestador().getId());
         }
@@ -243,5 +250,153 @@ public class AvaliacaoService {
         entity.setComentario(dto.getComentario());
         return entity;
     }
-}
 
+    /**
+     * Valida e filtra palavrões no comentário
+     *
+     * @param texto Texto para validar
+     * @return Texto com palavrões substituídos por "[censurado]"
+     */
+    private String filtrarPalavras(String texto) {
+        if (texto == null || texto.isEmpty()) {
+            return texto;
+        }
+
+        // Lista de palavrões (simplificada - em produção usar base externa)
+        String[] palavras = {
+            "droga", "maldito", "inferno", "porcaria", "excremento",
+            "xingamento1", "xingamento2"
+        };
+
+        String resultado = texto.toLowerCase();
+        for (String palavra : palavras) {
+            resultado = resultado.replaceAll("(?i)" + palavra, "[censurado]");
+        }
+
+        return resultado;
+    }
+
+    /**
+     * Cria avaliação com validação de palavrões e isolamento por tenant
+     *
+     * @param tenantId ID do usuário logado (do JWT)
+     * @param prestadorId ID do prestador a avaliar
+     * @param nota Entre 1 e 5
+     * @param comentario Texto do comentário (será filtrado)
+     * @return AvaliacaoDTO criada
+     */
+    @Transactional
+    public AvaliacaoDTO criarComValidacao(Long tenantId, Long prestadorId, Integer nota, String comentario) {
+        return criarParaUsuarioComValidacao(tenantId, null, prestadorId, nota, comentario);
+    }
+
+    @Transactional
+    public AvaliacaoDTO criarParaUsuarioComValidacao(Long tenantId, Long usuarioAvaliadoId, Long prestadorId, Integer nota, String comentario) {
+        Usuario avaliador = usuarioRepository.findById(tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+
+        if (nota == null || nota < 1 || nota > 5) {
+            throw new IllegalArgumentException("Nota deve estar entre 1 e 5");
+        }
+
+        validarComentario(comentario);
+
+        Prestador prestador = null;
+        Usuario usuarioAvaliado;
+        if (usuarioAvaliadoId != null) {
+            usuarioAvaliado = usuarioRepository.findById(usuarioAvaliadoId)
+                    .orElseThrow(() -> new IllegalArgumentException("Usuario avaliado nao encontrado"));
+        } else {
+            prestador = prestadorRepository.findById(prestadorId)
+                    .orElseThrow(() -> new IllegalArgumentException("Prestador nao encontrado"));
+            usuarioAvaliado = prestador.getUsuario();
+        }
+
+        if (usuarioAvaliado.getId().equals(tenantId)) {
+            throw new IllegalArgumentException("Voce nao pode avaliar o proprio perfil");
+        }
+
+        if (avaliacaoRepository.existsByUsuarioIdAndUsuarioAvaliadoId(tenantId, usuarioAvaliado.getId())) {
+            throw new IllegalArgumentException("Voce ja avaliou este usuario");
+        }
+
+        Avaliacao avaliacao = new Avaliacao();
+        avaliacao.setNota(nota);
+        avaliacao.setComentario(filtrarPalavras(comentario));
+        avaliacao.setUsuario(avaliador);
+        avaliacao.setUsuarioAvaliado(usuarioAvaliado);
+        avaliacao.setPrestador(prestador);
+
+        avaliacao = avaliacaoRepository.save(avaliacao);
+
+        if (prestador != null) {
+            prestador.atualizarNotaMedia();
+            prestadorRepository.save(prestador);
+        }
+
+        return toDTO(avaliacao);
+    }
+
+    /**
+     * Lista avaliações recebidas por um prestador (com validação de acesso)
+     *
+     * @param tenantId ID do usuário logado
+     * @return Lista de avaliações recebidas
+     */
+    @Transactional(readOnly = true)
+    public List<AvaliacaoDTO> listarAvaliacoesRecebidas(Long tenantId) {
+        // Validar que é prestador
+        Usuario usuario = usuarioRepository.findById(tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        Prestador prestador = prestadorRepository.findByUsuarioId(tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não é prestador"));
+
+        return avaliacaoRepository.findByPrestador(prestador)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtém média de avaliações de um prestador
+     */
+    @Transactional(readOnly = true)
+    public Double obterMedia(Long prestadorId) {
+        return avaliacaoRepository.getAvaliacaoMedia(prestadorId);
+    }
+
+    /**
+     * Conta avaliações de um prestador
+     */
+    @Transactional(readOnly = true)
+    public Long contarAvaliacoes(Long prestadorId) {
+        return avaliacaoRepository.countByPrestador(prestadorId);
+    }
+
+    private void validarComentario(String comentario) {
+        if (comentario != null && comentario.length() > 200) {
+            throw new IllegalArgumentException("O comentário não pode exceder 200 caracteres.");
+        }
+    }
+    @Transactional(readOnly = true)
+    public List<AvaliacaoDTO> listarAvaliacoesRecebidasPorUsuario(Long usuarioId) {
+        usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado."));
+
+        return avaliacaoRepository.findByUsuarioAvaliadoId(usuarioId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Double obterMediaUsuario(Long usuarioId) {
+        return avaliacaoRepository.getAvaliacaoMediaUsuario(usuarioId);
+    }
+
+    @Transactional(readOnly = true)
+    public Long contarAvaliacoesUsuario(Long usuarioId) {
+        return avaliacaoRepository.countByUsuarioAvaliado(usuarioId);
+    }
+}

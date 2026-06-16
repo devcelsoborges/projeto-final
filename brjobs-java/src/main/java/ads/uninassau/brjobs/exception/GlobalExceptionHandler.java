@@ -1,6 +1,9 @@
-package ads.uninassau.brjobs.config;
+package ads.uninassau.brjobs.exception;
 
 import ads.uninassau.brjobs.exception.EmailAlreadyInUseException;
+import ads.uninassau.brjobs.exception.CPFAlreadyInUseException;
+import ads.uninassau.brjobs.exception.ChatRateLimitException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     /**
@@ -37,5 +41,33 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleEmailAlreadyInUseException(EmailAlreadyInUseException ex) {
         // Retorna a mensagem de erro da exceção e status 409
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(CPFAlreadyInUseException.class)
+    public ResponseEntity<String> handleCPFAlreadyInUseException(CPFAlreadyInUseException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<String> handleInvalidPasswordException(InvalidPasswordException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        log.warn("GlobalExceptionHandler 400 IllegalArgumentException: {}", ex.getMessage());
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<String> handleSecurityException(SecurityException ex) {
+        log.warn("GlobalExceptionHandler 403 SecurityException: {}", ex.getMessage());
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(ChatRateLimitException.class)
+    public ResponseEntity<String> handleChatRateLimitException(ChatRateLimitException ex) {
+        log.warn("GlobalExceptionHandler 429 ChatRateLimitException: {}", ex.getMessage());
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
     }
 }

@@ -1,21 +1,28 @@
-/* Cores e Variáveis */
+/* =================================================================
+ * VARIÁVEIS GLOBAIS
+ * ================================================================= */
 :root {
-  --color-primary: #002b5b; /* Azul Escuro (BRJobs) */
-  --color-accent: #ffd700; /* Dourado */
-  --color-background: #f4f7f6; /* Fundo Leve */
-  --color-surface: #ffffff; /* Branco/Card */
+  --color-primary: #002b5b;
+  --color-accent: #ffd700;
+  --color-background: #f4f7f6;
+  --color-surface: #ffffff;
   --color-text-dark: #333333;
   --color-text-secondary: #666666;
-  --color-danger: #e53e3e; 
+  --color-danger: #e53e3e;
+  --color-success: #38a169;
   --border-radius-md: 8px;
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
+/* =================================================================
+ * CONTAINER E CARD
+ * ================================================================= */
+
 .register-wrapper {
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Alinha ao topo para formulários longos */
-  min-height: calc(100vh - 60px); 
+  align-items: flex-start;
+  min-height: calc(100vh - 60px);
   padding: 40px 20px;
   background-color: var(--color-background);
   transition: background-color 0.3s ease;
@@ -26,11 +33,27 @@
   padding: 40px;
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-lg);
-  max-width: 900px; /* Aumenta a largura para o formulário detalhado */
+  max-width: 900px;
   width: 100%;
   box-sizing: border-box;
   transition: background-color 0.3s ease, color 0.3s ease;
+  animation: slideUp 0.4s ease;
 }
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =================================================================
+ * HEADER
+ * ================================================================= */
 
 .card-title {
   color: var(--color-primary);
@@ -47,9 +70,57 @@
   font-size: 1rem;
 }
 
-/* Estilização das Seções Fieldset */
+/* =================================================================
+ * ALERTAS
+ * ================================================================= */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--border-radius-md);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.alert-danger {
+  background-color: #fed7d7;
+  border: 1px solid #fc8181;
+  color: #c53030;
+}
+
+.alert-success {
+  background-color: #c6f6d5;
+  border: 1px solid #9ae6b4;
+  color: #22543d;
+}
+
+/* =================================================================
+ * FIELDSETS
+ * ================================================================= */
+
 .form-section {
-  border: 1px solid var(--color-border);
+  border: 1px solid #e2e8f0;
   border-radius: var(--border-radius-md);
   padding: 20px;
   margin-bottom: 30px;
@@ -65,21 +136,27 @@
   margin-left: 10px;
 }
 
-/* Layout de Grade para os Campos */
+/* =================================================================
+ * GRID LAYOUT
+ * ================================================================= */
+
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Duas colunas padrão */
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
 .form-group {
-  margin-bottom: 0; /* O espaçamento é controlado pelo gap da grid */
+  margin-bottom: 0;
 }
 
-/* Classe para campos que ocupam a largura total da grade */
 .grid-span-full {
   grid-column: 1 / -1;
 }
+
+/* =================================================================
+ * LABELS E INPUTS
+ * ================================================================= */
 
 .form-group label {
   display: block;
@@ -93,7 +170,7 @@
 .register-form textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #cbd5e0;
   border-radius: var(--border-radius-md);
   box-sizing: border-box;
   transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s, color 0.3s;
@@ -104,6 +181,16 @@
   caret-color: var(--color-text-dark);
 }
 
+.register-form select {
+  background-color: var(--color-surface);
+  color: var(--color-text-dark);
+}
+
+.register-form select option {
+  background-color: var(--color-surface);
+  color: var(--color-text-dark);
+}
+
 .register-form input:focus,
 .register-form select:focus,
 .register-form textarea:focus {
@@ -112,23 +199,67 @@
   box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
 }
 
-/* Estilo para inputs inválidos */
 .register-form input.is-invalid,
 .register-form select.is-invalid,
 .register-form textarea.is-invalid {
   border-color: var(--color-danger);
+  background-color: #fff5f5;
+}
+
+.register-form input.is-invalid:focus,
+.register-form select.is-invalid:focus,
+.register-form textarea.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
 }
 
 .error-message {
   color: var(--color-danger);
   font-size: 0.85rem;
   margin-top: 5px;
+  font-weight: 500;
 }
 
-.mismatch-error {
-  /* Estilo adicional para erro de não coincidência de senhas */
-  font-weight: 600;
+/* =================================================================
+ * UPLOAD DE ARQUIVOS
+ * ================================================================= */
+
+.file-input-group {
+  display: flex;
+  flex-direction: column;
 }
+
+.file-input-group input[type="file"] {
+  display: none;
+}
+
+.file-label {
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  padding: 10px 15px;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.file-label:hover {
+  background-color: #003e7c;
+}
+
+.file-name {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 5px;
+}
+
+/* =================================================================
+ * BOTÕES
+ * ================================================================= */
 
 .btn-primary {
   width: 100%;
@@ -142,16 +273,52 @@
   transition: background-color 0.3s ease, transform 0.1s ease;
   font-size: 1.1rem;
   margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
 }
 
 .btn-primary:hover:not(:disabled) {
   background-color: #003e7c;
+  box-shadow: 0 4px 12px rgba(0, 43, 91, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-primary:disabled {
-  background-color: #a0aec0; 
+  background-color: #cbd5e0;
   cursor: not-allowed;
+  opacity: 0.7;
 }
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =================================================================
+ * FOOTER
+ * ================================================================= */
 
 .login-link {
   text-align: center;
@@ -169,52 +336,182 @@
 
 .login-link a:hover {
   color: var(--color-accent);
+  text-decoration: underline;
 }
 
-/* Estilo específico para input type="file" */
-.file-input-group {
-    display: flex;
-    flex-direction: column;
-}
+/* =================================================================
+ * RESPONSIVIDADE
+ * ================================================================= */
 
-.file-input-group input[type="file"] {
-    display: none; /* Esconde o input file padrão */
-}
-
-.file-label {
-    background-color: var(--color-primary);
-    color: var(--color-surface);
-    padding: 10px 15px;
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    text-align: center;
-    transition: background-color 0.3s;
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-.file-label:hover {
-    background-color: #003e7c;
-}
-
-.file-name {
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding-left: 5px;
-}
-
-/* Responsividade */
 @media (max-width: 768px) {
   .register-card {
     padding: 30px 20px;
   }
+
   .card-title {
     font-size: 1.75rem;
   }
+
   .form-grid {
-    grid-template-columns: 1fr; /* Uma coluna em telas menores */
+    grid-template-columns: 1fr;
+  }
+
+  .register-wrapper {
+    min-height: auto;
+    padding: 20px 10px;
+  }
+}
+
+@media (max-width: 500px) {
+  .register-card {
+    padding: 20px 15px;
+    margin: 0 5px;
+  }
+
+  .card-title {
+    font-size: 1.4rem;
+  }
+
+  .card-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .form-section {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .form-section legend {
+    font-size: 1.1rem;
+    margin-left: 5px;
+  }
+
+  .form-grid {
+    gap: 15px;
+  }
+
+  .btn-primary {
+    font-size: 1rem;
+    padding: 12px;
+    margin-top: 15px;
+  }
+}
+
+/* =================================================================
+ * 10. QUICK SIGN UP (SOCIAL)
+ * ================================================================= */
+
+.quick-signup {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: var(--color-background);
+  border-radius: 8px;
+  border: 1px solid #cbd5e0;
+}
+
+.signup-subtitle {
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 15px 0;
+  font-weight: 500;
+}
+
+.social-signup {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.btn-social {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-social:hover:not(:disabled) {
+  border-color: #a0aec0;
+  background-color: #edf2f7;
+  transform: translateY(-2px);
+}
+
+.btn-social:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-social:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-google {
+  color: #1f2937;
+}
+
+.btn-google:hover:not(:disabled) {
+  border-color: #4285f4;
+  background-color: #f8f9ff;
+}
+
+.btn-facebook {
+  color: #ffffff;
+  background-color: #1877f2;
+  border-color: #1877f2;
+}
+
+.btn-facebook:hover:not(:disabled) {
+  background-color: #0a66c2;
+  border-color: #0a66c2;
+}
+
+.signup-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  position: relative;
+}
+
+.signup-divider::before,
+.signup-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: #cbd5e0;
+}
+
+.signup-divider span {
+  padding: 0 12px;
+  background: var(--color-background);
+}
+
+@media (max-width: 600px) {
+  .quick-signup {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .social-signup {
+    gap: 10px;
+  }
+
+  .btn-social {
+    flex: 0 1 calc(33.333% - 7px);
+    font-size: 0.8rem;
+    padding: 10px;
   }
 }

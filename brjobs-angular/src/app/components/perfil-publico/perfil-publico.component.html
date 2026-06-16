@@ -1,0 +1,74 @@
+<section class="perfil-publico" *ngIf="!carregando && !erro && usuario">
+  <header class="perfil-header card-shell">
+    <h1>{{ usuario.nome }}</h1>
+    <p>{{ usuario.tipoUsuario === "PRESTADOR" ? "Prestador de serviços" : "Contratante" }}</p>
+    <div class="header-rating">
+      <span class="rating-stars">{{ getEstrelas(stats.media_avaliacao) }}</span>
+      <span>{{ stats.media_avaliacao | number: "1.1-2" }} / 5</span>
+      <span>{{ stats.total_avaliacoes }} avaliação(ões)</span>
+    </div>
+    <button class="btn-chat" type="button" *ngIf="podeEntrarEmContato()" (click)="entrarEmContato()">
+      {{ getTextoBotaoContato() }}
+    </button>
+    <button class="btn-own-profile" type="button" *ngIf="podeIrParaMeuPerfil()" (click)="irParaMeuPerfil()">
+      Ir para meu perfil de edição
+    </button>
+  </header>
+
+  <article class="card-shell">
+    <h2>Informações de contato</h2>
+    <div class="info-grid">
+      <p><strong>Email:</strong> {{ usuario.email }}</p>
+      <p *ngIf="usuario.telefone"><strong>Telefone:</strong> {{ usuario.telefone }}</p>
+      <p class="full-width"><strong>Cidade:</strong> {{ getCidadeExibicao() || "Não informada" }}</p>
+    </div>
+  </article>
+
+  <article class="card-shell" *ngIf="prestador">
+    <h2>Perfil profissional</h2>
+    <p *ngIf="prestador.funcao"><strong>Função:</strong> {{ prestador.funcao }}</p>
+    <p *ngIf="prestador.especialidades"><strong>Especialidades:</strong> {{ prestador.especialidades }}</p>
+    <p *ngIf="prestador.experienciaProfissional"><strong>Experiência:</strong> {{ prestador.experienciaProfissional }}</p>
+    <p *ngIf="prestador.descricao"><strong>Descrição:</strong> {{ prestador.descricao }}</p>
+  </article>
+
+  <article class="card-shell">
+    <h2>Avaliações</h2>
+    <div class="stats-row">
+      <span class="rating-stars">{{ getEstrelas(stats.media_avaliacao) }}</span>
+      <span>Média: {{ stats.media_avaliacao | number: "1.1-2" }} / 5</span>
+      <span>Total: {{ stats.total_avaliacoes }}</span>
+    </div>
+
+    <div class="avaliacao-form" *ngIf="podeAvaliar()">
+      <app-rating
+        [prestadorId]="prestador?.id || 0"
+        [usuarioAvaliadoId]="usuario.id"
+        (avaliacaoEnviada)="recarregarAvaliacoes()"
+      ></app-rating>
+    </div>
+
+    <div class="avaliacoes-lista" *ngIf="avaliacoes.length > 0; else semAvaliacoes">
+      <div class="avaliacao-item" *ngFor="let av of avaliacoes">
+        <p class="nota">{{ getEstrelas(av.nota) }} <span>{{ av.nota }}/5</span></p>
+        <p class="comentario" *ngIf="av.comentario">{{ av.comentario }}</p>
+        <p class="data" *ngIf="av.dataCriacao">{{ av.dataCriacao | date: "dd/MM/yyyy" }}</p>
+      </div>
+    </div>
+
+    <ng-template #semAvaliacoes>
+      <p class="vazio">Ainda não há avaliações para este perfil.</p>
+    </ng-template>
+  </article>
+
+  <a routerLink="/" class="voltar-link">Voltar para início</a>
+</section>
+
+<section class="estado" *ngIf="carregando">
+  <p>Carregando perfil...</p>
+</section>
+
+<section class="estado erro" *ngIf="!carregando && erro">
+  <p>{{ erro }}</p>
+  <a routerLink="/" class="voltar-link">Voltar para início</a>
+</section>

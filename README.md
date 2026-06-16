@@ -1276,3 +1276,18 @@ Este projeto está licenciado sob **MIT License** — verifique o arquivo `LICEN
 **Última atualização**: 26 de Novembro de 2025  
 **Versão**: 0.0.1-SNAPSHOT
 
+
+## Deploy temporario AWS EC2
+
+O backend `brjobs-java` pode ser publicado como container Docker em uma EC2 usando Amazon ECR. Consulte `brjobs-java/README_DEPLOY_AWS.md`.
+
+Os arquivos `.env.prod.example` e `.env.test-ec2.example` incluem credenciais de PostgreSQL apenas para teste/MVP temporario:
+
+```env
+DB_HOST=brjobs-postgres
+DB_NAME=brjobs
+DB_USER=brjobs_user
+DB_PASSWORD=brjobs_senha_forte_123
+```
+
+Essa senha deve ser trocada antes de qualquer producao real. O arquivo `.env.prod` nao deve ser versionado.
