@@ -38,3 +38,6 @@ build/
 .env
 .env.*
 !.env.example
+
+### Deploy (config local com infra) ###
+scripts/deploy.local.ps1

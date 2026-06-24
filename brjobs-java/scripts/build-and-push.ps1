@@ -21,7 +21,9 @@ $imageUri = "$registry/$ecrRepository`:$imageTag"
 $localImage = "$ecrRepository`:$imageTag"
 
 Write-Host "Login no Amazon ECR: $registry"
-aws ecr get-login-password --region $awsRegion | docker login --username AWS --password-stdin $registry
+# O pipe do PowerShell corrompe o token no docker login (--password-stdin) -> 400 Bad Request.
+# O pipe nativo do cmd.exe passa o token limpo.
+cmd /c "aws ecr get-login-password --region $awsRegion | docker login --username AWS --password-stdin $registry"
 
 Write-Host "Verificando repositorio ECR: $ecrRepository"
 aws ecr describe-repositories --region $awsRegion --repository-names $ecrRepository *> $null
