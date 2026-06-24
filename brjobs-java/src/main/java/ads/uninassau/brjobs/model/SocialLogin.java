@@ -47,7 +47,9 @@ public class SocialLogin {
     @Column(nullable = false)
     private String nome;
 
-    @Column(name = "email_verified", nullable = false)
+    // columnDefinition com default permite o ddl-auto=update adicionar a coluna
+    // em tabelas que ja tem linhas (sem default, o ALTER NOT NULL falha).
+    @Column(name = "email_verified", nullable = false, columnDefinition = "boolean not null default false")
     @Builder.Default
     private Boolean emailVerified = false;
 

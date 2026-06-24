@@ -33,7 +33,8 @@ build/
 .vscode/
 
 ### Environment files ###
+# Ignora todos os .env reais (.env, .env.dev, .env.prod, .env.local...)
+# e versiona apenas o template sem segredos.
 .env
 .env.*
-!.env.prod.example
-!.env.test-ec2.example
+!.env.example
