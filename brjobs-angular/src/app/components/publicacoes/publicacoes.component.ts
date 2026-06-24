@@ -11,6 +11,7 @@ import {
 } from "../../service/publicacao-servico.service";
 import { AuthService } from "../../service/auth.service";
 import { LocationService } from "../../service/location.service";
+import { AccountService } from "../../service/account.service";
 
 interface CategoriaServico {
   nome: string;
@@ -39,6 +40,9 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
   usuarioLogadoId: number | null = null;
   subcategoriaSelecionada = "";
   removendoPublicacaoId: number | null = null;
+  // R3: publicação bloqueada por e-mail não confirmado — oferece reenvio.
+  mostrarReenvioConfirmacao = false;
+  reenvioMensagem = "";
 
   readonly categoriasServico: CategoriaServico[] = [
     {
@@ -119,6 +123,7 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
     private readonly publicacaoService: PublicacaoServicoService,
     private readonly authService: AuthService,
     private readonly locationService: LocationService,
+    private readonly accountService: AccountService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -253,6 +258,8 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
   criarPublicacao(): void {
     this.erro = "";
     this.sucesso = "";
+    this.mostrarReenvioConfirmacao = false;
+    this.reenvioMensagem = "";
 
     if (!this.usuarioLogado) {
       this.erro = "Você precisa estar logado para publicar um serviço.";
@@ -274,7 +281,8 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
 
     const payload: CriarPublicacaoServicoDTO = {
       ...this.form,
-      categoria: (this.subcategoriaSelecionada || this.form.categoria || "").trim() || undefined,
+      categoria: (this.form.categoria || "").trim() || undefined,
+      subcategoria: (this.subcategoriaSelecionada || "").trim() || undefined,
       titulo: this.form.titulo.trim(),
       descricao: this.form.descricao.trim(),
       enderecoPublicacao: this.form.enderecoPublicacao.trim(),
@@ -333,7 +341,32 @@ export class PublicacoesComponent implements OnInit, OnDestroy {
         this.carregarPublicacoes();
       },
       error: (err) => {
-        this.erro = err?.error || "Falha ao criar publicação.";
+        // R3: e-mail não confirmado -> mensagem clara + opção de reenviar a confirmação.
+        if (err?.status === 403 && err?.error?.code === "EMAIL_NOT_CONFIRMED") {
+          this.erro = err.error.message || "Confirme seu e-mail para publicar.";
+          this.mostrarReenvioConfirmacao = true;
+        } else {
+          this.erro = (typeof err?.error === "string" ? err.error : err?.error?.message) || "Falha ao criar publicação.";
+        }
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /** Reenvia o e-mail de confirmação para o usuário logado (bloqueado de publicar). */
+  reenviarConfirmacaoEmail(): void {
+    const email = this.authService.getUsuarioAtual()?.email || localStorage.getItem("usuario_email");
+    if (!email) {
+      return;
+    }
+    this.reenvioMensagem = "";
+    this.accountService.reenviarConfirmacao(email).subscribe({
+      next: (res) => {
+        this.reenvioMensagem = res?.message || "E-mail de confirmação reenviado. Verifique sua caixa de entrada (e o spam).";
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.reenvioMensagem = "Não foi possível reenviar agora. Tente novamente em instantes.";
         this.cdr.markForCheck();
       }
     });

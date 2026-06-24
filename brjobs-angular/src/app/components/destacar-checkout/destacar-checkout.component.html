@@ -1,0 +1,49 @@
+<section class="checkout-container">
+  <div class="checkout-card">
+    <h1>Destacar publicação</h1>
+
+    @if (carregando) {
+      <p class="status">Preparando o pagamento...</p>
+    }
+
+    @if (erro && !sucesso) {
+      <div class="alert erro">{{ erro }}</div>
+    }
+
+    @if (escolhendoPlano && !carregando) {
+      <p class="status">Escolha um plano de destaque:</p>
+      <div class="planos-grid">
+        @for (plano of planos; track plano.id) {
+          <button type="button" class="plano-card" (click)="selecionarPlano(plano.id)">
+            <strong>{{ plano.name }}</strong>
+            <span class="plano-preco">R$ {{ plano.price | number: "1.2-2" }}</span>
+            <span class="plano-dias">{{ plano.durationDays }} dias em destaque</span>
+          </button>
+        }
+      </div>
+    }
+
+    @if (sucesso) {
+      <div class="sucesso-box">
+        <div class="icon">✓</div>
+        <h2>Pagamento recebido!</h2>
+        <p>Assim que a confirmação for processada, sua publicação aparecerá em destaque.</p>
+        <button type="button" class="btn-primary" (click)="irParaMinhas()">Ir para minhas publicações</button>
+      </div>
+    }
+
+    <!-- Container do Payment Element (sempre presente quando pronto, para o mount).
+         O botão é type="button" + (click): NÃO usar submit de form aqui, senão o submit
+         nativo recarrega a página (perde o ?plano=) e pagar() nunca roda. -->
+    <form (submit)="$event.preventDefault()" [hidden]="!pronto || sucesso">
+      <div id="payment-element"></div>
+
+      <button type="button" class="btn-primary pagar" (click)="pagar()" [disabled]="pagando">
+        {{ pagando ? "Processando..." : "Pagar e destacar" }}
+      </button>
+      <button type="button" class="btn-link" (click)="voltar()" [disabled]="pagando">Cancelar</button>
+
+      <p class="aviso">Pagamento processado com segurança pela Stripe. Em teste, use o cartão 4242 4242 4242 4242.</p>
+    </form>
+  </div>
+</section>

@@ -3,6 +3,7 @@ package ads.uninassau.brjobs.service;
 import ads.uninassau.brjobs.dto.GeocodeRequestDTO;
 import ads.uninassau.brjobs.dto.GeocodeResponseDTO;
 import ads.uninassau.brjobs.dto.PublicacaoServicoDTO;
+import ads.uninassau.brjobs.exception.EmailNotConfirmedException;
 import ads.uninassau.brjobs.model.PublicacaoServico;
 import ads.uninassau.brjobs.model.TipoPublicacaoServico;
 import ads.uninassau.brjobs.model.Usuario;
@@ -36,6 +37,13 @@ public class PublicacaoServicoService {
         Usuario usuario = usuarioRepository.findById(tenantId)
             .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
 
+        // R3: só publica quem confirmou o e-mail. Bloqueia apenas quando explicitamente
+        // não confirmado (contas sociais nascem confirmadas; contas legadas com null passam),
+        // mantendo consistência com o bloqueio de login.
+        if (Boolean.FALSE.equals(usuario.getEmailConfirmado())) {
+            throw new EmailNotConfirmedException("Confirme seu e-mail para publicar.");
+        }
+
         TipoPublicacaoServico tipo = parseTipo(dto.getTipoPublicacao());
         GeocodeResponseDTO geocode = resolveGeocode(dto);
 
@@ -48,6 +56,7 @@ public class PublicacaoServicoService {
             .titulo(dto.getTitulo().trim())
             .descricao(dto.getDescricao().trim())
             .categoria(dto.getCategoria() == null ? null : dto.getCategoria().trim())
+            .subcategoria(dto.getSubcategoria() == null ? null : dto.getSubcategoria().trim())
             .enderecoPublicacao(dto.getEnderecoPublicacao().trim())
             .cepPublicacao(blankToNull(dto.getCepPublicacao()))
             .cidadePublicacao(blankToNull(dto.getCidadePublicacao()))
@@ -110,6 +119,7 @@ public class PublicacaoServicoService {
             String titulo = safeLower(entity.getTitulo());
             String descricao = safeLower(entity.getDescricao());
             String categoria = safeLower(entity.getCategoria());
+            String subcategoria = safeLower(entity.getSubcategoria());
             String usuarioNome = safeLower(entity.getUsuario() != null ? entity.getUsuario().getNome() : null);
             String usuarioEndereco = safeLower(entity.getUsuario() != null ? entity.getUsuario().getEndereco() : null);
             String usuarioCidade = safeLower(entity.getUsuario() != null ? entity.getUsuario().getCidade() : null);
@@ -118,6 +128,7 @@ public class PublicacaoServicoService {
             if (titulo.contains(termoLower)
                 || descricao.contains(termoLower)
                 || categoria.contains(termoLower)
+                || subcategoria.contains(termoLower)
                 || usuarioNome.contains(termoLower)
                 || usuarioEndereco.contains(termoLower)
                 || usuarioCidade.contains(termoLower)
@@ -222,6 +233,7 @@ public class PublicacaoServicoService {
         dto.setTitulo(entity.getTitulo());
         dto.setDescricao(entity.getDescricao());
         dto.setCategoria(entity.getCategoria());
+        dto.setSubcategoria(entity.getSubcategoria());
         dto.setEnderecoPublicacao(entity.getEnderecoPublicacao());
         dto.setCepPublicacao(entity.getCepPublicacao());
         dto.setCidadePublicacao(entity.getCidadePublicacao());

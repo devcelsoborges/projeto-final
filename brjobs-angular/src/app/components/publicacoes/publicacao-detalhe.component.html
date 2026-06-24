@@ -22,10 +22,41 @@
       <p>{{ publicacao.categoria }}</p>
     </div>
 
+    <div class="meta-card" *ngIf="publicacao.subcategoria">
+      <h3>Subcategoria</h3>
+      <p>{{ publicacao.subcategoria }}</p>
+    </div>
+
     <div class="meta-card destaque-card" *ngIf="publicacao.isHighlighted">
       <h3>Destaque ativo</h3>
-      <p>{{ publicacao.highlightPlanName || "Plano ativo" }}</p>
       <p *ngIf="publicacao.highlightExpiresAt">Expira em {{ publicacao.highlightExpiresAt | date: "dd/MM/yyyy" }}</p>
+    </div>
+  </div>
+
+  <!-- Destacar publicação (somente o dono, se ainda não destacada) -->
+  <div class="destaque-acao" *ngIf="podeDestacar()">
+    <button type="button" class="destacar-btn" (click)="abrirDestaque()" *ngIf="!mostrarPlanos">
+      ⭐ Destacar publicação
+    </button>
+
+    <div class="destaque-planos" *ngIf="mostrarPlanos">
+      <h3>Escolha um plano de destaque</h3>
+      <p *ngIf="carregandoPlanos">Carregando planos...</p>
+      <div class="planos-grid" *ngIf="!carregandoPlanos">
+        <button
+          type="button"
+          class="plano-card"
+          *ngFor="let plano of planosDestaque"
+          [disabled]="destacando"
+          (click)="destacar(plano.id)"
+        >
+          <strong>{{ plano.name }}</strong>
+          <span class="plano-preco">R$ {{ plano.price | number: "1.2-2" }}</span>
+          <span class="plano-dias">{{ plano.durationDays }} dias em destaque</span>
+        </button>
+      </div>
+      <p class="destaque-loading" *ngIf="destacando">Redirecionando para o pagamento...</p>
+      <p class="destaque-erro" *ngIf="erroDestaque">{{ erroDestaque }}</p>
     </div>
   </div>
 

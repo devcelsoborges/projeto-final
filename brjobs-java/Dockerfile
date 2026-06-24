@@ -19,4 +19,5 @@ USER brjobs
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/brjobs-api.jar"]
+# --enable-native-access: o encoder WebP (webp-imageio) carrega lib nativa via System.load
+ENTRYPOINT ["java", "--enable-native-access=ALL-UNNAMED", "-jar", "/app/brjobs-api.jar"]

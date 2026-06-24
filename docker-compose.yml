@@ -35,6 +35,16 @@ services:
       AUTH_COOKIE_SECURE: "false"
       AUTH_COOKIE_SAME_SITE: Lax
       BRJOBS_JWT_SECRET: localDevSecretForJWTTokenGenerationAndValidationMustBeAtLeast256BitsLongForHS512Algorithm
+      # Dev local: expõe o código de reset na resposta para testar sem e-mail.
+      # Em produção mantenha false (default) e configure o Resend abaixo.
+      PASSWORD_RESET_EXPOSE_CODE: "true"
+      # E-mail de "Esqueci minha senha" via Resend. Preencha RESEND_API_KEY (re_...)
+      # e RESEND_FROM (remetente de um domínio verificado) para enviar de verdade.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-BRJobs <onboarding@resend.dev>}
+      # Stripe (destaque de publicação). Preencha no .env da raiz para testar localmente.
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      HIGHLIGHT_WEBHOOK_SECRET: ${HIGHLIGHT_WEBHOOK_SECRET:-}
     ports:
       - "8080:8080"
 

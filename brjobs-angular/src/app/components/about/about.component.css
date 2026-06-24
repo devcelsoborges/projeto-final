@@ -145,6 +145,14 @@
 }
 
 /* Responsividade */
+/* Tablet: cards estreitam para evitar overflow do min-width fixo */
+@media (max-width: 980px) {
+  .card-valor {
+    min-width: 240px;
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-sobre h1 {
     font-size: 2rem;
@@ -158,5 +166,41 @@
   }
   .card-valor {
     min-width: 100%;
+  }
+}
+
+/* Mobile: empilha cards em coluna unica sem overflow horizontal */
+@media (max-width: 600px) {
+  .hero-sobre {
+    padding: 56px 16px;
+  }
+  .hero-sobre h1 {
+    font-size: 1.7rem;
+  }
+  .conteudo {
+    padding: 28px 16px;
+  }
+  .conteudo h2 {
+    font-size: 1.6rem;
+  }
+  .conteudo p {
+    font-size: 1rem;
+  }
+  .valores {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .card-valor {
+    flex: 1 1 100%;
+    min-width: 100%;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .chamada {
+    padding: 40px 16px;
+  }
+  .chamada h2 {
+    font-size: 1.7rem;
   }
 }

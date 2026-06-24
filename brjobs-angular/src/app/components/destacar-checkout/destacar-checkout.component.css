@@ -1,0 +1,156 @@
+.checkout-container {
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.checkout-card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  padding: 28px;
+  max-width: 480px;
+  width: 100%;
+}
+
+.checkout-card h1 {
+  margin: 0 0 20px;
+  font-size: 1.4rem;
+}
+
+.status {
+  color: var(--color-text-muted, #6b7280);
+}
+
+#payment-element {
+  margin-bottom: 20px;
+}
+
+.btn-primary {
+  width: 100%;
+  background: #2563eb;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btn-link {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  color: var(--color-text-muted, #6b7280);
+  padding: 10px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.aviso {
+  color: var(--color-text-muted, #9ca3af);
+  font-size: 0.8rem;
+  margin-top: 14px;
+  text-align: center;
+}
+
+.alert.erro {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.planos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.plano-card {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.plano-card:hover {
+  border-color: var(--color-accent-500, #2563eb);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.plano-preco {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.plano-dias {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.85rem;
+}
+
+.sucesso-box {
+  text-align: center;
+}
+
+.sucesso-box .icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  font-size: 30px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+
+@media (max-width: 600px) {
+  .checkout-container {
+    padding: 20px 12px;
+  }
+
+  .checkout-card {
+    padding: 20px 16px;
+    border-radius: 12px;
+  }
+
+  .checkout-card h1 {
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+  }
+
+  .planos-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .plano-card {
+    padding: 12px;
+  }
+
+  .plano-preco {
+    font-size: 1.1rem;
+  }
+}

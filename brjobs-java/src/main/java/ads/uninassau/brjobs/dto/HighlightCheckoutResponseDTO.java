@@ -7,6 +7,7 @@ import lombok.Data;
 @Builder
 public class HighlightCheckoutResponseDTO {
     private Long paymentId;
-    private String stripeSessionId;
-    private String checkoutUrl;
+    private String paymentIntentId;
+    /** client_secret do PaymentIntent — usado pelo Payment Element no frontend. */
+    private String clientSecret;
 }

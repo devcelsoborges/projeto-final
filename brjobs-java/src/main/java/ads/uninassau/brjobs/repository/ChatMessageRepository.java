@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,13 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
      * Encontra mensagens não notificadas (para job em background)
      */
     List<ChatMessage> findByNotificadoFalse();
+
+    /**
+     * Mensagens ainda NÃO notificadas por e-mail, ainda NÃO lidas e criadas antes do
+     * corte (período de carência). Base do job de notificação "offline": se o
+     * destinatário leu no app dentro da carência, a mensagem sai deste conjunto.
+     */
+    List<ChatMessage> findByNotificadoFalseAndLidoFalseAndCreatedAtBefore(LocalDateTime cutoff);
 
     /**
      * Query customizada para contar mensagens não-lidas

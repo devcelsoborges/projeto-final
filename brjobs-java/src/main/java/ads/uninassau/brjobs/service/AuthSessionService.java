@@ -2,13 +2,18 @@ package ads.uninassau.brjobs.service;
 
 import ads.uninassau.brjobs.dto.LoginRequestDTO;
 import ads.uninassau.brjobs.dto.UsuarioDTO;
+import ads.uninassau.brjobs.exception.EmailNotConfirmedException;
+import ads.uninassau.brjobs.exception.SocialOnlyAccountException;
 import ads.uninassau.brjobs.model.AuthAuditEvent;
 import ads.uninassau.brjobs.model.AuthRefreshToken;
+import ads.uninassau.brjobs.model.SocialLogin;
 import ads.uninassau.brjobs.model.Usuario;
 import ads.uninassau.brjobs.repository.AuthAuditEventRepository;
 import ads.uninassau.brjobs.repository.AuthRefreshTokenRepository;
+import ads.uninassau.brjobs.repository.SocialLoginRepository;
 import ads.uninassau.brjobs.repository.UsuarioRepository;
 import ads.uninassau.brjobs.security.JwtTokenService;
+import ads.uninassau.brjobs.validator.UsuarioValidator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -44,6 +49,7 @@ public class AuthSessionService {
     private final UsuarioRepository usuarioRepository;
     private final AuthRefreshTokenRepository refreshTokenRepository;
     private final AuthAuditEventRepository auditEventRepository;
+    private final SocialLoginRepository socialLoginRepository;
     private final AuthService authService;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -61,16 +67,48 @@ public class AuthSessionService {
 
     @Transactional
     public SessionResult login(LoginRequestDTO request, HttpServletRequest servletRequest) {
+        String email = UsuarioValidator.normalizarEmail(request.getEmail());
+
+        usuarioRepository.findByEmailIgnoreCase(email)
+                .filter(Usuario::isSomenteLoginSocial)
+                .ifPresent(usuario -> {
+                    audit("auth_login_failed", usuario, servletRequest, "{\"provider\":\"local\",\"reason\":\"social_only_account\"}");
+                    throw new SocialOnlyAccountException(mensagemContaSomenteSocial(usuario));
+                });
+
         try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getSenha()));
-            Usuario usuario = usuarioRepository.findByEmail(request.getEmail())
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.getSenha()));
+            Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email)
                     .orElseThrow(() -> new IllegalArgumentException("Usuario nao encontrado"));
+
+            // Senha correta, mas e-mail ainda não confirmado: bloqueia (só quando explicitamente
+            // false — contas antigas/sociais com null ou true passam normalmente).
+            if (Boolean.FALSE.equals(usuario.getEmailConfirmado())) {
+                audit("auth_login_failed", usuario, servletRequest, "{\"provider\":\"local\",\"reason\":\"email_not_confirmed\"}");
+                throw new EmailNotConfirmedException("Confirme seu e-mail para acessar a conta.");
+            }
+
             audit("auth_login_success", usuario, servletRequest, "{\"provider\":\"local\"}");
             return issueSession(usuario, servletRequest, UUID.randomUUID());
         } catch (AuthenticationException ex) {
             audit("auth_login_failed", null, servletRequest, "{\"provider\":\"local\"}");
             throw ex;
         }
+    }
+
+    /**
+     * Mensagem orientando o dono de uma conta criada via login social a entrar
+     * pelo provedor ou definir uma senha local (que vincula tudo à mesma conta).
+     */
+    private String mensagemContaSomenteSocial(Usuario usuario) {
+        String provedores = socialLoginRepository.findByUsuario(usuario).stream()
+                .map(SocialLogin::getProvider)
+                .distinct()
+                .map(p -> Character.toUpperCase(p.charAt(0)) + p.substring(1))
+                .reduce((a, b) -> a + " ou " + b)
+                .orElse("Google ou Facebook");
+        return "Esta conta foi criada com login " + provedores + ". Entre com " + provedores
+                + " ou defina uma senha pela opção 'Esqueci minha senha'.";
     }
 
     @Transactional

@@ -44,7 +44,7 @@
                   {{ pub.tipoPublicacao === 'PRESTACAO' ? 'Prestação' : 'Contratação' }}
                 </span>
                 <span *ngIf="isPublicacaoDestacada(pub)" class="highlight-badge">
-                  Destaque {{ pub.highlightPlanName || 'ativo' }}
+                  Destaque
                 </span>
               </div>
             </div>
@@ -54,6 +54,7 @@
 
           <div class="publicacao-info">
             <span class="categoria-badge">{{ pub.categoria || 'Sem categoria' }}</span>
+            <span *ngIf="pub.subcategoria" class="categoria-badge">{{ pub.subcategoria }}</span>
             <span *ngIf="pub.tipoPublicacao === 'PRESTACAO' && pub.preco" class="preco">R$ {{ pub.preco | number:'1.2-2' }}</span>
             <span *ngIf="isPublicacaoDestacada(pub)" class="highlight-expira">
               Expira em {{ formatarDataDestaque(pub.highlightExpiresAt) }}

@@ -34,6 +34,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   subcategoriaSelecionada = '';
   tagsSelecionadas: string[] = [];
   localizacaoBusca = '';
+  // "Usar minha localização": estados de feedback do botão de geolocalização.
+  localizando = false;
+  usandoMinhaLocalizacao = false;
+  localizacaoErro = '';
   precoMin: number | null = null;
   precoMax: number | null = null;
   avaliacaoMinima = 0;
@@ -125,6 +129,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Reflete no botão uma localização do navegador já salva (persiste entre reloads).
+    this.usandoMinhaLocalizacao = this.locationService.currentLocation?.source === 'browser';
     this.buscarPublicacoes(true);
   }
 
@@ -380,6 +386,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   onLocalizacaoInput(): void {
+    // Digitar localização manual desativa a proximidade por GPS (são excludentes).
+    if (this.usandoMinhaLocalizacao) {
+      this.usandoMinhaLocalizacao = false;
+      this.locationService.clearLocation();
+    }
+    this.localizacaoErro = '';
     if (this.localizacaoDebounceHandle) {
       clearTimeout(this.localizacaoDebounceHandle);
     }
@@ -409,13 +421,38 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   usarMinhaLocalizacao(): void {
+    // Já ativa? O clique desliga (volta a busca sem proximidade).
+    if (this.usandoMinhaLocalizacao) {
+      this.usandoMinhaLocalizacao = false;
+      this.localizacaoErro = '';
+      this.locationService.clearLocation();
+      this.buscarPublicacoes(true);
+      return;
+    }
+
+    if (this.localizando) {
+      return;
+    }
+
+    this.localizando = true;
+    this.localizacaoErro = '';
+    this.cdr.markForCheck();
+
     this.locationService.requestBrowserLocation()
       .then(() => {
+        // Proximidade e filtro de texto são excludentes: ao usar a localização, limpamos o texto.
+        this.localizacaoBusca = '';
+        this.usandoMinhaLocalizacao = true;
+        this.localizando = false;
+        this.localizacaoErro = '';
         this.erro = '';
         this.buscarPublicacoes(true);
+        this.cdr.markForCheck();
       })
       .catch((error) => {
-        this.erro = error?.message || 'Não foi possível obter sua localização. Informe bairro ou cidade no filtro.';
+        this.localizando = false;
+        this.usandoMinhaLocalizacao = false;
+        this.localizacaoErro = error?.message || 'Não foi possível obter sua localização. Informe bairro ou cidade no filtro.';
         this.cdr.markForCheck();
       });
   }
@@ -450,6 +487,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.atendimentoFiltro = 'TODOS';
     this.dataPublicacaoFiltro = '';
     this.dropdownAberto = null;
+    this.usandoMinhaLocalizacao = false;
+    this.localizacaoErro = '';
+    this.locationService.clearLocation();
     this.buscarPublicacoes(true);
   }
 

@@ -1,0 +1,19 @@
+<div class="confirmar-container">
+  <div class="confirmar-card">
+    @if (status === 'loading') {
+      <div class="spinner"></div>
+      <h2>Confirmando seu cadastro</h2>
+      <p>{{ mensagem }}</p>
+    } @else if (status === 'success') {
+      <div class="icon success">✓</div>
+      <h2>Cadastro confirmado!</h2>
+      <p>{{ mensagem }}</p>
+      <button type="button" class="btn-primary" (click)="irParaLogin()">Ir para o login</button>
+    } @else {
+      <div class="icon error">!</div>
+      <h2>Não foi possível confirmar</h2>
+      <p>{{ mensagem }}</p>
+      <button type="button" class="btn-primary" (click)="irParaLogin()">Voltar ao login</button>
+    }
+  </div>
+</div>

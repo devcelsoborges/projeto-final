@@ -158,15 +158,20 @@ return throwError(() => this.handleError(error));
    */
   private handleError(error: any): ApiResponse {
     let message = 'Erro ao processar requisição';
+    // O 409 do backend vem como texto puro (mensagem orientando login social / "Esqueci
+    // minha senha"); o 400 vem como objeto { message }. Tratamos os dois formatos.
+    const backendMsg = typeof error?.error === 'string' ? error.error : error?.error?.message;
 
     if (error.status === 400) {
-      message = error.error?.message || 'Dados inválidos. Verifique os campos.';
+      message = backendMsg || 'Dados inválidos. Verifique os campos.';
     } else if (error.status === 409) {
-      message = 'Email já registrado no sistema.';
+      message = backendMsg || 'Este e-mail já está cadastrado.';
+    } else if (error.status === 0) {
+      message = 'Erro ao conectar ao servidor. Verifique sua conexão.';
     } else if (error.status === 500) {
-      message = 'Erro no servidor. Tente novamente mais tarde.';
-    } else if (error.error?.message) {
-      message = error.error.message;
+      message = backendMsg || 'Erro no servidor. Tente novamente mais tarde.';
+    } else if (backendMsg) {
+      message = backendMsg;
     }
 
     return {

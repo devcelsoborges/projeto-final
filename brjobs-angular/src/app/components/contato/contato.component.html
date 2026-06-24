@@ -74,16 +74,20 @@
                         </small>
                     </div>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         class="btn-enviar"
-                        [disabled]="form.invalid"
+                        [disabled]="form.invalid || enviando"
                     >
-                        Enviar Mensagem
+                        {{ enviando ? 'Enviando...' : 'Enviar Mensagem' }}
                     </button>
 
                     <div *ngIf="enviado" class="success-message">
                         ✓ Mensagem enviada com sucesso! Obrigado pelo contato.
+                    </div>
+
+                    <div *ngIf="erro" class="error-message" style="margin-top: 12px;">
+                        {{ erro }}
                     </div>
                 </form>
             </div>
@@ -94,22 +98,22 @@
                 <div class="info-item">
                     <h3>Email</h3>
                     <p>
-                        <a href="mailto:contato@brjobs.com.br">contato@brjobs.com.br</a>
+                        <a href="mailto:atendimento@brjobs.com.br">atendimento@brjobs.com.br</a>
                     </p>
                 </div>
 
                 <div class="info-item">
                     <h3>Telefone</h3>
                     <p>
-                        <a href="tel:+5511987654321">(11) 98765-4321</a>
+                        <a href="tel:+5583996642509">(83) 99664-2509</a>
                     </p>
                 </div>
 
                 <div class="info-item">
                     <h3>Endereço</h3>
                     <p>
-                        Rua Brasil, 1000<br/>
-                        São Paulo - SP, 01010-100<br/>
+                        Rua Hortência Helena Amorim Brito<br/>
+                        Cabedelo - PB, 58310-000<br/>
                         Brasil
                     </p>
                 </div>

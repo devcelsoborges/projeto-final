@@ -104,6 +104,35 @@ import { takeUntil } from 'rxjs/operators';
       background: var(--color-surface);
       color: var(--color-text-muted);
     }
+
+    @media (max-width: 980px) {
+      .notifications-page {
+        margin: 1.5rem auto;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .notifications-page {
+        width: calc(100% - 1.5rem);
+        margin: 1rem auto;
+      }
+
+      .page-header h1 {
+        font-size: 1.4rem;
+        word-break: break-word;
+      }
+
+      .notification-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+        padding: 0.85rem;
+      }
+
+      .notification-row time {
+        font-size: 0.78rem;
+      }
+    }
   `]
 })
 export class NotificacoesComponent implements OnInit, OnDestroy {

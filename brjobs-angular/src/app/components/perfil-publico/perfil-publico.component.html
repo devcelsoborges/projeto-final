@@ -1,7 +1,8 @@
 <section class="perfil-publico" *ngIf="!carregando && !erro && usuario">
   <header class="perfil-header card-shell">
+    <img *ngIf="!fotoIndisponivel" [src]="fotoUrl" (error)="onFotoErro()" alt="Foto de perfil" class="perfil-foto" />
+    <div *ngIf="fotoIndisponivel" class="perfil-foto-placeholder">{{ (usuario.nome || '?').charAt(0) }}</div>
     <h1>{{ usuario.nome }}</h1>
-    <p>{{ usuario.tipoUsuario === "PRESTADOR" ? "Prestador de serviços" : "Contratante" }}</p>
     <div class="header-rating">
       <span class="rating-stars">{{ getEstrelas(stats.media_avaliacao) }}</span>
       <span>{{ stats.media_avaliacao | number: "1.1-2" }} / 5</span>

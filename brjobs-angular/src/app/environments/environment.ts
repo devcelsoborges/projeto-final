@@ -1,7 +1,8 @@
-// Configurações de ambiente
+// ConfiguraÃ§Ãµes de ambiente
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:8080',
+  stripePublishableKey: 'pk_test_51TRiFRLCyLGNKGa5saHOfAfCDTEGFhOxjHUVBFmax0aMumrDbDfXIJVMhgW0028mOW48qEb1mqoZloqwR8uWXWnk008vxfcNp1',
   chat: {
     pollIntervalMs: 15000,
     maxMessageLength: 500,

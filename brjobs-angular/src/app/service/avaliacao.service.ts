@@ -24,7 +24,7 @@ export interface CreateAvaliacaoDTO {
   providedIn: 'root'
 })
 export class AvaliacaoService {
-  private apiUrl = `${environment.apiUrl.replace('/v1', '')}/avaliacoes`;
+  private apiUrl = `${environment.apiUrl}/api/avaliacoes`;
 
   constructor(private http: HttpClient) {}
 

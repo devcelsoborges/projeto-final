@@ -13,15 +13,15 @@ export interface HighlightPlan {
 
 export interface HighlightCheckoutResponse {
   paymentId: number;
-  stripeSessionId: string;
-  checkoutUrl: string;
+  paymentIntentId: string;
+  clientSecret: string;
 }
 
 @Injectable({
   providedIn: "root"
 })
 export class HighlightService {
-  private readonly apiBase = environment.apiUrl.replace("/v1", "");
+  private readonly apiBase = `${environment.apiUrl}/api`;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -29,10 +29,19 @@ export class HighlightService {
     return this.http.get<HighlightPlan[]>(`${this.apiBase}/highlight/plans`);
   }
 
+  /** Cria o PaymentIntent do destaque e devolve o client_secret para o Payment Element. */
   createCheckout(jobPostId: number, planId: number): Observable<HighlightCheckoutResponse> {
     return this.http.post<HighlightCheckoutResponse>(
       `${this.apiBase}/highlight/checkout/${jobPostId}`,
       { planId }
+    );
+  }
+
+  /** Confirma o pagamento ao voltar do checkout (consulta o PaymentIntent e ativa o destaque). */
+  confirmar(paymentId: number): Observable<{ highlighted: boolean }> {
+    return this.http.post<{ highlighted: boolean }>(
+      `${this.apiBase}/highlight/confirmar/${paymentId}`,
+      {}
     );
   }
 }

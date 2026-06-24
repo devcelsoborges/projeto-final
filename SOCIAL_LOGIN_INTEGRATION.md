@@ -273,6 +273,39 @@ const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
                          Redireciona /home
 ```
 
+### Unificação de contas pelo e-mail
+
+O e-mail é a chave de identidade entre todos os métodos de autenticação. Cadastros e
+logins com o mesmo e-mail — via Google, Facebook ou formulário do site — acessam a
+**mesma conta**:
+
+| Cenário | Comportamento |
+|---------|---------------|
+| Login social com e-mail já cadastrado no site | Vincula o provedor à conta existente e entra nela |
+| Login social com e-mail já usado em outro provedor | Mesma conta; cada provedor vira uma linha em `social_logins` |
+| Login social com e-mail novo | Cria a conta (CONTRATANTE) já com o e-mail normalizado |
+| Cadastro no site com e-mail que já existe (conta local **ou** social) | HTTP 409 — orienta a entrar pelo provedor ou usar "Esqueci minha senha" |
+| Login com senha em conta social que ainda não definiu senha | HTTP 401 com mensagem orientando a entrar com o provedor ou definir senha via "Esqueci minha senha" |
+| Definir senha local numa conta criada via social | Via "Esqueci minha senha" (`/api/auth/forgot-password/*`) — verifica a posse do e-mail |
+
+Princípio de segurança: o e-mail é a chave única (case-insensitive) de conta. A
+vinculação "mesmo e-mail = mesma conta" acontece **no login social** (o provedor já
+provou a posse do e-mail) e na ação **autenticada/verificada** de definir senha
+(reset por código no e-mail). O cadastro anônimo **nunca** define senha numa conta
+existente — caso contrário, qualquer um que soubesse o e-mail de uma conta Google
+poderia assumi-la (account takeover).
+
+Detalhes de implementação:
+
+- Normalização: `UsuarioValidator.normalizarEmail()` (trim + lowercase) em toda escrita;
+  busca por `UsuarioRepository.findByEmailIgnoreCase()` em toda leitura/login.
+- Defesa no banco: índice único funcional `ux_usuarios_email_lower` (migração `V17`).
+- Conta "somente social" é detectada por `Usuario.isSomenteLoginSocial()` (senha
+  placeholder `OAUTH2_<PROVIDER>`/`SOCIAL_LOGIN`, nunca um hash BCrypt).
+- Apple está desabilitado (`SocialAuthService.loginComApple` lança
+  `UnsupportedOperationException`) até que a validação de assinatura do token seja implementada.
+- Testes: `UsuarioServiceContaUnificadaTest` e `AuthSessionServiceLoginSocialTest`.
+
 ---
 
 ## 6. Backend API (Endpoints)

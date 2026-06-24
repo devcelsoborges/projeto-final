@@ -5,6 +5,7 @@ import { HttpClient } from "@angular/common/http";
 import { catchError, of, switchMap } from "rxjs";
 import { PublicacaoServico, PublicacaoServicoService } from "../../service/publicacao-servico.service";
 import { AuthService } from "../../service/auth.service";
+import { HighlightService, HighlightPlan } from "../../service/highlight.service";
 import { RatingComponent } from "../rating/rating.component";
 import { environment } from "../../environments/environment";
 
@@ -58,13 +59,21 @@ export class PublicacaoDetalheComponent implements OnInit {
   avaliacoes: AvaliacaoItem[] = [];
   stats: AvaliacaoStats = { media_avaliacao: 0, total_avaliacoes: 0 };
 
+  // Destaque (Stripe)
+  planosDestaque: HighlightPlan[] = [];
+  mostrarPlanos = false;
+  carregandoPlanos = false;
+  destacando = false;
+  erroDestaque = "";
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly http: HttpClient,
     private readonly publicacaoService: PublicacaoServicoService,
     private readonly cdr: ChangeDetectorRef,
     private readonly router: Router,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly highlightService: HighlightService
   ) {}
 
   ngOnInit(): void {
@@ -153,6 +162,40 @@ export class PublicacaoDetalheComponent implements OnInit {
     if (this.usuario?.id) {
       this.carregarAvaliacoesUsuario(this.usuario.id);
     }
+  }
+
+  /** Só o dono LOGADO pode destacar, e só se ainda não estiver destacada. */
+  podeDestacar(): boolean {
+    return this.authService.isLoggedIn() && this.isProprioPerfil() && !this.publicacao?.isHighlighted;
+  }
+
+  abrirDestaque(): void {
+    this.erroDestaque = "";
+    this.mostrarPlanos = true;
+    if (this.planosDestaque.length === 0) {
+      this.carregandoPlanos = true;
+      this.cdr.markForCheck();
+      this.highlightService.listPlans().subscribe({
+        next: (planos) => {
+          this.planosDestaque = planos;
+          this.carregandoPlanos = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.erroDestaque = "Não foi possível carregar os planos de destaque.";
+          this.carregandoPlanos = false;
+          this.cdr.markForCheck();
+        }
+      });
+    }
+  }
+
+  destacar(planId: number): void {
+    if (!this.publicacao?.id) {
+      return;
+    }
+    // Vai para o nosso checkout (Payment Element), sem redirecionar para a Stripe.
+    this.router.navigate(["/destacar", this.publicacao.id], { queryParams: { plano: planId } });
   }
 
   getEstrelas(nota?: number | null): string {

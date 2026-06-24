@@ -11,6 +11,7 @@ export interface PublicacaoServico {
   titulo: string;
   descricao: string;
   categoria?: string;
+  subcategoria?: string;
   enderecoPublicacao?: string;
   cepPublicacao?: string;
   cidadePublicacao?: string;
@@ -49,6 +50,7 @@ export interface CriarPublicacaoServicoDTO {
   titulo: string;
   descricao: string;
   categoria?: string;
+  subcategoria?: string;
   enderecoPublicacao: string;
   cepPublicacao?: string;
   cidadePublicacao?: string;

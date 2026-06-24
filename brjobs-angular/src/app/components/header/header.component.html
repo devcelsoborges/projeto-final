@@ -42,7 +42,10 @@
     aria-label="Abrir notificações"
     [attr.aria-expanded]="notificacoesAberto"
   >
-    <span class="bell-icon">🔔</span>
+    <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+    </svg>
     <span *ngIf="unreadChatCount > 0" class="bell-badge">{{ unreadChatCount > maxChatBadge ? maxChatBadge + '+' : unreadChatCount }}</span>
   </button>
 
@@ -80,23 +83,42 @@
   <ng-container *ngIf="isLoggedIn">
     <div class="usuario-dropdown">
       <button class="usuario-btn" (click)="toggleUsuarioMenu()" [class.active]="usuarioMenuAberto">
-        👤 {{ usuarioNome }}
-        <span class="dropdown-arrow">▼</span>
+        <img *ngIf="!avatarErro" class="usuario-avatar usuario-avatar-img" [src]="fotoUrl" (error)="avatarErro = true" alt="Foto de perfil" />
+        <span *ngIf="avatarErro" class="usuario-avatar">{{ iniciais }}</span>
+        <span class="usuario-nome-label">{{ usuarioNome }}</span>
+        <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 9l6 6 6-6"></path>
+        </svg>
       </button>
-      
+
       <!-- Dropdown menu -->
-      <div *ngIf="usuarioMenuAberto" class="usuario-menu" (click)="fecharUsuarioMenu()">
+      <div *ngIf="usuarioMenuAberto" class="usuario-menu">
+        <div class="usuario-menu-header">
+          <p class="umh-nome">{{ usuarioNome }}</p>
+          <p class="umh-email" *ngIf="usuarioEmail">{{ usuarioEmail }}</p>
+        </div>
+        <div class="menu-divider"></div>
         <a class="menu-item" (click)="irParaPerfil()">
-          <span class="menu-icon">P</span>
+          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path>
+          </svg>
           <span class="menu-text">Ver Perfil</span>
         </a>
         <a class="menu-item" (click)="editarPerfil()">
-          <span class="menu-icon">⚙️</span>
+          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+          </svg>
           <span class="menu-text">Editar Perfil</span>
         </a>
         <div class="menu-divider"></div>
         <a class="menu-item logout-item" (click)="logout()">
-          <span class="menu-icon">👋</span>
+          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <path d="M16 17l5-5-5-5"></path>
+            <path d="M21 12H9"></path>
+          </svg>
           <span class="menu-text">Sair</span>
         </a>
       </div>
@@ -110,36 +132,42 @@
     aria-label="Abrir ou fechar menu de navegação"
     [attr.aria-expanded]="menuAberto"
   >
-    ☰
+    <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <path d="M3 6h18M3 12h18M3 18h18"></path>
+    </svg>
   </button>
 </header>
 
 <!-- Menu móvel -->
 <nav *ngIf="menuAberto" class="mobile-menu" role="navigation" aria-label="Menu móvel">
+  <!-- Navegação geral -->
   <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/', 'mobile_nav_home')">Home</a>
-  
-  <ng-container *ngIf="!isLoggedIn">
-    <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/register', 'mobile_nav_register')">Cadastre-se</a>
-    <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/login', 'mobile_nav_login')">Login</a>
-  </ng-container>
+  <a routerLink="/publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/publicacoes', 'mobile_nav_publicacoes')">Publicar</a>
 
-  <!-- Abas do usuário logado -->
   <ng-container *ngIf="isLoggedIn">
-    <a routerLink="/profile" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/profile', 'mobile_nav_perfil')">Perfil</a>
     <a routerLink="/minhas-publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/minhas-publicacoes', 'mobile_nav_minhas_publicacoes')">Minhas publicações</a>
-
     <a (click)="abrirTodasNotificacoes()">Notificações</a>
     <a (click)="irParaChat()" class="chat-mobile-link">
       Chat
       <span *ngIf="unreadChatCount > 0" class="mobile-chat-badge">{{ unreadChatCount > maxChatBadge ? maxChatBadge + '+' : unreadChatCount }}</span>
     </a>
-    <a (click)="irParaPerfil()" class="usuario-nome-mobile">Perfil {{ usuarioNome }}</a>
-    <a (click)="editarPerfil()">Editar Perfil</a>
-    <button class="btn-logout" (click)="logout()">Sair</button>
   </ng-container>
-
-  <a routerLink="/publicacoes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/publicacoes', 'mobile_nav_publicacoes')">Publicar</a>
 
   <a routerLink="/sobre" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/sobre', 'mobile_nav_sobre')">Sobre nós</a>
   <a routerLink="/contato" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/contato', 'mobile_nav_contato')">Contato</a>
+
+  <!-- Não logado: ações de acesso -->
+  <ng-container *ngIf="!isLoggedIn">
+    <div class="mobile-menu-divider"></div>
+    <a routerLink="/register" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/register', 'mobile_nav_register')">Cadastre-se</a>
+    <a routerLink="/login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navegar('/login', 'mobile_nav_login')">Login</a>
+  </ng-container>
+
+  <!-- Logado: conta (Sair por último) -->
+  <ng-container *ngIf="isLoggedIn">
+    <div class="mobile-menu-divider"></div>
+    <a (click)="irParaPerfil()">Meu perfil</a>
+    <a (click)="editarPerfil()">Editar perfil</a>
+    <button class="btn-logout" (click)="logout()">Sair</button>
+  </ng-container>
 </nav>

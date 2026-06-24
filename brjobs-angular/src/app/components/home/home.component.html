@@ -40,8 +40,12 @@
             <button
               type="button"
               class="btn-geo"
+              [class.ativo]="usandoMinhaLocalizacao"
+              [class.carregando]="localizando"
+              [disabled]="localizando"
               (click)="usarMinhaLocalizacao()"
-              title="Usar minha localização"
+              [attr.aria-pressed]="usandoMinhaLocalizacao"
+              [title]="usandoMinhaLocalizacao ? 'Usando sua localização — clique para desligar' : 'Usar minha localização'"
               aria-label="Usar minha localização"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -53,6 +57,18 @@
 
           <button type="button" class="btn-buscar" (click)="buscarPublicacoes(true)">Buscar</button>
         </div>
+
+        <!-- Feedback do "Usar minha localização" -->
+        @if (localizando) {
+          <p class="localizacao-status">Obtendo sua localização…</p>
+        } @else if (usandoMinhaLocalizacao) {
+          <p class="localizacao-status ok">
+            📍 Usando sua localização — resultados ordenados por proximidade.
+            <button type="button" class="link-clear" (click)="usarMinhaLocalizacao()">Desativar</button>
+          </p>
+        } @else if (localizacaoErro) {
+          <p class="localizacao-status erro">{{ localizacaoErro }}</p>
+        }
 
         <!-- Filtros dinâmicos em pills -->
         <div class="filtros" role="group" aria-label="Filtros de busca">
@@ -243,13 +259,16 @@
       @for (pub of publicacoesFiltradas; track pub.id) {
         <article class="card-vaga">
           @if (pub.isHighlighted) {
-            <span class="highlight-chip">★ Destaque {{ pub.highlightPlanName || '' }}</span>
+            <span class="highlight-chip">★ Destaque</span>
           }
 
           <div class="card-topo">
             <span class="tag-tipo">{{ formatarTipo(pub.tipoPublicacao) }}</span>
             @if (pub.categoria) {
               <span class="tag-categoria">{{ pub.categoria }}</span>
+            }
+            @if (pub.subcategoria) {
+              <span class="tag-categoria">{{ pub.subcategoria }}</span>
             }
           </div>
 

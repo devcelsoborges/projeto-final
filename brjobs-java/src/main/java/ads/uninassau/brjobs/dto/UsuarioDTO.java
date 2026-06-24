@@ -36,4 +36,6 @@ public class UsuarioDTO {
     private LocalDate dataNascimento;
     private LocalDate dataCadastro;
     private boolean ativo;
+    private Boolean emailConfirmado;
+    private String fotoPerfilUrl;
 }

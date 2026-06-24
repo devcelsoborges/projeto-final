@@ -299,6 +299,19 @@ import { environment } from '../../environments/environment';
     .btn-primary:hover {
       background: var(--color-primary-light);
     }
+    .chat-header h4,
+    .conversa-header h5,
+    .ultima-msg,
+    .msg-content strong,
+    .msg-content p {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    @media (max-width: 980px) {
+      .conversas-list {
+        flex: 0 0 200px;
+      }
+    }
     @media (max-width: 760px) {
       .chat-container {
         height: calc(100dvh - 96px);
@@ -324,13 +337,6 @@ import { environment } from '../../environments/environment';
         min-height: 0;
       }
 
-      .chat-header h4,
-      .conversa-header h5,
-      .ultima-msg,
-      .msg-content p {
-        overflow-wrap: anywhere;
-      }
-
       .mensagens {
         min-height: 0;
         padding: 12px;
@@ -352,6 +358,46 @@ import { environment } from '../../environments/environment';
 
       .btn {
         width: 100%;
+      }
+    }
+    @media (max-width: 600px) {
+      .chat-container {
+        height: calc(100dvh - 80px);
+        min-height: 460px;
+      }
+
+      .conversas-list {
+        max-height: 38%;
+        padding: 12px;
+      }
+
+      .conversas-list h3 {
+        font-size: 15px;
+      }
+
+      .chat-header {
+        padding: 12px;
+      }
+
+      .chat-header h4 {
+        font-size: 16px;
+      }
+    }
+    @media (max-width: 480px) {
+      .chat-container {
+        flex-direction: column;
+      }
+
+      .conversas-list {
+        max-height: 34%;
+      }
+
+      .msg-content {
+        max-width: 100%;
+      }
+
+      .conversa-header {
+        flex-wrap: wrap;
       }
     }
   `]

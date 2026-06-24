@@ -343,6 +343,12 @@
  * RESPONSIVIDADE
  * ================================================================= */
 
+@media (max-width: 980px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .register-card {
     padding: 30px 20px;
@@ -359,6 +365,41 @@
   .register-wrapper {
     min-height: auto;
     padding: 20px 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .register-card {
+    padding: 24px 16px;
+    margin: 0 4px;
+  }
+
+  .card-title {
+    font-size: 1.5rem;
+  }
+
+  .card-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .form-section {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .form-section legend {
+    font-size: 1.1rem;
+    margin-left: 5px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .password-requirements {
+    font-size: 0.8rem;
   }
 }
 

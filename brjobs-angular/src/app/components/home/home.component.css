@@ -127,6 +127,58 @@
   background: var(--color-surface-muted);
 }
 
+/* Localização ativa: botão preenchido para indicar que está em uso. */
+.btn-geo.ativo {
+  background: var(--color-primary-500);
+  color: var(--color-on-primary, #fff);
+}
+
+.btn-geo.ativo:hover {
+  background: var(--color-primary-600);
+  color: var(--color-on-primary, #fff);
+}
+
+.btn-geo.carregando {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+.btn-geo.carregando svg {
+  animation: girar-geo 0.9s linear infinite;
+}
+
+@keyframes girar-geo {
+  to { transform: rotate(360deg); }
+}
+
+.localizacao-status {
+  margin: 10px 2px 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.localizacao-status.ok {
+  color: var(--color-primary-600, #1d4ed8);
+}
+
+.localizacao-status.erro {
+  color: #b91c1c;
+}
+
+.link-clear {
+  background: none;
+  border: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
 .btn-buscar {
   border: none;
   cursor: pointer;
@@ -535,10 +587,25 @@
 
   .btn-buscar {
     margin: 8px;
+    align-self: stretch;
+    /* No empilhamento o botão não acompanha mais a altura da barra; dá altura própria
+       (padding vertical) e largura total para não ficar espremido. */
+    padding: 14px 26px;
   }
 
   .filtros {
     justify-content: flex-start;
+  }
+
+  /* Dropdowns de filtro com min-width fixo estouram a viewport no mobile;
+     deixa fluir e limita à largura disponível. */
+  .dropdown {
+    min-width: auto;
+    max-width: calc(100vw - 32px);
+  }
+
+  .dropdown-valor {
+    min-width: auto;
   }
 
   .lista-vagas {
@@ -547,5 +614,12 @@
 
   .card-topo {
     padding-right: 0;
+  }
+}
+
+/* Tablet: o highlight-chip exige menos folga; reduz o padding reservado. */
+@media (max-width: 900px) {
+  .card-topo {
+    padding-right: 70px;
   }
 }

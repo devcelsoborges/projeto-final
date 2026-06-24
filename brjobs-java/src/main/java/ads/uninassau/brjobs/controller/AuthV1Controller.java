@@ -4,6 +4,8 @@ import ads.uninassau.brjobs.dto.CadastroContratanteDTO;
 import ads.uninassau.brjobs.dto.LoginRequestDTO;
 import ads.uninassau.brjobs.dto.UsuarioDTO;
 import ads.uninassau.brjobs.dto.AuthResponseDTO;
+import ads.uninassau.brjobs.exception.EmailNotConfirmedException;
+import ads.uninassau.brjobs.exception.SocialOnlyAccountException;
 import ads.uninassau.brjobs.model.Usuario;
 import ads.uninassau.brjobs.repository.UsuarioRepository;
 import ads.uninassau.brjobs.service.AuthService;
@@ -52,6 +54,18 @@ public class AuthV1Controller {
             AuthSessionService.SessionResult session = authSessionService.login(loginRequest, request);
             authSessionService.writeSessionCookies(response, session);
             return ResponseEntity.ok(session.usuario());
+        } catch (EmailNotConfirmedException e) {
+            // Credenciais corretas, mas e-mail não confirmado: o front usa o code para
+            // mostrar a opção de reenviar o e-mail de confirmação.
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of(
+                            "message", e.getMessage(),
+                            "code", "EMAIL_NOT_CONFIRMED",
+                            "email", loginRequest.getEmail()
+                    ));
+        } catch (SocialOnlyAccountException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "E-mail ou senha invalidos."));
@@ -152,7 +166,7 @@ public class AuthV1Controller {
                     .body(Map.of("message", message));
         }
 
-        Usuario usuario = usuarioRepository.findByEmail(social.getEmail())
+        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(social.getEmail())
                 .orElseThrow(() -> new IllegalStateException("Usuario social nao encontrado"));
         AuthSessionService.SessionResult session = authSessionService.issueSocialSession(usuario, request, provider);
         authSessionService.writeSessionCookies(response, session);

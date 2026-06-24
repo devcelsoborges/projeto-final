@@ -11,6 +11,14 @@
       {{ errorMessage }}
     </div>
 
+    <!-- Conta com e-mail não confirmado: oferecer reenvio -->
+    <div *ngIf="showResendConfirmation" class="resend-confirmation">
+      <button type="button" class="link-button" (click)="reenviarConfirmacao()">
+        Reenviar e-mail de confirmação
+      </button>
+      <p *ngIf="resendMessage" class="resend-message">{{ resendMessage }}</p>
+    </div>
+
     <form [formGroup]="form" (ngSubmit)="submit()">
       
       <!-- Email -->

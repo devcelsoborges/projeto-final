@@ -4,6 +4,7 @@ import ads.uninassau.brjobs.exception.InvalidPasswordException;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -84,6 +85,16 @@ public class UsuarioValidator {
         if (idade > IDADE_MAXIMA) {
             throw new IllegalArgumentException("A data de nascimento informada é inválida.");
         }
+    }
+
+    /**
+     * Normaliza o e-mail para servir de chave única de conta: remove espaços nas
+     * pontas e converte para minúsculas (Locale.ROOT evita o problema do "i" turco).
+     * Garante que cadastro local e logins sociais com o mesmo e-mail — mesmo com
+     * caixa diferente — resolvam para o mesmo registro, sem duplicar conta.
+     */
+    public static String normalizarEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 
     /**

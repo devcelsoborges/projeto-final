@@ -18,11 +18,12 @@
   position: relative; /* necessário para tooltip */
 }
 
-/* Tooltip */
+/* Tooltip — exibido ABAIXO do botão. Acima ele era cortado/coberto pela barra
+   superior (header sticky no topo, sem espaço livre acima). */
 .btn-accessibility[aria-label]::after {
   content: attr(aria-label);
   position: absolute;
-  bottom: 120%; /* acima do botão */
+  top: calc(100% + 8px); /* abaixo do botão */
   left: 50%;
   transform: translateX(-50%);
   background-color: #333;

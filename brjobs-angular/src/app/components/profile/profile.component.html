@@ -4,9 +4,16 @@
     
     <!-- Header com Nome do Usuário -->
     <div class="profile-header">
+      <div class="profile-avatar">
+        <img *ngIf="!fotoIndisponivel" [src]="usuario.fotoPerfil" (error)="onFotoErro()" alt="Foto de perfil" class="avatar-img" />
+        <div *ngIf="fotoIndisponivel" class="avatar-placeholder">{{ (usuario.nome || '?').charAt(0) }}</div>
+        <label *ngIf="isEditing" class="avatar-upload">
+          {{ uploadingFoto ? 'Enviando...' : '📷 Trocar foto' }}
+          <input type="file" accept="image/png,image/jpeg,image/webp" (change)="onProfilePhotoChange($event)" [disabled]="uploadingFoto" hidden />
+        </label>
+      </div>
       <div class="profile-info">
         <h1 class="card-title">{{ usuario.nome }}</h1>
-        <p class="card-subtitle">{{ usuario.tipoUsuario === 'PRESTADOR' ? '💼 Prestador de Serviços' : '🏢 Contratante' }}</p>
         <p class="email-text">{{ usuario.email }}</p>
         <p class="bio-text" *ngIf="usuario.bio">{{ usuario.bio }}</p>
       </div>
@@ -75,7 +82,7 @@
 
           <!-- Email (read-only) -->
           <div class="form-group grid-span-full">
-            <label for="email">E-mail *</label>
+            <label for="email">E-mail</label>
             <input 
               id="email" 
               type="email" 
@@ -88,7 +95,7 @@
 
           <!-- Telefone (1/2) -->
           <div class="form-group">
-            <label for="telefone">Telefone *</label>
+            <label for="telefone">Telefone</label>
             <input 
               id="telefone" 
               type="tel" 
@@ -97,16 +104,13 @@
               (input)="onTelefoneInput($event)"
               [class.is-invalid]="profileForm.get('telefone')?.invalid && profileForm.get('telefone')?.touched"
             >
-            <div *ngIf="profileForm.get('telefone')?.errors?.['required'] && profileForm.get('telefone')?.touched" class="error-message">
-              Telefone é obrigatório
-            </div>
             <div *ngIf="profileForm.get('telefone')?.errors?.['invalidTelefone'] && profileForm.get('telefone')?.touched" class="error-message">
               Telefone deve ter 10 ou 11 dígitos
             </div>
           </div>
 
           <div class="form-group">
-            <label for="cep">CEP *</label>
+            <label for="cep">CEP</label>
             <input
               id="cep"
               type="text"
@@ -116,9 +120,6 @@
               (input)="onCepInput($event)"
               [class.is-invalid]="profileForm.get('cep')?.invalid && profileForm.get('cep')?.touched"
             >
-            <div *ngIf="profileForm.get('cep')?.errors?.['required'] && profileForm.get('cep')?.touched" class="error-message">
-              CEP é obrigatório
-            </div>
             <div *ngIf="profileForm.get('cep')?.errors?.['invalidCep'] && profileForm.get('cep')?.touched" class="error-message">
               CEP deve ter 8 dígitos
             </div>
@@ -136,18 +137,6 @@
             </select>
           </div>
 
-          <!-- Tipo de Usuário (1/2) -->
-          <div class="form-group">
-            <label for="tipoUsuario">Tipo de Usuário *</label>
-            <select id="tipoUsuario" formControlName="tipoUsuario" [class.is-invalid]="profileForm.get('tipoUsuario')?.invalid && profileForm.get('tipoUsuario')?.touched">
-              <option value="PRESTADOR">Prestador de Serviços</option>
-              <option value="CONTRATANTE">Contratante</option>
-            </select>
-            <div *ngIf="profileForm.get('tipoUsuario')?.errors?.['required'] && profileForm.get('tipoUsuario')?.touched" class="error-message">
-              Selecione o tipo de usuário
-            </div>
-          </div>
-
           <!-- Data de Nascimento (1/2) -->
           <div class="form-group">
             <label for="dataNascimento">Data de Nascimento</label>
@@ -159,7 +148,7 @@
           </div>
 
           <div class="form-group grid-span-full">
-            <label for="rua">Rua *</label>
+            <label for="rua">Rua</label>
             <input
               id="rua"
               type="text"
@@ -181,7 +170,7 @@
           </div>
 
           <div class="form-group">
-            <label for="numero">Número *</label>
+            <label for="numero">Número</label>
             <input
               id="numero"
               type="text"
@@ -202,7 +191,7 @@
           </div>
 
           <div class="form-group">
-            <label for="bairro">Bairro *</label>
+            <label for="bairro">Bairro</label>
             <input
               id="bairro"
               type="text"
@@ -213,7 +202,7 @@
           </div>
 
           <div class="form-group">
-            <label for="cidade">Cidade *</label>
+            <label for="cidade">Cidade</label>
             <input
               id="cidade"
               type="text"
@@ -224,7 +213,7 @@
           </div>
 
           <div class="form-group">
-            <label for="estado">UF *</label>
+            <label for="estado">UF</label>
             <input
               id="estado"
               type="text"
@@ -279,11 +268,6 @@
           <div class="info-item">
             <label>Gênero</label>
             <p>{{ usuario.genero || '—' }}</p>
-          </div>
-
-          <div class="info-item">
-            <label>Tipo de Usuário</label>
-            <p>{{ usuario.tipoUsuario === 'PRESTADOR' ? 'Prestador de Serviços' : 'Contratante' }}</p>
           </div>
 
           <div class="info-item">

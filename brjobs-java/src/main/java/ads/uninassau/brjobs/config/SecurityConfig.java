@@ -21,10 +21,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.time.Duration;
 
 
 @Configuration
@@ -67,7 +70,12 @@ public class SecurityConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        // Timeouts evitam que uma dependência externa lenta (Resend, Google, Nominatim)
+        // pendure a thread do servlet indefinidamente e esgote o pool do Tomcat (DoS).
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(3));
+        factory.setReadTimeout(Duration.ofSeconds(5));
+        return new RestTemplate(factory);
     }
 
     @Bean
@@ -154,11 +162,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/social/google").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/config/public").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/contato").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/publicacoes/minhas").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/publicacoes/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/highlight/plans").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/webhook/stripe").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/usuarios/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/usuarios/*/foto").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/prestadores/usuario/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/avaliacoes/prestador/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/avaliacoes/usuario/*/recebidas").permitAll()

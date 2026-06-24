@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ContatoService } from '../../service/contato.service';
 
 @Component({
   selector: 'app-contato',
@@ -11,8 +12,12 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContatoComponent {
+  private readonly contatoService = inject(ContatoService);
+
   form: FormGroup;
   enviado = false;
+  enviando = false;
+  erro: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -27,17 +32,35 @@ export class ContatoComponent {
   }
 
   enviarFormulario(): void {
-    if (this.form.valid) {
-      this.enviado = true;
-      this.form.reset();
-      this.cdr.markForCheck();
-      
-      // Resetar a mensagem após 3 segundos
-      setTimeout(() => {
-        this.enviado = false;
-        this.cdr.markForCheck();
-      }, 3000);
+    if (this.form.invalid || this.enviando) {
+      this.form.markAllAsTouched();
+      return;
     }
+
+    this.enviando = true;
+    this.erro = null;
+    this.cdr.markForCheck();
+
+    this.contatoService.enviar(this.form.value).subscribe({
+      next: () => {
+        this.enviado = true;
+        this.enviando = false;
+        this.form.reset();
+        this.cdr.markForCheck();
+
+        // Resetar a mensagem de sucesso após alguns segundos
+        setTimeout(() => {
+          this.enviado = false;
+          this.cdr.markForCheck();
+        }, 5000);
+      },
+      error: (err) => {
+        this.enviando = false;
+        this.erro = err?.error?.message
+          || 'Não foi possível enviar sua mensagem agora. Tente novamente em instantes.';
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   get nome() {

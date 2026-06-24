@@ -11,6 +11,8 @@ import { MinhasPublicacoesComponent } from './components/minhas-publicacoes/minh
 import { PublicacaoDetalheComponent } from './components/publicacoes/publicacao-detalhe.component';
 import { ChatComponent } from './components/chat/chat.component';
 import { ForgotPasswordComponent } from './components/forgot-password.component/forgot-password.component';
+import { ConfirmarEmailComponent } from './components/confirmar-email/confirmar-email.component';
+import { DestacarCheckoutComponent } from './components/destacar-checkout/destacar-checkout.component';
 import { NotificacoesComponent } from './components/notificacoes/notificacoes.component';
 import { authGuard } from './guards/auth.guard';
 //import { AcessibilidadeComponent } from './components/acessibilidade/acessibilidade.component';
@@ -20,12 +22,14 @@ export const routes: Routes = [
   { path: 'home', component: HomeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'confirmar-email', component: ConfirmarEmailComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'profile', component: ProfileComponent, canActivate: [authGuard] },
   { path: 'perfil/:usuarioId', component: PerfilPublicoComponent },
   { path: 'publicacoes', component: PublicacoesComponent },
   { path: 'minhas-publicacoes', component: MinhasPublicacoesComponent, canActivate: [authGuard] },
   { path: 'publicacoes/:id', component: PublicacaoDetalheComponent },
+  { path: 'destacar/:publicacaoId', component: DestacarCheckoutComponent, canActivate: [authGuard] },
   { path: 'chat', component: ChatComponent, canActivate: [authGuard] },
   { path: 'notificacoes', component: NotificacoesComponent, canActivate: [authGuard] },
   { path: 'sobre', component: SobreComponent },

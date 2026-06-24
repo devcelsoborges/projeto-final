@@ -11,6 +11,7 @@ public class PublicacaoServicoDTO {
     private String titulo;
     private String descricao;
     private String categoria;
+    private String subcategoria;
     private String enderecoPublicacao;
     private String cepPublicacao;
     private String cidadePublicacao;

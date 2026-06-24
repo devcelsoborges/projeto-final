@@ -24,6 +24,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   menuAberto = false;
   isLoggedIn = false;
   usuarioNome: string | null = null;
+  usuarioEmail: string | null = null;
+  usuarioId: number | null = null;
+  avatarErro = false;
+  private readonly apiBase = `${environment.apiUrl}/api`;
   usuarioMenuAberto = false;
   notificacoesAberto = false;
   carregandoNotificacoes = false;
@@ -51,6 +55,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.isLoggedIn = logged;
         if (!logged) {
           this.usuarioNome = null;
+          this.usuarioEmail = null;
+          this.usuarioId = null;
           this.unreadChatCount = 0;
         }
         this.cdr.markForCheck();
@@ -61,6 +67,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .subscribe((usuario) => {
         if (usuario?.nome) {
           this.usuarioNome = usuario.nome;
+        }
+        if (usuario?.email) {
+          this.usuarioEmail = usuario.email;
+        }
+        if (usuario?.id && usuario.id !== this.usuarioId) {
+          this.usuarioId = usuario.id;
+          this.avatarErro = false; // novo usuário/foto: tenta carregar a foto de novo
         }
         this.cdr.markForCheck();
       });
@@ -128,10 +141,36 @@ export class HeaderComponent implements OnInit, OnDestroy {
   verificarLogin(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
     this.usuarioNome = localStorage.getItem('usuario_nome');
+    this.usuarioEmail = localStorage.getItem('usuario_email');
+    const idArmazenado = Number(localStorage.getItem('usuario_id') || '0');
+    this.usuarioId = idArmazenado > 0 ? idArmazenado : null;
+    this.avatarErro = false;
+  }
+
+  /** URL da foto do usuário; o <img> cai nas iniciais (avatarErro) se não houver foto. */
+  get fotoUrl(): string {
+    return this.usuarioId ? `${this.apiBase}/usuarios/${this.usuarioId}/foto` : '';
+  }
+
+  /** Iniciais para o avatar (ex.: "Celso Borges" -> "CB"). */
+  get iniciais(): string {
+    const nome = (this.usuarioNome || '').trim();
+    if (!nome) {
+      return '?';
+    }
+    const partes = nome.split(/\s+/).filter(Boolean);
+    const primeira = partes[0]?.charAt(0) ?? '';
+    const ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0) : '';
+    return ((primeira + ultima) || primeira || '?').toUpperCase();
   }
 
   toggleMenu(): void {
     this.menuAberto = !this.menuAberto;
+    if (this.menuAberto) {
+      // Abrir o menu fecha os outros painéis (evita sobreposição no mobile).
+      this.fecharNotificacoes();
+      this.fecharUsuarioMenu();
+    }
     this.cdr.markForCheck();
   }
 
@@ -171,6 +210,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.fecharUsuarioMenu();
 
     if (this.notificacoesAberto) {
+      this.fecharMenu(); // fecha o menu mobile para não sobrepor o painel
       this.notificationService.refreshNow();
     }
     this.cdr.markForCheck();
@@ -238,6 +278,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Atualizar estado
     this.isLoggedIn = false;
     this.usuarioNome = null;
+    this.usuarioEmail = null;
+    this.usuarioId = null;
     this.usuarioMenuAberto = false;
     this.notificacoesAberto = false;
     this.notificacoes = [];

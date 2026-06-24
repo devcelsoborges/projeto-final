@@ -26,10 +26,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+        // Pula apenas os endpoints públicos que EMITEM/renovam sessão ou não dependem do
+        // access token. Endpoints como /me, /logout e /validate precisam que o filtro rode
+        // para autenticar a partir do token (cookie ACCESS_TOKEN ou header Authorization) —
+        // por isso NÃO entram nesta lista. (A regra anterior pulava todo o prefixo
+        // /api/v1/auth/ e deixava o /me sempre 401.)
         String path = request.getRequestURI();
-        return "OPTIONS".equalsIgnoreCase(request.getMethod())
-                || path.startsWith("/api/v1/auth/")
-                || path.startsWith("/api/auth/");
+        return path.equals("/api/v1/auth/csrf")
+                || path.equals("/api/v1/auth/login")
+                || path.equals("/api/v1/auth/register")
+                || path.equals("/api/v1/auth/refresh")
+                || path.equals("/api/v1/auth/logout")
+                || path.startsWith("/api/v1/auth/social/")
+                || path.equals("/api/auth/login")
+                || path.equals("/api/auth/logout")
+                || path.startsWith("/api/auth/social-login/")
+                || path.startsWith("/api/auth/forgot-password/");
     }
 
     @Override
@@ -61,7 +76,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     logger.error("Erro ao extrair informações do token JWT ou carregar usuário.", ex);
                 }
             } else if (jwt != null) {
-                logger.warn("Token JWT inválido ou expirado: " + jwt.substring(0, Math.min(20, jwt.length())) + "...");
+                // Não logar fragmento do token (é credencial). Token expirado é situação normal.
+                logger.debug("Requisição com token JWT ausente ou inválido.");
             }
         } catch (Exception ex) {
             // Logs de falha de autenticação (ex: token inválido)

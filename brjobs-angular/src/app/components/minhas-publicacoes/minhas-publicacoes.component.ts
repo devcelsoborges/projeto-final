@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { RouterModule } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import { Subscription } from "rxjs";
 import {
   PublicacaoServico,
@@ -38,7 +38,8 @@ export class MinhasPublicacoesComponent implements OnInit, OnDestroy {
     private readonly publicacaoService: PublicacaoServicoService,
     private readonly highlightService: HighlightService,
     private readonly authService: AuthService,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
+    private readonly router: Router
   ) {}
 
   ngOnInit(): void {
@@ -172,27 +173,8 @@ export class MinhasPublicacoesComponent implements OnInit, OnDestroy {
   }
 
   destacarPublicacao(publicacao: PublicacaoServico, plano: HighlightPlan): void {
-    if (this.destacandoPublicacaoId != null) {
-      return;
-    }
-
-    this.destacandoPublicacaoId = publicacao.id;
-
-    this.highlightService.createCheckout(publicacao.id, plano.id).subscribe({
-      next: (resp) => {
-        this.destacandoPublicacaoId = null;
-        if (resp?.checkoutUrl) {
-          window.location.href = resp.checkoutUrl;
-          return;
-        }
-        alert("Não foi possível iniciar o checkout.");
-      },
-      error: (err) => {
-        this.destacandoPublicacaoId = null;
-        alert(err?.error || "Erro ao iniciar o destaque da publicação.");
-        this.cdr.markForCheck();
-      }
-    });
+    // Vai para o nosso checkout (Payment Element), sem redirecionar para a Stripe.
+    this.router.navigate(["/destacar", publicacao.id], { queryParams: { plano: plano.id } });
   }
 
   isPublicacaoDestacada(publicacao: PublicacaoServico): boolean {

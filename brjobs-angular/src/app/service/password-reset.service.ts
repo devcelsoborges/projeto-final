@@ -5,7 +5,6 @@ import { environment } from '../environments/environment';
 
 interface PasswordResetRequestResponse {
   message: string;
-  debugCode?: string;
 }
 
 interface ApiMessageResponse {
@@ -20,15 +19,13 @@ export class PasswordResetService {
 
   constructor(private readonly http: HttpClient) {}
 
+  /** Passo 1: solicita o e-mail com o link de redefinição. */
   requestCode(email: string): Observable<PasswordResetRequestResponse> {
     return this.http.post<PasswordResetRequestResponse>(`${this.apiUrl}/request`, { email });
   }
 
-  verifyCode(email: string, code: string): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiUrl}/verify`, { email, code });
-  }
-
-  resetPassword(email: string, code: string, newPassword: string): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiUrl}/reset`, { email, code, newPassword });
+  /** Passo 2 (via link): redefine a senha usando o token do link. */
+  resetPassword(token: string, newPassword: string): Observable<ApiMessageResponse> {
+    return this.http.post<ApiMessageResponse>(`${this.apiUrl}/reset`, { token, newPassword });
   }
 }

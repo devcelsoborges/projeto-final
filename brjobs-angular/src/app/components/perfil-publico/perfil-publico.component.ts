@@ -15,7 +15,6 @@ interface UsuarioPerfil {
   endereco?: string;
   bairro?: string;
   cidade?: string;
-  tipoUsuario?: string;
 }
 
 interface PrestadorPerfil {
@@ -56,6 +55,7 @@ export class PerfilPublicoComponent implements OnInit {
   avaliacoes: AvaliacaoItem[] = [];
   stats: AvaliacaoStats = { media_avaliacao: 0, total_avaliacoes: 0 };
   usuarioIdSolicitado = 0;
+  fotoIndisponivel = false;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -101,6 +101,7 @@ export class PerfilPublicoComponent implements OnInit {
         }
 
         this.usuario = usuario;
+        this.fotoIndisponivel = false;
         this.cdr.markForCheck();
         this.carregarDadosPrestador(usuario.id);
       });
@@ -154,6 +155,16 @@ export class PerfilPublicoComponent implements OnInit {
   getEstrelas(nota?: number | null): string {
     const estrelas = Math.max(0, Math.min(5, Math.round(nota ?? 0)));
     return `${"★".repeat(estrelas)}${"☆".repeat(5 - estrelas)}`;
+  }
+
+  /** URL da foto do usuário (o endpoint serve o .webp; cai no placeholder se 404). */
+  get fotoUrl(): string {
+    return this.usuario ? `${this.apiBase}/usuarios/${this.usuario.id}/foto` : "";
+  }
+
+  onFotoErro(): void {
+    this.fotoIndisponivel = true;
+    this.cdr.markForCheck();
   }
 
   podeEntrarEmContato(): boolean {
@@ -231,15 +242,13 @@ export class PerfilPublicoComponent implements OnInit {
     const email = localStorage.getItem("usuario_email") || "";
     const telefone = localStorage.getItem("usuario_telefone") || "";
     const endereco = localStorage.getItem("usuario_endereco") || "";
-    const tipoUsuario = localStorage.getItem("usuario_tipo") || "";
 
     this.usuario = {
       id: idLogado,
       nome,
       email,
       telefone,
-      endereco,
-      tipoUsuario
+      endereco
     };
 
     return true;

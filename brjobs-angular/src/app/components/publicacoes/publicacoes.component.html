@@ -130,6 +130,12 @@
           <button type="submit" class="primary-action">Publicar agora</button>
 
           <p class="mensagem erro" *ngIf="erro">{{ erro }}</p>
+          <div class="reenvio-confirmacao" *ngIf="mostrarReenvioConfirmacao">
+            <button type="button" class="link-reenviar" (click)="reenviarConfirmacaoEmail()">
+              Reenviar e-mail de confirmação
+            </button>
+            <p class="mensagem" *ngIf="reenvioMensagem">{{ reenvioMensagem }}</p>
+          </div>
           <p class="mensagem sucesso" *ngIf="sucesso">{{ sucesso }}</p>
         </form>
       </ng-container>
@@ -166,6 +172,7 @@
             <div class="meta">
               <span>{{ formatarValor(pub) }}</span>
               <span>{{ pub.categoria || "Sem categoria" }}</span>
+              <span *ngIf="pub.subcategoria"> · {{ pub.subcategoria }}</span>
               <span *ngIf="formatarDistancia(pub)">{{ formatarDistancia(pub) }}</span>
               <span *ngIf="pub.cidadePublicacao || pub.estadoPublicacao">{{ pub.cidadePublicacao }}{{ pub.estadoPublicacao ? "/" + pub.estadoPublicacao : "" }}</span>
               <span>por {{ pub.usuarioNome }}</span>

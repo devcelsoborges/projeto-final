@@ -15,7 +15,7 @@ import ads.uninassau.brjobs.repository.UsuarioRepository;
 import ads.uninassau.brjobs.service.payment.PaymentCheckoutSession;
 import ads.uninassau.brjobs.service.payment.PaymentGateway;
 import com.stripe.model.Event;
-import com.stripe.model.checkout.Session;
+import com.stripe.model.PaymentIntent;
 import com.stripe.net.Webhook;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -76,11 +75,16 @@ public class HighlightService {
             throw new IllegalArgumentException("Esta publicacao ja possui destaque ativo");
         }
 
-        if (highlightPaymentRepository.existsByPublicacaoServicoIdAndStatusIn(
-                publicacaoId,
-                Set.of(HighlightPaymentStatus.PENDING, HighlightPaymentStatus.APPROVED)
-        )) {
-            throw new IllegalArgumentException("Ja existe um pagamento ativo ou pendente para esta publicacao");
+        // Descarta checkouts anteriores não concluídos desta publicação, para não travar uma nova
+        // tentativa. O destaque ativo já foi barrado acima; pagamentos APPROVED antigos (de destaques
+        // já expirados) não devem impedir um novo destaque.
+        List<HighlightPayment> pendentes = highlightPaymentRepository
+                .findByPublicacaoServicoIdAndStatus(publicacaoId, HighlightPaymentStatus.PENDING);
+        for (HighlightPayment pendente : pendentes) {
+            paymentGateway.cancelPayment(pendente.getStripeSessionId());
+            pendente.setStatus(HighlightPaymentStatus.FAILED);
+            highlightPaymentRepository.save(pendente);
+            log.info("highlight_pending_descartado paymentId={} publicacaoId={}", pendente.getId(), publicacaoId);
         }
 
         HighlightPlan plan = highlightPlanRepository.findById(request.getPlanId())
@@ -97,7 +101,7 @@ public class HighlightService {
 
         payment = highlightPaymentRepository.save(payment);
         PaymentCheckoutSession session = paymentGateway.createCheckoutSession(usuario, publicacao, plan, payment);
-        payment.setStripeSessionId(session.getSessionId());
+        payment.setStripeSessionId(session.getSessionId()); // = PaymentIntent id
         highlightPaymentRepository.save(payment);
 
         log.info("highlight_checkout_created userId={} publicacaoId={} planId={} paymentId={}",
@@ -105,8 +109,8 @@ public class HighlightService {
 
         return HighlightCheckoutResponseDTO.builder()
                 .paymentId(payment.getId())
-                .stripeSessionId(session.getSessionId())
-                .checkoutUrl(session.getCheckoutUrl())
+                .paymentIntentId(session.getSessionId())
+                .clientSecret(session.getClientSecret())
                 .build();
     }
 
@@ -129,30 +133,66 @@ public class HighlightService {
 
         log.info("highlight_webhook_received eventId={} type={}", event.getId(), event.getType());
 
-        if (!"checkout.session.completed".equals(event.getType())) {
+        // Checkout próprio (Payment Element): o pagamento é confirmado via PaymentIntent.
+        if (!"payment_intent.succeeded".equals(event.getType())) {
             return;
         }
 
-        Session session = (Session) event.getDataObjectDeserializer()
+        PaymentIntent intent = (PaymentIntent) event.getDataObjectDeserializer()
                 .getObject()
                 .orElseThrow(() -> new IllegalArgumentException("Payload do webhook invalido"));
 
-        if (!"paid".equalsIgnoreCase(session.getPaymentStatus())) {
-            return;
+        HighlightPayment payment = highlightPaymentRepository.findByStripeSessionId(intent.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Pagamento nao encontrado para o PaymentIntent"));
+
+        aplicarDestaque(payment, event.getId(), "webhook");
+    }
+
+    /**
+     * Confirma o pagamento no retorno do checkout (sem depender do webhook): consulta o
+     * status do PaymentIntent na Stripe e, se aprovado, ativa o destaque. Idempotente com
+     * o webhook — o que chegar primeiro aplica; o segundo é no-op.
+     *
+     * @return true se a publicação ficou (ou já estava) destacada.
+     */
+    @Transactional
+    public boolean confirmarPagamento(Long tenantId, Long paymentId) {
+        HighlightPayment payment = highlightPaymentRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Pagamento nao encontrado"));
+
+        if (!payment.getUsuario().getId().equals(tenantId)) {
+            throw new SecurityException("Pagamento nao pertence ao usuario");
         }
 
-        HighlightPayment payment = highlightPaymentRepository.findByStripeSessionId(session.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Pagamento nao encontrado para a sessao"));
-
         if (payment.getStatus() == HighlightPaymentStatus.APPROVED) {
-            log.warn("highlight_webhook_duplicate paymentId={} sessionId={}", payment.getId(), session.getId());
+            return true;
+        }
+
+        String status = paymentGateway.retrievePaymentStatus(payment.getStripeSessionId());
+        if (!"succeeded".equalsIgnoreCase(status)) {
+            log.info("highlight_confirm_pending paymentId={} status={}", payment.getId(), status);
+            return false;
+        }
+
+        aplicarDestaque(payment, null, "confirm");
+        return true;
+    }
+
+    /**
+     * Aplica o destaque a partir de um pagamento aprovado. Idempotente: se já aprovado, não faz nada.
+     */
+    private void aplicarDestaque(HighlightPayment payment, String stripeEventId, String origem) {
+        if (payment.getStatus() == HighlightPaymentStatus.APPROVED) {
+            log.warn("highlight_already_approved paymentId={} origem={}", payment.getId(), origem);
             return;
         }
 
         PublicacaoServico publicacao = payment.getPublicacaoServico();
         HighlightPlan plan = payment.getHighlightPlan();
 
-        payment.setStripeEventId(event.getId());
+        if (stripeEventId != null) {
+            payment.setStripeEventId(stripeEventId);
+        }
         payment.setStatus(HighlightPaymentStatus.APPROVED);
 
         publicacao.setIsHighlighted(true);
@@ -163,8 +203,8 @@ public class HighlightService {
         highlightPaymentRepository.save(payment);
         publicacaoCacheService.evictAll();
 
-        log.info("highlight_webhook_approved paymentId={} publicacaoId={} plan={} expiresAt={}",
-                payment.getId(), publicacao.getId(), plan.getName(), publicacao.getHighlightExpiresAt());
+        log.info("highlight_approved origem={} paymentId={} publicacaoId={} plan={} expiresAt={}",
+                origem, payment.getId(), publicacao.getId(), plan.getName(), publicacao.getHighlightExpiresAt());
     }
 
     @Transactional

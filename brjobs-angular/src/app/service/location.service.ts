@@ -50,7 +50,17 @@ export class LocationService {
           this.setLocation(location);
           resolve(location);
         },
-        () => reject(new Error("Não foi possível obter sua localização.")),
+        (err) => {
+          let msg = "Não foi possível obter sua localização.";
+          if (err.code === err.PERMISSION_DENIED) {
+            msg = "Permissão de localização negada. Habilite o acesso no navegador (ícone de cadeado na barra de endereço) e tente novamente.";
+          } else if (err.code === err.TIMEOUT) {
+            msg = "Tempo esgotado ao obter sua localização. Tente novamente.";
+          } else if (err.code === err.POSITION_UNAVAILABLE) {
+            msg = "Localização indisponível no momento. Tente novamente em instantes.";
+          }
+          reject(new Error(msg));
+        },
         {
           enableHighAccuracy: false,
           timeout: 10000,

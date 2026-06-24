@@ -6,6 +6,8 @@ import lombok.Data;
 @Data
 @Builder
 public class PaymentCheckoutSession {
+    /** Id do PaymentIntent na Stripe (usado para casar o webhook). */
     private String sessionId;
-    private String checkoutUrl;
+    /** client_secret do PaymentIntent, consumido pelo Payment Element no frontend. */
+    private String clientSecret;
 }

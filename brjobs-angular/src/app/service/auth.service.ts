@@ -32,6 +32,7 @@ export interface UsuarioDTO {
   bio?: string;
   tipoUsuario: string;
   ativo: boolean;
+  emailConfirmado?: boolean;
   dataCadastro?: string;
   fotoPerfil?: string;
 }
@@ -218,6 +219,10 @@ export class AuthService {
       bio: localStorage.getItem('usuario_bio') || '',
       tipoUsuario: localStorage.getItem('usuario_tipo') || '',
       ativo: true,
+      // Tri-state: ausência da chave (conta legada) = undefined, não false.
+      emailConfirmado: localStorage.getItem('usuario_emailConfirmado') === null
+        ? undefined
+        : localStorage.getItem('usuario_emailConfirmado') === 'true',
       dataCadastro: localStorage.getItem('usuario_dataCadastro') || undefined
     };
 
@@ -248,6 +253,9 @@ export class AuthService {
     localStorage.setItem('usuario_complemento', usuario.complemento || '');
     localStorage.setItem('usuario_bio', usuario.bio || '');
     localStorage.setItem('usuario_tipo', usuario.tipoUsuario || '');
+    if (usuario.emailConfirmado !== undefined && usuario.emailConfirmado !== null) {
+      localStorage.setItem('usuario_emailConfirmado', String(usuario.emailConfirmado));
+    }
     if (usuario.dataCadastro) {
       localStorage.setItem('usuario_dataCadastro', usuario.dataCadastro);
     }
@@ -272,6 +280,7 @@ export class AuthService {
       'usuario_estado',
       'usuario_bio',
       'usuario_tipo',
+      'usuario_emailConfirmado',
       'usuario_dataCadastro'
     ].forEach((key) => localStorage.removeItem(key));
   }

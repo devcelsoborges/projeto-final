@@ -67,6 +67,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isEditing = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
+
+  // Foto de perfil
+  uploadingFoto = false;
+  fotoIndisponivel = false;
   
   // Formulário de edição
   profileForm!: FormGroup;
@@ -111,21 +115,24 @@ export class ProfileComponent implements OnInit, OnDestroy {
    * Inicializa os formulários
    */
   private initializeForms(): void {
+    // Perfil de login unificado (nativo + social): só o nome é obrigatório (e o e-mail,
+    // que é a chave de unificação e fica travado). Os demais campos são opcionais —
+    // validamos apenas o FORMATO quando preenchidos, para não travar o usuário (ex.: quem
+    // entrou pelo Google e não tem endereço) nem sujar o payload com campos forçados.
     this.profileForm = this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(3)]],
-      email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
-      telefone: ['', [Validators.required, this.telefoneValidator]],
-      cep: ['', [Validators.required, this.cepValidator]],
-      rua: ['', [Validators.required]],
-      numero: ['', [Validators.required]],
+      email: [{ value: '', disabled: true }, [Validators.email]],
+      telefone: ['', [this.telefoneValidator]],
+      cep: ['', [this.cepValidator]],
+      rua: [''],
+      numero: [''],
       complemento: [''],
-      bairro: ['', [Validators.required]],
-      cidade: ['', [Validators.required]],
-      estado: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(2)]],
+      bairro: [''],
+      cidade: [''],
+      estado: ['', [Validators.maxLength(2)]],
       genero: [''],
       dataNascimento: [''],
-      bio: ['', [Validators.maxLength(600)]],
-      tipoUsuario: ['PRESTADOR', [Validators.required]]
+      bio: ['', [Validators.maxLength(600)]]
     });
 
     this.prestadorForm = this.fb.group({
@@ -197,6 +204,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.usuario.bio = '';
       }
 
+      // Aponta a foto para o endpoint do backend (serve o webp salvo); se não houver foto,
+      // o GET retorna 404 e o <img> cai no placeholder via onFotoErro().
+      this.usuario.fotoPerfil = `${this.apiBase}/usuarios/${this.usuario.id}/foto`;
+      this.fotoIndisponivel = false;
+
       this.hidratarEnderecoLegado();
 
       // Se é prestador, carregar dados profissionais
@@ -231,8 +243,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         estado: (this.usuario.estado || '').toUpperCase(),
         genero: this.usuario.genero,
         dataNascimento: this.usuario.dataNascimento,
-        bio: this.usuario.bio || '',
-        tipoUsuario: this.usuario.tipoUsuario
+        bio: this.usuario.bio || ''
       });
 
       if (this.prestador) {
@@ -313,7 +324,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     const payload = {
       id: this.usuario.id,
-      tipoUsuario: formData.tipoUsuario,
+      // tipoUsuario não é mais editável na UI (depreciado); preserva o valor existente
+      // para não violar a constraint NOT NULL no backend.
+      tipoUsuario: this.usuario.tipoUsuario,
       nome: formData.nome,
       email: formData.email,
       telefone: (formData.telefone || '').replace(/\D/g, ''),
@@ -366,7 +379,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           localStorage.setItem('usuario_endereco', enderecoCompleto);
           localStorage.setItem('usuario_genero', formData.genero);
           localStorage.setItem('usuario_dataNascimento', dataNascimentoIso);
-          localStorage.setItem('usuario_tipo', formData.tipoUsuario);
+          localStorage.setItem('usuario_tipo', this.usuario.tipoUsuario);
           localStorage.setItem('usuario_bio', formData.bio || '');
 
           // Recarrega o perfil para garantir que os dados estão sincronizados
@@ -457,35 +470,70 @@ export class ProfileComponent implements OnInit, OnDestroy {
    * Manipula upload de foto de perfil
    */
   onProfilePhotoChange(event: any): void {
-    if (event.target.files.length > 0) {
-      const file = event.target.files[0];
-
-      // Validação de tamanho (máx 5MB)
-      const maxSize = 5 * 1024 * 1024;
-      if (file.size > maxSize) {
-        this.errorMessage = `Arquivo muito grande. Máximo 5MB.`;
-        return;
-      }
-
-      // Validação de tipo
-      if (!file.type.startsWith('image/')) {
-        this.errorMessage = 'O arquivo deve ser uma imagem.';
-        return;
-      }
-
-      // Simula leitura de arquivo
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.usuario.fotoPerfil = e.target.result;
-        this.successMessage = 'Foto atualizada com sucesso!';
-        this.cdr.markForCheck();
-        setTimeout(() => {
-          this.successMessage = null;
-          this.cdr.markForCheck();
-        }, 3000);
-      };
-      reader.readAsDataURL(file);
+    const files = event?.target?.files;
+    if (!files || files.length === 0) {
+      return;
     }
+    const file = files[0];
+
+    // Validação de tamanho (máx 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      this.errorMessage = 'Arquivo muito grande. Máximo 5MB.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Validação de tipo
+    if (!file.type.startsWith('image/')) {
+      this.errorMessage = 'O arquivo deve ser uma imagem.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Preview otimista enquanto o upload acontece.
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.usuario.fotoPerfil = e.target.result;
+      this.fotoIndisponivel = false;
+      this.cdr.markForCheck();
+    };
+    reader.readAsDataURL(file);
+
+    // Envia ao backend, que converte para .webp e salva (UsuarioController POST /foto).
+    const formData = new FormData();
+    formData.append('foto', file);
+    this.uploadingFoto = true;
+    this.errorMessage = null;
+    this.cdr.markForCheck();
+
+    this.http.post(`${this.apiBase}/usuarios/${this.usuario.id}/foto`, formData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.uploadingFoto = false;
+          // Aponta para o endpoint (webp) com cache-buster para furar o cache de 5min.
+          this.usuario.fotoPerfil = `${this.apiBase}/usuarios/${this.usuario.id}/foto?t=${Date.now()}`;
+          this.fotoIndisponivel = false;
+          this.successMessage = 'Foto atualizada com sucesso!';
+          this.cdr.markForCheck();
+          setTimeout(() => {
+            this.successMessage = null;
+            this.cdr.markForCheck();
+          }, 3000);
+        },
+        error: (err) => {
+          this.uploadingFoto = false;
+          this.errorMessage = err?.error?.message || (typeof err?.error === 'string' ? err.error : null) || 'Não foi possível enviar a foto. Tente novamente.';
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  /** Foto indisponível (sem foto ou 404): cai para o placeholder com a inicial do nome. */
+  onFotoErro(): void {
+    this.fotoIndisponivel = true;
+    this.cdr.markForCheck();
   }
 
   /**

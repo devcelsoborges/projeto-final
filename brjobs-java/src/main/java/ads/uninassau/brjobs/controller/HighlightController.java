@@ -32,6 +32,16 @@ public class HighlightController {
         return ResponseEntity.ok(highlightService.createCheckout(tenantId, jobPostId, request));
     }
 
+    @PostMapping("/api/highlight/confirmar/{paymentId}")
+    @ValidateTenant
+    public ResponseEntity<java.util.Map<String, Object>> confirmarPagamento(
+            @RequestAttribute("tenant_id") Long tenantId,
+            @PathVariable("paymentId") Long paymentId
+    ) {
+        boolean destacada = highlightService.confirmarPagamento(tenantId, paymentId);
+        return ResponseEntity.ok(java.util.Map.of("highlighted", destacada));
+    }
+
     @PostMapping("/api/webhook/stripe")
     public ResponseEntity<Void> handleStripeWebhook(
             @RequestHeader(value = "Stripe-Signature", required = false) String signature,

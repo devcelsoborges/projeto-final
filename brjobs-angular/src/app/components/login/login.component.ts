@@ -5,6 +5,7 @@ import { CommonModule, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../service/auth.service';
 import { SocialLoginService } from '../../service/social-login.service';
+import { AccountService } from '../../service/account.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -21,6 +22,10 @@ export class LoginComponent implements OnInit, OnDestroy {
   socialLoading = false;
   errorMessage: string | null = null;
   rememberMe = false;
+  // Conta com e-mail não confirmado: mostra a opção de reenviar a confirmação.
+  showResendConfirmation = false;
+  unconfirmedEmail: string | null = null;
+  resendMessage: string | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -28,6 +33,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private socialLoginService: SocialLoginService,
+    private accountService: AccountService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -83,6 +89,8 @@ export class LoginComponent implements OnInit, OnDestroy {
    */
   submit(): void {
     this.errorMessage = null;
+    this.showResendConfirmation = false;
+    this.resendMessage = null;
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -108,14 +116,44 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.router.navigate(['/home']);
         },
         error: (error) => {
-          if (error.status === 401) {
-            this.errorMessage = 'E-mail ou senha inválidos. Tente novamente.';
+          if (error.status === 403 && error.error?.code === 'EMAIL_NOT_CONFIRMED') {
+            this.errorMessage = error.error?.message || 'Confirme seu e-mail para acessar a conta.';
+            this.unconfirmedEmail = error.error?.email || email;
+            this.showResendConfirmation = true;
+          } else if (error.status === 401) {
+            // Usa a mensagem do backend (ex.: conta criada com login social orienta a
+            // entrar com o provedor ou usar "Esqueci minha senha"); cai no texto padrão
+            // só quando não há mensagem (senha realmente inválida).
+            this.errorMessage = error.error?.message || 'E-mail ou senha inválidos. Tente novamente.';
           } else if (error.status === 0) {
             this.errorMessage = 'Erro ao conectar ao servidor. Verifique se o backend está rodando.';
           } else {
             this.errorMessage = error.error?.message || 'Erro ao fazer login. Tente novamente.';
           }
           this.loading = false;
+        }
+      });
+  }
+
+  /**
+   * Reenvia o e-mail de confirmação para a conta não confirmada.
+   */
+  reenviarConfirmacao(): void {
+    const alvo = this.unconfirmedEmail || this.form.get('email')?.value;
+    if (!alvo) {
+      return;
+    }
+    this.resendMessage = null;
+    this.accountService.reenviarConfirmacao(alvo)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.resendMessage = res.message || 'E-mail de confirmação reenviado.';
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.resendMessage = 'Não foi possível reenviar agora. Tente novamente em instantes.';
+          this.cdr.detectChanges();
         }
       });
   }

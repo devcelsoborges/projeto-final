@@ -28,10 +28,13 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AccountActivationService accountActivationService;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder,
+                          AccountActivationService accountActivationService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.accountActivationService = accountActivationService;
     }
 
     /**
@@ -45,12 +48,13 @@ public class UsuarioService {
      */
     @Transactional
     public UsuarioDTO criarContratante(CadastroContratanteDTO dto) {
-        validarDadosParaCadastro(dto.getEmail(), dto.getCpf(), dto.getTelefone(), dto.getDataNascimento(), dto.getSenha(), dto.getConfirmacaoSenha());
+        String email = UsuarioValidator.normalizarEmail(dto.getEmail());
+        validarDadosParaCadastro(email, dto.getCpf(), dto.getTelefone(), dto.getDataNascimento(), dto.getSenha(), dto.getConfirmacaoSenha());
 
         Usuario usuario = new Usuario();
         usuario.setTipoUsuario(TipoUsuario.CONTRATANTE);
         usuario.setNome(dto.getNome());
-        usuario.setEmail(dto.getEmail());
+        usuario.setEmail(email);
         usuario.setSenha(passwordEncoder.encode(dto.getSenha()));
         usuario.setTelefone(dto.getTelefone());
         usuario.setCpf(dto.getCpf());
@@ -68,6 +72,7 @@ public class UsuarioService {
         usuario.setAtivo(true);
 
         usuario = usuarioRepository.save(usuario);
+        accountActivationService.enviarConfirmacao(usuario);
         return toDTO(usuario);
     }
 
@@ -83,12 +88,13 @@ public class UsuarioService {
      */
     @Transactional
     public UsuarioDTO criarPrestador(CadastroPrestadorDTO dto) {
-        validarDadosParaCadastro(dto.getEmail(), dto.getCpf(), dto.getTelefone(), dto.getDataNascimento(), dto.getSenha(), dto.getConfirmacaoSenha());
+        String email = UsuarioValidator.normalizarEmail(dto.getEmail());
+        validarDadosParaCadastro(email, dto.getCpf(), dto.getTelefone(), dto.getDataNascimento(), dto.getSenha(), dto.getConfirmacaoSenha());
 
         Usuario usuario = new Usuario();
         usuario.setTipoUsuario(TipoUsuario.PRESTADOR);
         usuario.setNome(dto.getNome());
-        usuario.setEmail(dto.getEmail());
+        usuario.setEmail(email);
         usuario.setSenha(passwordEncoder.encode(dto.getSenha()));
         usuario.setTelefone(dto.getTelefone());
         usuario.setCpf(dto.getCpf());
@@ -106,6 +112,7 @@ public class UsuarioService {
         usuario.setAtivo(true);
 
         usuario = usuarioRepository.save(usuario);
+        accountActivationService.enviarConfirmacao(usuario);
         return toDTO(usuario);
     }
 
@@ -141,7 +148,9 @@ public class UsuarioService {
     }
 
     /**
-     * Atualiza dados básicos do usuário (não atualiza senha, foto ou currículo)
+     * Atualiza dados básicos do usuário (não atualiza senha, foto ou currículo).
+     * Merge parcial: campos ausentes (null) no DTO preservam o valor atual;
+     * string em branco limpa explicitamente o campo (exceto nome, que é obrigatório).
      *
      * @throws UserNotFoundException se o usuário não for encontrado
      */
@@ -150,22 +159,37 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
 
-        usuario.setNome(dto.getNome());
-        usuario.setTelefone(dto.getTelefone());
-        usuario.setEndereco(dto.getEndereco());
-        usuario.setCep(dto.getCep());
-        usuario.setRua(dto.getRua());
-        usuario.setBairro(dto.getBairro());
-        usuario.setCidade(dto.getCidade());
-        usuario.setEstado(dto.getEstado());
-        usuario.setNumero(dto.getNumero());
-        usuario.setComplemento(dto.getComplemento());
-        usuario.setBio(dto.getBio());
-        usuario.setGenero(dto.getGenero());
-        usuario.setDataNascimento(dto.getDataNascimento());
+        if (dto.getNome() != null && !dto.getNome().isBlank()) {
+            usuario.setNome(dto.getNome());
+        }
+        usuario.setTelefone(mesclarCampo(dto.getTelefone(), usuario.getTelefone()));
+        usuario.setEndereco(mesclarCampo(dto.getEndereco(), usuario.getEndereco()));
+        usuario.setCep(mesclarCampo(dto.getCep(), usuario.getCep()));
+        usuario.setRua(mesclarCampo(dto.getRua(), usuario.getRua()));
+        usuario.setBairro(mesclarCampo(dto.getBairro(), usuario.getBairro()));
+        usuario.setCidade(mesclarCampo(dto.getCidade(), usuario.getCidade()));
+        usuario.setEstado(mesclarCampo(dto.getEstado(), usuario.getEstado()));
+        usuario.setNumero(mesclarCampo(dto.getNumero(), usuario.getNumero()));
+        usuario.setComplemento(mesclarCampo(dto.getComplemento(), usuario.getComplemento()));
+        usuario.setBio(mesclarCampo(dto.getBio(), usuario.getBio()));
+        usuario.setGenero(mesclarCampo(dto.getGenero(), usuario.getGenero()));
+        if (dto.getDataNascimento() != null) {
+            usuario.setDataNascimento(dto.getDataNascimento());
+        }
 
         usuario = usuarioRepository.save(usuario);
         return toDTO(usuario);
+    }
+
+    /**
+     * Regra de merge parcial para campos opcionais de texto:
+     * null preserva o valor atual; string em branco limpa o campo.
+     */
+    private static String mesclarCampo(String novoValor, String valorAtual) {
+        if (novoValor == null) {
+            return valorAtual;
+        }
+        return novoValor.isBlank() ? null : novoValor;
     }
 
     /**
@@ -198,6 +222,18 @@ public class UsuarioService {
     }
 
     /**
+     * Busca os bytes da foto de perfil do usuário
+     *
+     * @return bytes da foto, ou null se o usuário não possuir foto
+     * @throws UserNotFoundException se o usuário não for encontrado
+     */
+    public byte[] buscarFotoPerfil(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+        return usuario.getFotoPerfil();
+    }
+
+    /**
      * Deleta (soft delete) um usuário
      */
     @Transactional
@@ -220,15 +256,26 @@ public class UsuarioService {
     }
 
     /**
-     * Valida dados comuns para cadastro
+     * Valida dados comuns para cadastro.
+     * A unicidade do e-mail é checada de forma case-insensitive: o mesmo e-mail (ainda
+     * que com caixa diferente) nunca gera uma segunda conta. Se já existir uma conta
+     * com este e-mail — inclusive criada via login social — o cadastro é rejeitado com
+     * 409; o caminho seguro para uma conta social ganhar senha local é "Esqueci minha
+     * senha" (que verifica a posse do e-mail). Assim evitamos account takeover por um
+     * cadastro anônimo definir senha numa conta que não é sua.
      */
     private void validarDadosParaCadastro(String email, String cpf, String telefone, LocalDate dataNascimento, String senha, String confirmacaoSenha) {
         // Validar email
         if (!UsuarioValidator.validarEmail(email)) {
             throw new IllegalArgumentException("O formato do email é inválido.");
         }
-        if (usuarioRepository.findByEmail(email).isPresent()) {
-            throw new EmailAlreadyInUseException(email);
+        if (usuarioRepository.findByEmailIgnoreCase(email).isPresent()) {
+            // Mantemos o 409 (nunca deixar um cadastro anônimo definir senha numa conta
+            // existente = account takeover) e orientamos o caminho seguro. Mensagem NEUTRA:
+            // não revela se a conta é social ou local (evita enumeração de tipo de conta).
+            throw new EmailAlreadyInUseException(
+                    "Este e-mail já está em uso. Se a conta é sua, faça login (inclusive com Google/Facebook) "
+                            + "ou use \"Esqueci minha senha\" para definir/recuperar o acesso.");
         }
 
         // Validar CPF
@@ -280,8 +327,12 @@ public class UsuarioService {
         dto.setGenero(usuario.getGenero());
         dto.setDataNascimento(usuario.getDataNascimento());
         dto.setAtivo(usuario.isAtivo());
+        dto.setEmailConfirmado(usuario.getEmailConfirmado());
         if (usuario.getDataCadastro() != null) {
             dto.setDataCadastro(usuario.getDataCadastro().toLocalDate());
+        }
+        if (usuario.getFotoPerfil() != null && usuario.getFotoPerfil().length > 0) {
+            dto.setFotoPerfilUrl("/api/usuarios/" + usuario.getId() + "/foto");
         }
         return dto;
     }

@@ -241,6 +241,21 @@ textarea.form-control {
 /* =================================================================
  * 8. RESPONSIVIDADE
  * ================================================================= */
+@media (max-width: 900px) {
+  .contato-wrapper {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .hero-contato {
+    padding: 60px 20px;
+  }
+
+  .hero-contato h1 {
+    font-size: 2.2rem;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-contato h1 {
     font-size: 2rem;

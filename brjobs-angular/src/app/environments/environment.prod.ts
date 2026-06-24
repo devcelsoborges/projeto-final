@@ -1,7 +1,8 @@
-// Configurações de ambiente
+// ConfiguraÃ§Ãµes de ambiente
 export const environment = {
   production: true,
   apiUrl: 'https://api.brjobs.com.br',
+  stripePublishableKey: 'pk_live_SUBSTITUA_PELA_CHAVE_LIVE',
   chat: {
     pollIntervalMs: 15000,
     maxMessageLength: 500,

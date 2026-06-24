@@ -6,6 +6,7 @@ import ads.uninassau.brjobs.model.SocialLogin;
 import ads.uninassau.brjobs.model.TipoUsuario;
 import ads.uninassau.brjobs.repository.UsuarioRepository;
 import ads.uninassau.brjobs.repository.SocialLoginRepository;
+import ads.uninassau.brjobs.validator.UsuarioValidator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -138,42 +139,20 @@ public class SocialAuthService {
         }
     }
 
+    /**
+     * Login com Apple — DESABILITADO.
+     *
+     * A implementação anterior apenas decodificava o payload do identity token (Base64)
+     * SEM validar a assinatura RS256 contra as chaves públicas da Apple, nem iss/aud/exp.
+     * Combinado com a vinculação por e-mail, isso permitiria forjar um token com o e-mail
+     * de qualquer vítima e assumir a conta dela. O método fica indisponível até que a
+     * validação real seja implementada (JWKs em https://appleid.apple.com/auth/keys +
+     * conferência de issuer/audience/expiração), evitando que seja exposto por engano.
+     */
     @Transactional
     public AuthResponseDTO loginComApple(String identityToken) {
-        try {
-            JsonNode claims = validarAppleToken(identityToken);
-            String email = claims.get("email").asText();
-            String providerId = claims.get("sub").asText();
-            String nome = email.split("@")[0];
-
-            Usuario usuario = buscarOuCriarUsuario(email, nome, "apple");
-            
-            socialLoginRepository.findByProviderAndProviderId("apple", providerId)
-                .orElseGet(() -> {
-                    SocialLogin novo = SocialLogin.builder()
-                        .usuario(usuario)
-                        .provider("apple")
-                        .providerId(providerId)
-                        .email(email)
-                        .nome(nome)
-                        .emailVerified(true)
-                        .createdAt(LocalDateTime.now())
-                        .build();
-                    return socialLoginRepository.save(novo);
-                });
-
-            return AuthResponseDTO.builder()
-                .usuarioId(usuario.getId())
-                .email(usuario.getEmail())
-                .nome(usuario.getNome())
-                .build();
-
-        } catch (Exception ex) {
-            log.error("Erro ao fazer login com Apple", ex);
-            return AuthResponseDTO.builder()
-                .error("Invalid token: " + ex.getMessage())
-                .build();
-        }
+        throw new UnsupportedOperationException(
+                "Login com Apple ainda não suportado: requer validação de assinatura do identity token.");
     }
 
     private GoogleProfile carregarPerfilGoogle(String token, String tokenType) throws Exception {
@@ -361,25 +340,18 @@ public class SocialAuthService {
         }
     }
 
-    private JsonNode validarAppleToken(String identityToken) throws Exception {
-        String[] parts = identityToken.split("\\.");
-        if (parts.length != 3) throw new IllegalArgumentException("Invalid token");
-
-        String payload = parts[1];
-        payload += "==".substring((payload.length() * 8) % 6);
-        byte[] decodedBytes = Base64.getUrlDecoder().decode(payload);
-        
-        return objectMapper.readTree(decodedBytes);
-    }
-
     private Usuario buscarOuCriarUsuario(String email, String nome, String provider) {
-        return usuarioRepository.findByEmail(email)
+        String emailNormalizado = UsuarioValidator.normalizarEmail(email);
+        // Vincula pelo e-mail (case-insensitive): se já existe conta local ou de
+        // outro provedor com este e-mail, reaproveita a MESMA conta em vez de duplicar.
+        return usuarioRepository.findByEmailIgnoreCase(emailNormalizado)
             .orElseGet(() -> {
                 Usuario user = Usuario.builder()
-                    .email(email)
+                    .email(emailNormalizado)
                     .nome(nome)
                     .tipoUsuario(TipoUsuario.CONTRATANTE)
                     .ativo(true)
+                    .emailConfirmado(true) // e-mail já verificado pelo provedor social
                     .build();
                 user.setSenha("OAUTH2_" + provider.toUpperCase());
                 return usuarioRepository.save(user);

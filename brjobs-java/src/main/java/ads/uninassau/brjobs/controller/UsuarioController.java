@@ -8,12 +8,15 @@ import ads.uninassau.brjobs.service.UsuarioService;
 import ads.uninassau.brjobs.service.PrestadorService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Controller responsável pelas operações de usuário.
@@ -114,6 +117,22 @@ public class UsuarioController {
         byte[] fotoBytes = fileService.processarFotoPerfil(foto);
         usuarioService.atualizarFotoPerfil(id, fotoBytes);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Retorna a foto de perfil do usuário (bytes da imagem)
+     * GET /api/usuarios/{id}/foto
+     */
+    @GetMapping("/{id}/foto")
+    public ResponseEntity<byte[]> buscarFotoPerfil(@PathVariable Long id) {
+        byte[] foto = usuarioService.buscarFotoPerfil(id);
+        if (foto == null || foto.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(fileService.detectarTipoImagem(foto)))
+                .cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
+                .body(foto);
     }
 
     /**

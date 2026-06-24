@@ -1,0 +1,4 @@
+# Arquivos de ambiente (contêm segredos — nunca commitar)
+.env
+.env.local
+.env.*.local

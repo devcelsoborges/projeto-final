@@ -89,8 +89,23 @@ public class Usuario {
     @Column(name = "password_reset_code", length = 6)
     private String passwordResetCode;
 
+    // Hash (SHA-256) do token de redefinição enviado no link do e-mail.
+    // Guardamos só o hash: vazamento do banco não expõe tokens utilizáveis.
+    @Column(name = "password_reset_token_hash", length = 64)
+    private String passwordResetTokenHash;
+
     @Column(name = "password_reset_expires_at")
     private LocalDateTime passwordResetExpiresAt;
+
+    // Confirmação de e-mail no cadastro (não bloqueia login; registra a confirmação).
+    @Column(name = "email_confirmado")
+    private Boolean emailConfirmado;
+
+    @Column(name = "email_confirmation_token", length = 64)
+    private String emailConfirmationToken;
+
+    @Column(name = "email_confirmation_expires_at")
+    private LocalDateTime emailConfirmationExpiresAt;
 
     @PreUpdate
     protected void onUpdate() {
@@ -118,6 +133,17 @@ public class Usuario {
      */
     public boolean isContratante() {
         return tipoUsuario.isContratante();
+    }
+
+    /**
+     * Verifica se a conta foi criada via login social (Google/Facebook/Apple)
+     * e ainda não definiu uma senha local. Contas sociais recebem um
+     * placeholder na coluna senha (NOT NULL), nunca um hash BCrypt.
+     */
+    public boolean isSomenteLoginSocial() {
+        return senha == null
+                || "SOCIAL_LOGIN".equals(senha)
+                || senha.startsWith("OAUTH2_");
     }
 
     /**

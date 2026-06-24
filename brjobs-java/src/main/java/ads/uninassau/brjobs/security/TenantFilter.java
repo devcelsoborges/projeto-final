@@ -48,7 +48,8 @@ public class TenantFilter extends OncePerRequestFilter {
                     String email = jwtTokenService.getUsernameFromToken(token);
 
                     // 4. Resolver ID real do usuário para uso como tenant_id
-                    Usuario usuario = usuarioRepository.findByEmail(email)
+                    //    (case-insensitive: coerente com a unificação de contas por e-mail)
+                    Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email)
                         .orElseThrow(() -> new IllegalArgumentException("Usuário do token não encontrado"));
 
                     request.setAttribute("tenant_id", usuario.getId());

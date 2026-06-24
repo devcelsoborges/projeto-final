@@ -72,10 +72,12 @@ export class RegisterComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (usuario) => {
           this.authService.setUsuarioAtual(usuario);
-          this.successMessage = `Bem-vindo, ${usuario.nome}!`;
+          this.successMessage =
+            `Conta criada! Enviamos um e-mail de confirmação para ${usuario.email}. ` +
+            `Confirme seu e-mail para poder publicar.`;
           this.loading = false;
           this.cdr.markForCheck();
-          setTimeout(() => this.router.navigate(["/home"]), 800);
+          setTimeout(() => this.router.navigate(["/home"]), 2500);
         },
         error: (error) => this.handleRegistroErro(error)
       });

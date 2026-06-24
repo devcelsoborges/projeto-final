@@ -39,6 +39,9 @@ public class PublicacaoServico {
     @Column(length = 50)
     private String categoria;
 
+    @Column(length = 50)
+    private String subcategoria;
+
     @Column(name = "endereco_publicacao", length = 255)
     private String enderecoPublicacao;
 

@@ -6,6 +6,79 @@
   gap: 20px;
 }
 
+/* ===== Destacar publicação ===== */
+.destaque-acao {
+  display: grid;
+  gap: 12px;
+}
+
+.destacar-btn {
+  justify-self: start;
+  background: var(--color-accent-500, #e8920c);
+  color: #1b1b1b;
+  border: 0;
+  border-radius: var(--radius-md, 10px);
+  padding: 12px 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.destacar-btn:hover {
+  filter: brightness(0.95);
+}
+
+.destaque-planos h3 {
+  margin: 0 0 12px;
+}
+
+.planos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.plano-card {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #d8dde6);
+  border-radius: var(--radius-md, 10px);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.plano-card:hover:not(:disabled) {
+  border-color: var(--color-accent-500, #e8920c);
+  box-shadow: var(--shadow-1, 0 4px 14px rgba(0, 0, 0, 0.08));
+  transform: translateY(-1px);
+}
+
+.plano-card:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.plano-preco {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-accent-700, #b86a05);
+}
+
+.plano-dias {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.85rem;
+}
+
+.destaque-erro {
+  color: var(--color-danger, #ef4444);
+}
+
+.destaque-loading {
+  color: var(--color-text-muted, #6b7280);
+}
+
 .detalhe-header {
   display: flex;
   justify-content: space-between;
@@ -40,7 +113,7 @@
 
 .meta-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
 
@@ -209,5 +282,26 @@
 
   .detalhe-header h1 {
     font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .detalhe-publicacao {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .detalhe-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .meta-grid,
+  .planos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .perfil-link,
+  .chat-link {
+    width: 100%;
   }
 }

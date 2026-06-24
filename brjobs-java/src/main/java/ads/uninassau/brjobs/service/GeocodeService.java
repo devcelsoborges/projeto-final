@@ -63,7 +63,7 @@ public class GeocodeService {
                     log.debug("geocode_cache_hit addressHash={} provider={}", hash, cache.getSource());
                     return toResponse(cache);
                 })
-                .orElseGet(() -> buscarNominatim(normalized, hash));
+                .orElseGet(() -> buscarNominatim(request, normalized, hash));
     }
 
     public String normalize(GeocodeRequestDTO request) {
@@ -87,18 +87,55 @@ public class GeocodeService {
         return hash(normalize(request));
     }
 
-    private GeocodeResponseDTO buscarNominatim(String normalized, String hash) {
+    private GeocodeResponseDTO buscarNominatim(GeocodeRequestDTO request, String normalized, String hash) {
         if (!"nominatim".equalsIgnoreCase(provider)) {
             throw new IllegalStateException("Provider de geocoding não suportado: " + provider);
         }
 
-        throttle();
+        // 1) Tenta o endereço completo (rua + número + cidade + UF + CEP).
+        JsonNode match = consultarNominatim(normalized);
+        String precision = "full";
 
+        // 2) Fallback: muitas ruas/números não existem no OpenStreetMap. Em vez de bloquear
+        //    a publicação, geocodifica pela cidade + UF (sempre encontrável) com precisão
+        //    aproximada. Só falha de fato se nem a cidade for encontrada.
+        if (match == null) {
+            String consultaCidade = montarConsultaCidade(request);
+            if (consultaCidade != null) {
+                match = consultarNominatim(consultaCidade);
+                precision = "city";
+            }
+        }
+
+        if (match == null) {
+            log.warn("geocode_failed provider=nominatim reason=nao_encontrado addressHash={}", hash);
+            throw new IllegalArgumentException("Não foi possível validar o endereço agora.");
+        }
+
+        Double lat = Double.valueOf(match.get("lat").asText());
+        Double lng = Double.valueOf(match.get("lon").asText());
+
+        GeocodeCache cache = geocodeCacheRepository.save(GeocodeCache.builder()
+                .addressHash(hash)
+                .normalizedAddress(normalized)
+                .lat(lat)
+                .lng(lng)
+                .source("nominatim")
+                .precision(precision)
+                .expiresAt(LocalDateTime.now().plusDays(cacheTtlDays))
+                .build());
+
+        return toResponse(cache);
+    }
+
+    /** Executa uma consulta ao Nominatim e devolve o primeiro resultado, ou null se vazio/erro. */
+    private JsonNode consultarNominatim(String query) {
+        throttle();
         URI uri = UriComponentsBuilder
                 .fromUriString(nominatimBaseUrl + "/search")
                 .queryParam("format", "jsonv2")
                 .queryParam("limit", "1")
-                .queryParam("q", normalized)
+                .queryParam("q", query)
                 .build()
                 .encode()
                 .toUri();
@@ -108,36 +145,28 @@ public class GeocodeService {
             headers.set(HttpHeaders.USER_AGENT, nominatimUserAgent);
             headers.set(HttpHeaders.REFERER, "https://brjobs.com.br");
             ResponseEntity<String> response = restTemplate.exchange(
-                    uri,
-                    HttpMethod.GET,
-                    new HttpEntity<>(headers),
-                    String.class
-            );
-            String body = response.getBody();
-            JsonNode root = objectMapper.readTree(body);
-            if (!root.isArray() || root.isEmpty()) {
-                throw new IllegalArgumentException("Endereço não encontrado.");
+                    uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            JsonNode root = objectMapper.readTree(response.getBody());
+            if (root == null || !root.isArray() || root.isEmpty()) {
+                return null;
             }
-
-            JsonNode first = root.get(0);
-            Double lat = Double.valueOf(first.get("lat").asText());
-            Double lng = Double.valueOf(first.get("lon").asText());
-
-            GeocodeCache cache = geocodeCacheRepository.save(GeocodeCache.builder()
-                    .addressHash(hash)
-                    .normalizedAddress(normalized)
-                    .lat(lat)
-                    .lng(lng)
-                    .source("nominatim")
-                    .precision(first.hasNonNull("type") ? first.get("type").asText() : "approx")
-                    .expiresAt(LocalDateTime.now().plusDays(cacheTtlDays))
-                    .build());
-
-            return toResponse(cache);
+            return root.get(0);
         } catch (Exception ex) {
-            log.warn("geocode_failed provider=nominatim reason={} addressHash={}", ex.getMessage(), hash);
-            throw new IllegalArgumentException("Não foi possível validar o endereço agora.");
+            log.warn("geocode_query_failed reason={}", ex.getMessage());
+            return null;
         }
+    }
+
+    /** Consulta aproximada por cidade + UF (fallback), ou null se a cidade não veio. */
+    private String montarConsultaCidade(GeocodeRequestDTO request) {
+        if (request == null || safe(request.getCidade()).isBlank()) {
+            return null;
+        }
+        return String.join(", ", safe(request.getCidade()), safe(request.getEstado()), "Brasil")
+                .replaceAll("(,\\s*)+", ", ")
+                .replaceAll("^,\\s*|,\\s*$", "")
+                .trim()
+                .toLowerCase(Locale.ROOT);
     }
 
     private synchronized void throttle() {
