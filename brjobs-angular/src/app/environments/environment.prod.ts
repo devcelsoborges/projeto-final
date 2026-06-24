@@ -2,7 +2,7 @@
 export const environment = {
   production: true,
   apiUrl: 'https://api.brjobs.com.br',
-  stripePublishableKey: 'pk_live_SUBSTITUA_PELA_CHAVE_LIVE',
+  stripePublishableKey: 'pk_live_51TRiEzLBtI5b9UJx2SrkaZDDwPpLwePGZFG34pCqCNdfJtcAGkBjf09hCwyEu6UNqOR0NBW8OU6rAwGQxtWRCkWt00bEP7Y8mU',
   chat: {
     pollIntervalMs: 15000,
     maxMessageLength: 500,
