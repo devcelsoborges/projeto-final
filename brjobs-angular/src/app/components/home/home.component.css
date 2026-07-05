@@ -595,17 +595,31 @@
 
   .filtros {
     justify-content: flex-start;
+    /* Passa a ser o contexto de posicionamento dos dropdowns no mobile. */
+    position: relative;
   }
 
-  /* Dropdowns de filtro com min-width fixo estouram a viewport no mobile;
-     deixa fluir e limita à largura disponível. */
+  /* No mobile os dropdowns são ancorados ao container .filtros (e não a cada
+     pill), abrindo em largura fluida logo abaixo da linha de filtros. Antes,
+     com `left: 0` relativo à pill, os filtros à direita (Valor, Data de
+     publicação) estouravam a borda direita da viewport e criavam scroll
+     horizontal — o max-width limitava a largura, mas não a posição. */
+  .filtro {
+    position: static;
+  }
+
   .dropdown {
-    min-width: auto;
-    max-width: calc(100vw - 32px);
+    left: 0;
+    right: 0;
+    min-width: 0;
+    max-width: none;
+    width: auto;
   }
 
   .dropdown-valor {
-    min-width: auto;
+    min-width: 0;
+    /* Mínimo e Máximo lado a lado aproveitando a largura total. */
+    grid-template-columns: 1fr 1fr;
   }
 
   .lista-vagas {

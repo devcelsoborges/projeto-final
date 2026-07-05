@@ -45,3 +45,13 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Responsividade (obrigatório antes de finalizar)
+
+- **Nenhuma entrega de UI (tela, feature, fix, ajuste de layout) é concluída sem
+  revisar a responsividade.** Ver o checklist completo em `../../CLAUDE.md`
+  ("Regra obrigatória: revisar a responsividade antes de finalizar").
+- Validar em mobile (≤375px), tablet (~768px) e desktop (≥1280px); garantir zero
+  scroll horizontal e que dropdowns/popovers/modais não estourem a viewport.
+- Prefira rodar o app (`npm start`) e inspecionar o DOM para confirmar, em vez de
+  apenas ler o CSS.

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "brjobs-angular",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "brjobs-angular", "start"],
+      "port": 4200
+    }
+  ]
+}

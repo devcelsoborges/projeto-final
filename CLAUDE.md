@@ -11,6 +11,29 @@ Guidance for Claude Code and developers working on the brjobs project.
 | `brjobs-angular/` | Angular 20, TypeScript 5.9, Tailwind CSS | SPA frontend: job catalog, authentication, user profiles, search, contact |
 | `brjobs-java/` | Spring Boot 3.3.5, Java 17, PostgreSQL | REST API: job management, user auth, profile, search, messaging |
 
+## ✅ Regra obrigatória: revisar a responsividade antes de finalizar (Definition of Done)
+
+**Toda entrega que toque a UI — nova tela, feature, correção de bug, ajuste de
+layout/estilo — SÓ é considerada concluída depois de a responsividade ter sido
+revisada.** Não finalize nem reporte como "pronto" sem passar por este checklist.
+
+Como revisar (de preferência rodando o app e inspecionando o DOM, não só lendo o CSS):
+
+- [ ] Testar em **mobile (≤375px)**, **tablet (~768px)** e **desktop (≥1280px)**.
+- [ ] **Nenhum scroll horizontal**: `document.documentElement.scrollWidth` não pode
+      ultrapassar `window.innerWidth` em nenhum breakpoint.
+- [ ] Elementos que abrem/flutuam (dropdowns, popovers, modais, menus, tooltips)
+      **não estouram a borda da viewport** — atenção especial a itens ancorados a
+      gatilhos posicionados à direita.
+- [ ] Textos não são cortados/truncados de forma indesejada; botões e alvos de
+      toque continuam clicáveis (mín. ~40px) e não ficam espremidos.
+- [ ] Imagens/mídia respeitam `max-width: 100%`; grids/flex reempilham quando falta
+      largura.
+- [ ] Inputs continuam utilizáveis no mobile (evitar largura fixa que estoura;
+      considerar zoom do iOS com `font-size` < 16px).
+
+Ao concluir, diga explicitamente em quais larguras a responsividade foi validada.
+
 ## Running the Full Stack
 
 ```bash
