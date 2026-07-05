@@ -29,6 +29,13 @@
   color: transparent;
 }
 
+/* Dark mode: o gradiente das primárias fica azul-escuro sobre o fundo navy e o
+   H1 fica quase ilegível (contraste ~3.6:1 no início do título). Usa tons claros
+   de azul para garantir leitura confortável. */
+:host-context([data-theme="dark"]) .hero h1 {
+  background-image: linear-gradient(90deg, #5ba4cf, #a9d6f0);
+}
+
 .hero .subtitle {
   font-size: 1.1rem;
   color: var(--color-text-muted);
