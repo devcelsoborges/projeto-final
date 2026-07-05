@@ -48,7 +48,7 @@ class ChatNotificationServiceTest {
         ReflectionTestUtils.setField(service, "enabled", true);
         ReflectionTestUtils.setField(service, "graceMinutes", 2);
         ReflectionTestUtils.setField(service, "templateId", "new-message-notification");
-        ReflectionTestUtils.setField(service, "chatUrl", "http://localhost:4200/chat");
+        ReflectionTestUtils.setField(service, "frontendBaseUrl", "https://brjobs.com.br");
         ReflectionTestUtils.setField(service, "listingFallback", "sua conversa no BRJobs");
     }
 
@@ -133,6 +133,7 @@ class ChatNotificationServiceTest {
         assertEquals("Ana", vars.get("first_name"), "primeiro nome do destinatário");
         assertEquals("Joao Silva", vars.get("sender_name"));
         assertEquals("sua conversa no BRJobs", vars.get("listing_title"));
+        assertEquals("https://brjobs.com.br/chat", vars.get("message_url"), "URL do chat derivada da base do frontend");
         String preview = (String) vars.get("message_preview");
         assertFalse(preview.contains("<b>"), "preview deve escapar HTML");
         assertTrue(preview.contains("&lt;b&gt;"), "tag deve virar entidade escapada");

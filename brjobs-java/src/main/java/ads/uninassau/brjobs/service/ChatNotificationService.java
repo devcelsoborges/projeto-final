@@ -49,8 +49,11 @@ public class ChatNotificationService {
     @Value("${app.mail.resend.template.new-message:new-message-notification}")
     private String templateId;
 
-    @Value("${app.frontend.chat-url:http://localhost:4200/chat}")
-    private String chatUrl;
+    // Deriva a URL do chat da base do frontend (que já vem correta em prod via
+    // FRONTEND_BASE_URL). Antes usava um app.frontend.chat-url próprio que ninguém
+    // setava, então o link caía no default localhost:4200/chat em produção.
+    @Value("${app.frontend.base-url:http://localhost:4200}")
+    private String frontendBaseUrl;
 
     @Value("${app.chat.notification.listing-fallback:sua conversa no BRJobs}")
     private String listingFallback;
@@ -95,7 +98,7 @@ public class ChatNotificationService {
                     "sender_name", escaparHtml(senderName),
                     "listing_title", listingFallback,
                     "message_preview", truncarEscapar(maisRecente.getConteudo()),
-                    "message_url", chatUrl
+                    "message_url", montarChatUrl()
             );
 
             boolean ok = mailService.sendTemplate(
@@ -116,6 +119,14 @@ public class ChatNotificationService {
 
         log.info("chat_notification_job_run conversas={} mensagens={} emails_aceitos={}",
                 porConversa.size(), pendentes.size(), enviados);
+    }
+
+    /** Monta a URL do chat a partir da base do frontend (sem barra dupla). */
+    private String montarChatUrl() {
+        String base = frontendBaseUrl.endsWith("/")
+                ? frontendBaseUrl.substring(0, frontendBaseUrl.length() - 1)
+                : frontendBaseUrl;
+        return base + "/chat";
     }
 
     /**
