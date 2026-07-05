@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -141,10 +142,16 @@ public class ChatService {
      * Obtém lista de conversas ativas de um usuário
      */
     public List<ChatConversationDTO> obterConversas(Long usuarioId) {
-        List<ConversaChat> conversas = conversaChatRepository.findActiveConversations(usuarioId);
+        // 1 query com JOIN FETCH (conversas + participantes + última mensagem) ...
+        List<ConversaChat> conversas = conversaChatRepository.findActiveConversationsWithParticipants(usuarioId);
+
+        // ... + 1 query agrupada para as não-lidas por remetente. Substitui o antigo N+1
+        // (um countUnreadBySender por conversa + lazy-loads por associação).
+        Map<Long, Long> naoLidasPorRemetente = chatMessageRepository.countUnreadGroupedBySender(usuarioId).stream()
+            .collect(Collectors.toMap(linha -> (Long) linha[0], linha -> (Long) linha[1]));
 
         List<ChatConversationDTO> dtos = conversas.stream()
-            .map(conversa -> mapConversationToDTO(conversa, usuarioId))
+            .map(conversa -> mapConversationToDTO(conversa, usuarioId, naoLidasPorRemetente))
             .collect(Collectors.toList());
 
         log.info("chat_conversations_loaded user_id={} conversations_count={}", usuarioId, dtos.size());
@@ -161,13 +168,13 @@ public class ChatService {
         return unread;
     }
 
-    private ChatConversationDTO mapConversationToDTO(ConversaChat conversa, Long usuarioId) {
+    private ChatConversationDTO mapConversationToDTO(ConversaChat conversa, Long usuarioId, Map<Long, Long> naoLidasPorRemetente) {
         Usuario contato = conversa.getUsuario1().getId().equals(usuarioId)
             ? conversa.getUsuario2()
             : conversa.getUsuario1();
 
         ChatMessage ultima = conversa.getUltimaMensagem();
-        long naoLidas = chatMessageRepository.countUnreadBySender(usuarioId, contato.getId());
+        long naoLidas = naoLidasPorRemetente.getOrDefault(contato.getId(), 0L);
 
         return ChatConversationDTO.builder()
             .id(conversa.getId())

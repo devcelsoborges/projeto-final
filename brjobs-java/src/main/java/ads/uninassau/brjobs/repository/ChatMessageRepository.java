@@ -59,6 +59,16 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.destinatario.id = :destinatarioId AND m.remetente.id = :remetenteId AND m.lido = false")
     long countUnreadBySender(@Param("destinatarioId") Long destinatarioId, @Param("remetenteId") Long remetenteId);
 
+    /**
+     * Não-lidas do destinatário agrupadas por remetente, em UMA query. Substitui o N+1 de
+     * um {@link #countUnreadBySender} por conversa ao montar a lista em /chat/conversas.
+     * Cada linha: [remetenteId (Long), total (Long)].
+     */
+    @Query("SELECT m.remetente.id, COUNT(m) FROM ChatMessage m " +
+           "WHERE m.destinatario.id = :destinatarioId AND m.lido = false " +
+           "GROUP BY m.remetente.id")
+    List<Object[]> countUnreadGroupedBySender(@Param("destinatarioId") Long destinatarioId);
+
     @Modifying
     @Query("UPDATE ChatMessage m SET m.lido = true WHERE m.destinatario.id = :destinatarioId AND m.remetente.id = :remetenteId AND m.lido = false")
     int markConversationAsRead(@Param("destinatarioId") Long destinatarioId, @Param("remetenteId") Long remetenteId);

@@ -4,7 +4,10 @@ export const environment = {
   apiUrl: 'https://api.brjobs.com.br',
   stripePublishableKey: 'pk_live_51TRiEzLBtI5b9UJx2SrkaZDDwPpLwePGZFG34pCqCNdfJtcAGkBjf09hCwyEu6UNqOR0NBW8OU6rAwGQxtWRCkWt00bEP7Y8mU',
   chat: {
-    pollIntervalMs: 15000,
+    // Conversa aberta (mensagens que o usuário está lendo): mantém a cadência atual.
+    activePollIntervalMs: 15000,
+    // Badge de não-lidas em segundo plano (todas as telas): mais lento e barato.
+    unreadPollIntervalMs: 30000,
     maxMessageLength: 500,
     headerBadgeMax: 99
   },

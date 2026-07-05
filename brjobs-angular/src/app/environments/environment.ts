@@ -4,7 +4,10 @@ export const environment = {
   apiUrl: 'http://localhost:8080',
   stripePublishableKey: 'pk_test_51TRiFRLCyLGNKGa5saHOfAfCDTEGFhOxjHUVBFmax0aMumrDbDfXIJVMhgW0028mOW48qEb1mqoZloqwR8uWXWnk008vxfcNp1',
   chat: {
-    pollIntervalMs: 15000,
+    // Conversa aberta (mensagens que o usuário está lendo): mantém a cadência atual.
+    activePollIntervalMs: 15000,
+    // Badge de não-lidas em segundo plano (todas as telas): mais lento e barato.
+    unreadPollIntervalMs: 30000,
     maxMessageLength: 500,
     headerBadgeMax: 99
   },

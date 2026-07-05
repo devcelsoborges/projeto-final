@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, interval, map, Observable, of, Subject } from 'rxjs';
-import { catchError, switchMap, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, map, Observable, of, Subject } from 'rxjs';
+import { catchError, takeUntil } from 'rxjs/operators';
 import { ChatService, Conversa } from './chat.service';
 import { AuthService } from './auth.service';
-import { environment } from '../environments/environment';
 
 export interface NotificationItem {
   id: number;
@@ -15,6 +14,14 @@ export interface NotificationItem {
   queryParams: Record<string, string | number>;
 }
 
+/**
+ * Lista de notificações (conversas) exibida no sino do header e na página
+ * /notificacoes. Busca o endpoint PESADO `/chat/conversas` apenas SOB DEMANDA
+ * (ao abrir o sino ou a página) — não faz polling em segundo plano.
+ *
+ * O contador do badge NÃO vem daqui: fica a cargo do ChatUnreadService, que faz
+ * um COUNT barato. Aqui só limpamos o estado quando o usuário desloga.
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -22,7 +29,6 @@ export class NotificationService {
   private notificationsSubject = new BehaviorSubject<NotificationItem[]>([]);
   private loadingSubject = new BehaviorSubject<boolean>(false);
   private unreadCountSubject = new BehaviorSubject<number>(0);
-  private stopPolling$ = new Subject<void>();
   private destroy$ = new Subject<void>();
 
   readonly notifications$ = this.notificationsSubject.asObservable();
@@ -36,23 +42,12 @@ export class NotificationService {
     this.authService.isLoggedIn$
       .pipe(takeUntil(this.destroy$))
       .subscribe((isLoggedIn) => {
-        if (isLoggedIn) {
-          this.startPolling();
-        } else {
-          this.stopPolling();
+        if (!isLoggedIn) {
           this.notificationsSubject.next([]);
           this.unreadCountSubject.next(0);
           this.loadingSubject.next(false);
         }
       });
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        this.stopPolling(false);
-      } else if (this.authService.isLoggedIn()) {
-        this.startPolling();
-      }
-    });
   }
 
   listRecent(limit = 5): Observable<NotificationItem[]> {
@@ -82,30 +77,6 @@ export class NotificationService {
         this.applyNotifications(notifications);
         this.loadingSubject.next(false);
       });
-  }
-
-  private startPolling(): void {
-    this.stopPolling(false);
-    this.refreshNow();
-
-    interval(environment.chat.pollIntervalMs)
-      .pipe(
-        takeUntil(this.stopPolling$),
-        switchMap(() => {
-          if (document.hidden || !this.authService.isLoggedIn()) {
-            return of(this.notificationsSubject.value);
-          }
-          return this.listAll().pipe(catchError(() => of(this.notificationsSubject.value)));
-        })
-      )
-      .subscribe((notifications) => this.applyNotifications(notifications));
-  }
-
-  private stopPolling(clearLoading = true): void {
-    this.stopPolling$.next();
-    if (clearLoading) {
-      this.loadingSubject.next(false);
-    }
   }
 
   private applyNotifications(notifications: NotificationItem[]): void {

@@ -7,6 +7,7 @@ import { ThemeMode, ThemeService } from '../../service/theme.service';
 import { UxTelemetryService } from '../../service/ux-telemetry.service';
 import { AuthService } from '../../service/auth.service';
 import { NotificationItem, NotificationService } from '../../service/notification.service';
+import { ChatUnreadService } from '../../service/chat-unread.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -43,6 +44,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private telemetry: UxTelemetryService,
     private authService: AuthService,
     private notificationService: NotificationService,
+    private chatUnreadService: ChatUnreadService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -78,7 +80,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    this.notificationService.unreadCount$
+    // Badge de não-lidas vem do ChatUnreadService (COUNT barato, polling global e
+    // pausável). Injetá-lo aqui também garante que ele "viva" durante toda a sessão.
+    this.chatUnreadService.unreadCount$
       .pipe(takeUntil(this.destroy$))
       .subscribe((count) => {
         this.unreadChatCount = count;

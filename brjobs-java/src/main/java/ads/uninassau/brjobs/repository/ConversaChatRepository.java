@@ -36,4 +36,20 @@ public interface ConversaChatRepository extends JpaRepository<ConversaChat, Long
            "AND c.ultimaMensagem IS NOT NULL " +
            "ORDER BY c.updatedAt DESC")
     List<ConversaChat> findActiveConversations(@Param("userId") Long userId);
+
+    /**
+     * Igual a {@link #findActiveConversations}, mas com JOIN FETCH das associações LAZY
+     * (usuario1, usuario2, ultimaMensagem e o remetente dela) numa única query — evita o
+     * N+1 de lazy-loads por conversa quando a lista é montada (endpoint /chat/conversas,
+     * chamado em polling).
+     */
+    @Query("SELECT c FROM ConversaChat c " +
+           "JOIN FETCH c.usuario1 " +
+           "JOIN FETCH c.usuario2 " +
+           "LEFT JOIN FETCH c.ultimaMensagem m " +
+           "LEFT JOIN FETCH m.remetente " +
+           "WHERE (c.usuario1.id = :userId OR c.usuario2.id = :userId) " +
+           "AND c.ultimaMensagem IS NOT NULL " +
+           "ORDER BY c.updatedAt DESC")
+    List<ConversaChat> findActiveConversationsWithParticipants(@Param("userId") Long userId);
 }

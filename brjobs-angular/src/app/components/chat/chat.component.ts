@@ -415,8 +415,21 @@ export class ChatComponent implements OnInit, OnDestroy {
   isSending = false;
   private pollIntervalId: ReturnType<typeof setInterval> | null = null;
   readonly maxMessageLength = environment.chat.maxMessageLength;
-  private readonly pollIntervalMs = environment.chat.pollIntervalMs;
+  // Conversa aberta: mantém a cadência rápida (não regride a chegada das mensagens).
+  private readonly pollIntervalMs = environment.chat.activePollIntervalMs;
   private destroy$ = new Subject<void>();
+
+  // Pausa o polling com a aba oculta; ao voltar, sincroniza na hora.
+  private readonly onVisibilityChange = (): void => {
+    if (document.hidden) {
+      return;
+    }
+    this.carregarConversas(true);
+    if (this.contatoSelecionadoId) {
+      this.carregarMensagens(this.contatoSelecionadoId, true);
+    }
+    this.chatUnreadService.refreshNow();
+  };
 
   constructor(
     private chatService: ChatService,
@@ -436,7 +449,9 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     this.usuarioLogado = Number(localStorage.getItem('usuario_id') || '0');
     this.carregarConversas();
-    this.chatUnreadService.startPolling();
+    // O badge de não-lidas tem polling global (ChatUnreadService); aqui só um
+    // refresh imediato ao entrar no chat.
+    this.chatUnreadService.refreshNow();
 
     this.chatUnreadService.unreadCount$
       .pipe(takeUntil(this.destroy$))
@@ -458,11 +473,17 @@ export class ChatComponent implements OnInit, OnDestroy {
       });
 
     this.pollIntervalId = setInterval(() => {
+      // Aba oculta: não gasta request (o usuário não está vendo mesmo).
+      if (document.hidden) {
+        return;
+      }
       this.carregarConversas(true);
       if (this.contatoSelecionadoId) {
         this.carregarMensagens(this.contatoSelecionadoId, true);
       }
     }, this.pollIntervalMs);
+
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
 
     this.telemetry.logEvent('chat_screen_opened', {
       userState: 'auth'
@@ -474,7 +495,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       clearInterval(this.pollIntervalId);
       this.pollIntervalId = null;
     }
-    this.chatUnreadService.stopPolling();
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
 
     this.destroy$.next();
     this.destroy$.complete();
