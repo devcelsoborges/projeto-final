@@ -622,6 +622,17 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  /* Inputs numéricos têm min-width intrínseco (~size=20 chars); sem zerar isso as
+     colunas 1fr não encolhem e o painel estoura em telas estreitas (≤375px). */
+  .dropdown-valor .campo-num {
+    min-width: 0;
+  }
+
+  .dropdown-valor .campo-num input {
+    width: 100%;
+    min-width: 0;
+  }
+
   .lista-vagas {
     grid-template-columns: 1fr;
   }
