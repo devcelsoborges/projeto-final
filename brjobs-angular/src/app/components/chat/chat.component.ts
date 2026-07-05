@@ -312,6 +312,19 @@ import { environment } from '../../environments/environment';
         flex: 0 0 200px;
       }
     }
+    /* O styles.css global deixa TODO .btn com width:100% em <=900px. Na barra de
+       envio, sem empilhar, o botão toma a linha inteira e espreme o input (faixa
+       761–900px). Então empilha a barra (input em cima, botão embaixo) já a partir
+       de 900px, casando com o breakpoint do botão global. */
+    @media (max-width: 900px) {
+      .msg-input {
+        flex-wrap: wrap;
+      }
+      .form-control {
+        flex-basis: 100%;
+        min-width: 0;
+      }
+    }
     @media (max-width: 760px) {
       .chat-container {
         height: calc(100dvh - 96px);
